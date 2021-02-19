@@ -231,6 +231,30 @@ class ASIC:
             disable_map[i] = 1
         self.set_ext_trigger_disable(array, disable_map)
 
+    def enable_all_tdc(self):
+        self.b.ICYSHSR1.enable_all_tdc_but(0, [])
+        self.b.ICYSHSR1.enable_all_tdc_but(1, [])
+
+    def enable_all_quench(self):
+        self.b.ICYSHSR1.enable_all_quench_but(0, [])
+        self.b.ICYSHSR1.enable_all_quench_but(1, [])
+
+    def enable_all_ext_trigger(self):
+        self.b.ICYSHSR1.enable_all_ext_trigger_but(0, [])
+        self.b.ICYSHSR1.enable_all_ext_trigger_but(1, [])
+
+    def disable_all_tdc(self):
+        self.b.ICYSHSR1.disable_all_tdc_but(0, [])
+        self.b.ICYSHSR1.disable_all_tdc_but(1, [])
+
+    def disable_all_quench(self):
+        self.b.ICYSHSR1.disable_all_quench_but(0, [])
+        self.b.ICYSHSR1.disable_all_quench_but(1, [])
+
+    def disable_all_ext_trigger(self):
+        self.b.ICYSHSR1.disable_all_ext_trigger_but(0, [])
+        self.b.ICYSHSR1.disable_all_ext_trigger_but(1, [])
+
     #
     # Configurations
     #
