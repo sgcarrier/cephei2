@@ -1,4 +1,5 @@
 import time
+import numpy as np
 
 
 class ConstantsASIC:
@@ -133,31 +134,102 @@ class ASIC:
             self.b.ICYSHSR1.DARK_COUNT_FILTER_DELTA_5_1(self.head_id, dark_count_filter[5], 0)
 
     def set_tdc_disable(self, array, disable_map):
-        pass
+        disable_words = np.zeros(2, dtype=np.int)
+        for i in range(len(disable_map)):
+            word_index = int(i / 32)
+            if disable_map[i]:
+                disable_words[word_index] |= (0x1 << (i % 32))
+        if array == 0:
+            for i in range(2):
+                self.b.ICYSHSR1.PIXEL_DISABLE_TDC_ARRAY_0(self.head_id, disable_words[i], i)
+        else:
+            for i in range(2):
+                self.b.ICYSHSR1.PIXEL_DISABLE_TDC_ARRAY_1(self.head_id, disable_words[i], i)
 
     def set_quench_disable(self, array, disable_map):
-        pass
+        disable_words = np.zeros(7)
+        for i in range(len(disable_map)):
+            word_index = int(i / 32)
+            if disable_map[i]:
+                disable_words[word_index] |= (0x1 << (i % 32))
+        if array == 0:
+            for i in range(7):
+                self.b.ICYSHSR1.PIXEL_DISABLE_QUENCH_ARRAY_0(self.head_id, disable_words[i], i)
+        else:
+            for i in range(7):
+                self.b.ICYSHSR1.PIXEL_DISABLE_QUENCH_ARRAY_1(self.head_id, disable_words[i], i)
 
     def set_ext_trigger_disable(self, array, disable_map):
+        disable_words = np.zeros(7)
+        for i in range(len(disable_map)):
+            word_index = int(i / 32)
+            if disable_map[i]:
+                disable_words[word_index] |= (0x1 << (i % 32))
+        if array == 0:
+            for i in range(7):
+                self.b.ICYSHSR1.DISABLE_EXTERNAL_TRIGGER_ARRAY_0(self.head_id, disable_words[i], i)
+        else:
+            for i in range(7):
+                self.b.ICYSHSR1.DISABLE_EXTERNAL_TRIGGER_ARRAY_1(self.head_id, disable_words[i], i)
+
+    def set_weighted_average(self, array, weights):
         pass
 
+    # There are either 16 or 49 tdc by matrix (configuration 4 pixels to 1 tdc)
     def enable_all_tdc_but(self, array, enabled_tdc):
-        pass
+        array_size = 16
+        if array == 0:
+            array_size = 49
+        disable_map = np.zeros(array_size)
+        for i in enabled_tdc:
+            disable_map[i] = 1
+        self.set_tdc_disable(array, disable_map)
 
+    # There are either 16 or 49 tdc by matrix (configuration 4 pixels to 1 tdc)
     def disable_all_tdc_but(self, array, disabled_tdc):
-        pass
+        array_size = 16
+        if array == 0:
+            array_size = 49
+        disable_map = np.ones(array_size)
+        for i in disabled_tdc:
+            disable_map[i] = 0
+        self.set_tdc_disable(array, disable_map)
 
     def enable_all_quench_but(self, array, enabled_quench):
-        pass
+        array_size = 64
+        if array == 0:
+            array_size = 196
+        disable_map = np.zeros(array_size)
+        for i in enabled_quench:
+            disable_map[i] = 1
+        self.set_quench_disable(array, disable_map)
 
     def disable_all_quench_but(self, array, disabled_quench):
-        pass
+        array_size = 64
+        if array == 0:
+            array_size = 196
+        disable_map = np.ones(array_size)
+        for i in disabled_quench:
+            disable_map[i] = 1
+        self.set_quench_disable(array, disable_map)
 
     def enable_all_ext_trigger_but(self, array, enabled_ext_trig):
-        pass
+        array_size = 64
+        if array == 0:
+            array_size = 196
+        disable_map = np.zeros(array_size)
+        for i in enabled_ext_trig:
+            disable_map[i] = 1
+        self.set_ext_trigger_disable(array, disable_map)
 
     def disable_all_ext_trigger_but(self, array, disabled_ext_trig):
-        pass
+        array_size = 64
+        if array == 0:
+            array_size = 196
+        disable_map = np.ones(array_size)
+        for i in disabled_ext_trig:
+            disable_map[i] = 1
+        self.set_ext_trigger_disable(array, disable_map)
 
     #
     # Configurations
