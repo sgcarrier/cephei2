@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-setup(  name='Cephei',
+setup(  name='cephei2',
         version='0.1',
         description='Toolkit for making automated tests with Hermes for ASIC characterisation',
         long_description='',
@@ -11,6 +11,7 @@ setup(  name='Cephei',
         author_email='simon.g.carrier@usherbrooke.ca',
         packages=find_packages(),
         install_requires=[
+            'pip>=19.1',
             'markdown',
             'h5py==2.9.0',
             'requests',
@@ -18,10 +19,9 @@ setup(  name='Cephei',
             'telnetlib3',
             'matplotlib',
             'tqdm',
-            'pyqtgraph',
-            'PyQt5',
-            'PyOpenGL',
-            'scipy'
+            'scipy',
+            'grams-device-utility @ git+ssh://git@grams-gitlab.3it.usherbrooke.ca/sgcarrier/grams-device-utility.git@master'
+
 
         ],
         include_package_data=True,
