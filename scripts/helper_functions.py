@@ -295,7 +295,6 @@ class HV:
         value = int((-(voltage-3.3) * (2**16 - 1)) / 18.3)
         if value < 0 or value >= 2**16:
             raise ValueError("HV value " + str(voltage) + " outside of range 3.3V to -15V")
-        self.b.AD5668.INTERNAL_REF_SETUP(1, 1, 1)
         self.b.AD5668.WRITE_TO_AND_UPDATE_DAC(1, self.hv_id, value)
 
 
