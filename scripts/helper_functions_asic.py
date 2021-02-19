@@ -175,31 +175,31 @@ class ASIC:
 
     #Setup pour test de la PLL lente; Input: Ref_Freq_Slow; Output: Div_Freq_Slow_PLL_Test
     def test_PLL_slow(self):
-        self.b.ICYSHSR1.PLL_ENABLE(self.head_id, 0)
-        self.b.ICYSHSR1.PLL_ENABLE_TEST(self.head_id, 1)
-        self.b.ICYSHSR1.PLL_SELECT_TEST(self.head_id, 1)
-        self.b.ICYSHSR1.PLL_TEST_SECTION_MUX(self.head_id, 0x0001)
+        self.b.ICYSHSR1.PLL_ENABLE(self.head_id, 0) # Disable Array PLL
+        self.b.ICYSHSR1.PLL_ENABLE_TEST(self.head_id, 1) # Enable Test PLL
+        self.b.ICYSHSR1.PLL_SELECT_TEST(self.head_id, 1) # Use PLL for test
+        self.b.ICYSHSR1.PLL_TEST_SECTION_MUX(self.head_id, 0x0001) # Output freq_slow
 
     # Setup pour test de la PLL Rapide; Input: Ref_Freq_Fast; Output: Div_Freq_Fast_PLL_Test
     def test_PLL_fast(self):
-        self.b.ICYSHSR1.PLL_ENABLE(self.head_id, 0)
-        self.b.ICYSHSR1.PLL_ENABLE_TEST(self.head_id, 1)
-        self.b.ICYSHSR1.PLL_SELECT_TEST(self.head_id, 1)
-        self.b.ICYSHSR1.PLL_TEST_SECTION_MUX(self.head_id, 0x0002)
+        self.b.ICYSHSR1.PLL_ENABLE(self.head_id, 0) # Disable Array PLL
+        self.b.ICYSHSR1.PLL_ENABLE_TEST(self.head_id, 1) # Enable Test PLL
+        self.b.ICYSHSR1.PLL_SELECT_TEST(self.head_id, 1) # Use PLL for test
+        self.b.ICYSHSR1.PLL_TEST_SECTION_MUX(self.head_id, 0x0002) # Output freq_fast
 
     # Setup pour test du TDC Test avec PLL de Test; Input: Ref_Freq_Slow, Ref_Freq_Fast; Output: o_serialiseur_test
     def test_TDC_PLL(self):
-        self.b.ICYSHSR1.PLL_ENABLE(self.head_id, 0)
-        self.b.ICYSHSR1.PLL_ENABLE_TEST(self.head_id, 1)
-        self.b.ICYSHSR1.PLL_SELECT_TEST(self.head_id, 1)
-        self.b.ICYSHSR1.PLL_TEST_SECTION_MUX(self.head_id, 0x0003)
+        self.b.ICYSHSR1.PLL_ENABLE(self.head_id, 0) # Disable Array PLL
+        self.b.ICYSHSR1.PLL_ENABLE_TEST(self.head_id, 1) # Enable Test PLL
+        self.b.ICYSHSR1.PLL_SELECT_TEST(self.head_id, 1) # Use PLL for test
+        self.b.ICYSHSR1.PLL_TEST_SECTION_MUX(self.head_id, 0x0003) # Output TDC output
 
     # Setup pour test du TDC Test avec tension externe; Input: V_Fast, V_Slow; Output: o_serialiseur_test
     def test_TDC_ext(self):
-        self.b.ICYSHSR1.PLL_ENABLE(self.head_id, 0)
-        self.b.ICYSHSR1.PLL_ENABLE_TEST(self.head_id, 1)
-        self.b.ICYSHSR1.PLL_SELECT_TEST(self.head_id, 0)
-        self.b.ICYSHSR1.PLL_TEST_SECTION_MUX(self.head_id, 0x0003)
+        self.b.ICYSHSR1.PLL_ENABLE(self.head_id, 0) # Disable Array PLL
+        self.b.ICYSHSR1.PLL_ENABLE_TEST(self.head_id, 1) # Enable Test PLL
+        self.b.ICYSHSR1.PLL_SELECT_TEST(self.head_id, 0) # Use Vext for test
+        self.b.ICYSHSR1.PLL_TEST_SECTION_MUX(self.head_id, 0x0003) # Output TDC output
 
     # Readout_time is in clk cycle (4ns)
     def configure_ct_counting_mode(self, array, readout_time):
