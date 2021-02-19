@@ -101,17 +101,26 @@ class ASIC:
     def set_lookup_tables(self):
         pass
 
-    def set_skew_correction(self, array, skew_corrections):
+    def set_skew_correction(self, array, pixel_id, skew_correction):
+        register_offset = int(pixel_id / 2)
         if array == 0:
-            if len(skew_corrections) != 196:
-                raise TypeError("Skew correction length should be 196 for array 0")
-            # TODO
+            if pixel_id % 2 == 0:
+                self.b.ICYSHSR1.SPAD_LOCAL_SKEW_EVEN_0(self.head_id, skew_correction, register_offset)
+            else:
+                self.b.ICYSHSR1.SPAD_LOCAL_SKEW_ODD_0(self.head_id, skew_correction, register_offset)
         else:
-            if len(skew_corrections) != 64:
-                raise TypeError("Skew correction length should be 64 for array 1")
-            # TODO
+            if pixel_id % 2 == 0:
+                self.b.ICYSHSR1.SPAD_LOCAL_SKEW_EVEN_1(self.head_id, skew_correction, register_offset)
+            else:
+                self.b.ICYSHSR1.SPAD_LOCAL_SKEW_ODD_1(self.head_id, skew_correction, register_offset)
 
-    def set_corrections(self, skew_correction, coarse, fine, coarse_bias_corr, coarse_slope_corr):
+    def set_coarse_correction(self, array, pixel_id, coarse_correction):
+        pass
+
+    def set_fine_correction(self, array, pixel_id, fine_correction):
+        pass
+
+    def set_corrections(self, array, tdc_id, coarse, fine, coarse_bias_corr, coarse_slope_corr):
         pass
 
     # Dark_count_filter must be an array of 6 integers.
@@ -173,6 +182,7 @@ class ASIC:
                 self.b.ICYSHSR1.DISABLE_EXTERNAL_TRIGGER_ARRAY_1(self.head_id, disable_words[i], i)
 
     def set_weighted_average(self, array, weights):
+        # TODO
         pass
 
     # There are either 16 or 49 tdc by matrix (configuration 4 pixels to 1 tdc)
