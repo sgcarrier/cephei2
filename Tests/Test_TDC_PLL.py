@@ -1,0 +1,6 @@
+from scripts.helper_functions import Board
+
+board = Board()
+board.slow_oscillator_head_0.set_frequency(250)
+board.fast_oscillator_head_0.set_frequency(252.5)
+board.asic_head_0.test_TDC_PLL()
