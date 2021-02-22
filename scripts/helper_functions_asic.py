@@ -40,6 +40,7 @@ class ASIC:
         self.b.ICYSHSR1.gpio_set(self.head_id, "REINIT", True)
         time.sleep(1)
         self.b.ICYSHSR1.gpio_set(self.head_id, "REINIT", False)
+        time.sleep(1)
 
     # This function doesn't sync multiple chips together.
     def sync(self):
@@ -98,9 +99,6 @@ class ASIC:
         self.b.ICYSHSR1.ENERGY_DISCRIMINATION_PHOTON_ORDER(self.head_id, photon_order, 0)
         self.b.ICYSHSR1.ENERGY_DISCRIMINATION_ALWAYS_OUTPUT(self.head_id, always_out, 0)
 
-    def set_lookup_tables(self):
-        pass
-
     def set_skew_correction(self, array, pixel_id, skew_correction):
         register_offset = int(pixel_id / 2)
         if array == 0:
@@ -114,14 +112,71 @@ class ASIC:
             else:
                 self.b.ICYSHSR1.SPAD_LOCAL_SKEW_ODD_1(self.head_id, skew_correction, register_offset)
 
-    def set_coarse_correction(self, array, pixel_id, coarse_correction):
-        pass
+    def set_coarse_correction(self, array, tdc_id, coarse_correction):
+        register_offset = int(tdc_id / 2)
+        if array == 0:
+            if tdc_id % 2 == 0:
+                self.b.ICYSHSR1.TDC_LOCAL_CORRECTION_COARSE_EVEN_0(self.head_id, coarse_correction, register_offset)
+            else:
+                self.b.ICYSHSR1.TDC_LOCAL_CORRECTION_COARSE_ODD_0(self.head_id, coarse_correction, register_offset)
+        else:
+            if tdc_id % 2 == 0:
+                self.b.ICYSHSR1.TDC_LOCAL_CORRECTION_COARSE_EVEN_1(self.head_id, coarse_correction, register_offset)
+            else:
+                self.b.ICYSHSR1.TDC_LOCAL_CORRECTION_COARSE_ODD_1(self.head_id, coarse_correction, register_offset)
 
-    def set_fine_correction(self, array, pixel_id, fine_correction):
-        pass
+    def set_fine_correction(self, array, tdc_id, fine_correction):
+        register_offset = int(tdc_id / 2)
+        if array == 0:
+            if tdc_id % 2 == 0:
+                self.b.ICYSHSR1.TDC_LOCAL_CORRECTION_FINE_EVEN_0(self.head_id, fine_correction, register_offset)
+            else:
+                self.b.ICYSHSR1.TDC_LOCAL_CORRECTION_FINE_ODD_0(self.head_id, fine_correction, register_offset)
+        else:
+            if tdc_id % 2 == 0:
+                self.b.ICYSHSR1.TDC_LOCAL_CORRECTION_FINE_EVEN_1(self.head_id, fine_correction, register_offset)
+            else:
+                self.b.ICYSHSR1.TDC_LOCAL_CORRECTION_FINE_ODD_1(self.head_id, fine_correction, register_offset)
 
-    def set_corrections(self, array, tdc_id, coarse, fine, coarse_bias_corr, coarse_slope_corr):
-        pass
+    def set_lookup_tables(self, array, tdc_id, bias_lookup, slope_lookup):
+        # Pad bias with zeros (16)
+        # Pad slope with zeros (16)
+        # TODO
+        register_offset_bias = tdc_id * 4
+        register_offset_slope = tdc_id * 2
+        if array == 0:
+            for i in range(4):
+                self.b.ICYSHSR1.COARSE_BIAS_LOOKUP_TABLE_0_0(self.head_id, bias_lookup[(i*4)+0], register_offset_bias)
+                self.b.ICYSHSR1.COARSE_BIAS_LOOKUP_TABLE_1_0(self.head_id, bias_lookup[(i*4)+1], register_offset_bias)
+                self.b.ICYSHSR1.COARSE_BIAS_LOOKUP_TABLE_2_0(self.head_id, bias_lookup[(i*4)+2], register_offset_bias)
+                self.b.ICYSHSR1.COARSE_BIAS_LOOKUP_TABLE_3_0(self.head_id, bias_lookup[(i*4)+3], register_offset_bias)
+
+            for i in range(8):
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_0_0(self.head_id, slope_lookup[(i*8)+0], register_offset_slope)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_1_0(self.head_id, slope_lookup[(i*8)+1], register_offset_slope)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_2_0(self.head_id, slope_lookup[(i*8)+2], register_offset_slope)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_3_0(self.head_id, slope_lookup[(i*8)+3], register_offset_slope)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_4_0(self.head_id, slope_lookup[(i*8)+4], register_offset_slope)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_5_0(self.head_id, slope_lookup[(i*8)+5], register_offset_slope)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_6_0(self.head_id, slope_lookup[(i*8)+6], register_offset_slope)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_7_0(self.head_id, slope_lookup[(i*8)+7], register_offset_slope)
+        else:
+            for i in range(4):
+                self.b.ICYSHSR1.COARSE_BIAS_LOOKUP_TABLE_0_1(self.head_id, bias_lookup[(i*4)+0], register_offset_bias)
+                self.b.ICYSHSR1.COARSE_BIAS_LOOKUP_TABLE_1_1(self.head_id, bias_lookup[(i*4)+1], register_offset_bias)
+                self.b.ICYSHSR1.COARSE_BIAS_LOOKUP_TABLE_2_1(self.head_id, bias_lookup[(i*4)+2], register_offset_bias)
+                self.b.ICYSHSR1.COARSE_BIAS_LOOKUP_TABLE_3_1(self.head_id, bias_lookup[(i*4)+3], register_offset_bias)
+
+            for i in range(8):
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_0_1(self.head_id, slope_lookup[(i*8)+0], register_offset_slope)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_1_1(self.head_id, slope_lookup[(i*8)+1], register_offset_slope)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_2_1(self.head_id, slope_lookup[(i*8)+2], register_offset_slope)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_3_1(self.head_id, slope_lookup[(i*8)+3], register_offset_slope)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_4_1(self.head_id, slope_lookup[(i*8)+4], register_offset_slope)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_5_1(self.head_id, slope_lookup[(i*8)+5], register_offset_slope)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_6_1(self.head_id, slope_lookup[(i*8)+6], register_offset_slope)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_7_1(self.head_id, slope_lookup[(i*8)+7], register_offset_slope)
+
 
     # Dark_count_filter must be an array of 6 integers.
     def set_dcr_filter(self, array, dark_count_filter=None):
