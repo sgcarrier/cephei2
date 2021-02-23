@@ -1,4 +1,4 @@
-from experiments.BasicExperiment import BasicExperiment
+from utility.BasicExperiment import BasicExperiment
 import h5py
 import numpy as np
 import logging
@@ -89,3 +89,24 @@ class FakeExperiment(BasicExperiment):
         :return:
         '''
         self.h.close()
+
+
+
+if __name__ == '__main__':
+    from utility.ExperimentRunner import ExperimentRunner
+
+    logging.basicConfig(level=logging.DEBUG)
+
+
+    # Instanciate the example experiment
+    experiment = FakeExperiment(filename="../output/example_NON_CORR_TEST.hdf5",
+                                         countLimit=50000)
+
+    # Assign the experiment to the runner and tell the variables you have and if you want to iterate
+    # in this case, first_variable doesn't change, and second_variable starts at 6000, ends at 3000 by -500 steps
+    runner = ExperimentRunner(experiment=experiment,
+                              variables={'first_variable': 15000, 'second_variable':(6000,3000,-500)})
+
+    #run and stop it. Ctrl-C can stop it prematurely.
+    runner.start()
+    runner.stop()
