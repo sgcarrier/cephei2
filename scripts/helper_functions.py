@@ -100,6 +100,9 @@ class PLL:
 
 # LMK01020
 class Divider:
+    MUX_CORR = 1
+    MUX_NOT_CORR = 0
+
     def __init__(self, chartier, device_id):
         self.device_id = device_id
         self.b = chartier
@@ -111,7 +114,7 @@ class Divider:
             self.goe = "TRIG_GOE"
 
     # mux_select: 1 = corr, 0 = not corr
-    def set_divider(self, divider, mux_select, test_mode=True):
+    def set_divider(self, divider, mux_select):
         if divider % 2 != 0:
             print("WARNING: divider not divisible by 2. The output won't be the exact one given")
 
@@ -123,10 +126,7 @@ class Divider:
         # Output the same thing on both the test point and the real output
         self.b.LMK01020.CLKOUT5_DIV(self.device_id, divider)
         self.b.LMK01020.CLKOUT5_MUX(self.device_id, 1)
-        if test_mode:
-            self.b.LMK01020.CLKOUT5_EN(self.device_id, 1)
-        else:
-            self.b.LMK01020.CLKOUT5_EN(self.device_id, 0)
+        self.b.LMK01020.CLKOUT5_EN(self.device_id, 1)
 
         self.b.LMK01020.CLKOUT0_DIV(self.device_id, divider)
         self.b.LMK01020.CLKOUT0_MUX(self.device_id, 1)
@@ -227,13 +227,17 @@ class DelayLine:
 
         return delay_code
 
+    # Max delay =
     def set_delay(self, delay):
         code = self.delay_to_bit_code(delay)
+        self.set_delay_code(code)
+
+    def set_delay_code(self, delay_code):
         disable = 0
         length = 0  # When high latches D[9:0] and D[10] bits. When low, the D[9:0] and D[10] are transparent.
         d10 = 0     #
-        low_config = 0 | (code << 1) & 0xFE | d10
-        high_config = 0 | ((code >> 7) & 0x7) | (disable << 3) | (length << 4)
+        low_config = 0 | (delay_code << 1) & 0xFE | d10
+        high_config = 0 | ((delay_code >> 7) & 0x7) | (disable << 3) | (length << 4)
 
         self.b.TCA9539.CONFIGURATIONPORT0(self.device_id, 0x0)
         self.b.TCA9539.CONFIGURATIONPORT1(self.device_id, 0x0)
@@ -263,6 +267,15 @@ class DelayLine:
 
 # Controlled through TCA9539
 class MUX:
+    LASER_INPUT = 0
+    DIVIDER_INPUT = 1
+    EXTERNAL_INPUT = 0
+    PCB_INPUT = 1
+    NON_INVERTED = 0
+    INVERTED = 1
+    MONOSTABLE = 0
+    DELAYED_LASER = 1
+
     def __init__(self, chartier, mux_id):
         self.device_id = 2
         self.mux_id = 1 << mux_id

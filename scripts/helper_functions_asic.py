@@ -40,6 +40,7 @@ class ASIC:
         self.b.ICYSHSR1.gpio_set(self.head_id, "REINIT", True)
         time.sleep(1)
         self.b.ICYSHSR1.gpio_set(self.head_id, "REINIT", False)
+        time.sleep(1)
 
     # This function doesn't sync multiple chips together.
     def sync(self):
@@ -98,21 +99,84 @@ class ASIC:
         self.b.ICYSHSR1.ENERGY_DISCRIMINATION_PHOTON_ORDER(self.head_id, photon_order, 0)
         self.b.ICYSHSR1.ENERGY_DISCRIMINATION_ALWAYS_OUTPUT(self.head_id, always_out, 0)
 
-    def set_lookup_tables(self):
-        pass
-
-    def set_skew_correction(self, array, skew_corrections):
+    def set_skew_correction(self, array, pixel_id, skew_correction):
+        register_offset = int(pixel_id / 2)
         if array == 0:
-            if len(skew_corrections) != 196:
-                raise TypeError("Skew correction length should be 196 for array 0")
-            # TODO
+            if pixel_id % 2 == 0:
+                self.b.ICYSHSR1.SPAD_LOCAL_SKEW_EVEN_0(self.head_id, skew_correction, register_offset)
+            else:
+                self.b.ICYSHSR1.SPAD_LOCAL_SKEW_ODD_0(self.head_id, skew_correction, register_offset)
         else:
-            if len(skew_corrections) != 64:
-                raise TypeError("Skew correction length should be 64 for array 1")
-            # TODO
+            if pixel_id % 2 == 0:
+                self.b.ICYSHSR1.SPAD_LOCAL_SKEW_EVEN_1(self.head_id, skew_correction, register_offset)
+            else:
+                self.b.ICYSHSR1.SPAD_LOCAL_SKEW_ODD_1(self.head_id, skew_correction, register_offset)
 
-    def set_corrections(self, skew_correction, coarse, fine, coarse_bias_corr, coarse_slope_corr):
-        pass
+    def set_coarse_correction(self, array, tdc_id, coarse_correction):
+        register_offset = int(tdc_id / 2)
+        if array == 0:
+            if tdc_id % 2 == 0:
+                self.b.ICYSHSR1.TDC_LOCAL_CORRECTION_COARSE_EVEN_0(self.head_id, coarse_correction, register_offset)
+            else:
+                self.b.ICYSHSR1.TDC_LOCAL_CORRECTION_COARSE_ODD_0(self.head_id, coarse_correction, register_offset)
+        else:
+            if tdc_id % 2 == 0:
+                self.b.ICYSHSR1.TDC_LOCAL_CORRECTION_COARSE_EVEN_1(self.head_id, coarse_correction, register_offset)
+            else:
+                self.b.ICYSHSR1.TDC_LOCAL_CORRECTION_COARSE_ODD_1(self.head_id, coarse_correction, register_offset)
+
+    def set_fine_correction(self, array, tdc_id, fine_correction):
+        register_offset = int(tdc_id / 2)
+        if array == 0:
+            if tdc_id % 2 == 0:
+                self.b.ICYSHSR1.TDC_LOCAL_CORRECTION_FINE_EVEN_0(self.head_id, fine_correction, register_offset)
+            else:
+                self.b.ICYSHSR1.TDC_LOCAL_CORRECTION_FINE_ODD_0(self.head_id, fine_correction, register_offset)
+        else:
+            if tdc_id % 2 == 0:
+                self.b.ICYSHSR1.TDC_LOCAL_CORRECTION_FINE_EVEN_1(self.head_id, fine_correction, register_offset)
+            else:
+                self.b.ICYSHSR1.TDC_LOCAL_CORRECTION_FINE_ODD_1(self.head_id, fine_correction, register_offset)
+
+    def set_lookup_tables(self, array, tdc_id, bias_lookup, slope_lookup):
+        # Pad bias with zeros (16)
+        # Pad slope with zeros (16)
+        # TODO
+        register_offset_bias = tdc_id * 4
+        register_offset_slope = tdc_id * 2
+        if array == 0:
+            for i in range(4):
+                self.b.ICYSHSR1.COARSE_BIAS_LOOKUP_TABLE_0_0(self.head_id, bias_lookup[(i*4)+0], register_offset_bias)
+                self.b.ICYSHSR1.COARSE_BIAS_LOOKUP_TABLE_1_0(self.head_id, bias_lookup[(i*4)+1], register_offset_bias)
+                self.b.ICYSHSR1.COARSE_BIAS_LOOKUP_TABLE_2_0(self.head_id, bias_lookup[(i*4)+2], register_offset_bias)
+                self.b.ICYSHSR1.COARSE_BIAS_LOOKUP_TABLE_3_0(self.head_id, bias_lookup[(i*4)+3], register_offset_bias)
+
+            for i in range(8):
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_0_0(self.head_id, slope_lookup[(i*8)+0], register_offset_slope)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_1_0(self.head_id, slope_lookup[(i*8)+1], register_offset_slope)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_2_0(self.head_id, slope_lookup[(i*8)+2], register_offset_slope)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_3_0(self.head_id, slope_lookup[(i*8)+3], register_offset_slope)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_4_0(self.head_id, slope_lookup[(i*8)+4], register_offset_slope)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_5_0(self.head_id, slope_lookup[(i*8)+5], register_offset_slope)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_6_0(self.head_id, slope_lookup[(i*8)+6], register_offset_slope)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_7_0(self.head_id, slope_lookup[(i*8)+7], register_offset_slope)
+        else:
+            for i in range(4):
+                self.b.ICYSHSR1.COARSE_BIAS_LOOKUP_TABLE_0_1(self.head_id, bias_lookup[(i*4)+0], register_offset_bias)
+                self.b.ICYSHSR1.COARSE_BIAS_LOOKUP_TABLE_1_1(self.head_id, bias_lookup[(i*4)+1], register_offset_bias)
+                self.b.ICYSHSR1.COARSE_BIAS_LOOKUP_TABLE_2_1(self.head_id, bias_lookup[(i*4)+2], register_offset_bias)
+                self.b.ICYSHSR1.COARSE_BIAS_LOOKUP_TABLE_3_1(self.head_id, bias_lookup[(i*4)+3], register_offset_bias)
+
+            for i in range(8):
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_0_1(self.head_id, slope_lookup[(i*8)+0], register_offset_slope)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_1_1(self.head_id, slope_lookup[(i*8)+1], register_offset_slope)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_2_1(self.head_id, slope_lookup[(i*8)+2], register_offset_slope)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_3_1(self.head_id, slope_lookup[(i*8)+3], register_offset_slope)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_4_1(self.head_id, slope_lookup[(i*8)+4], register_offset_slope)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_5_1(self.head_id, slope_lookup[(i*8)+5], register_offset_slope)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_6_1(self.head_id, slope_lookup[(i*8)+6], register_offset_slope)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_7_1(self.head_id, slope_lookup[(i*8)+7], register_offset_slope)
+
 
     # Dark_count_filter must be an array of 6 integers.
     def set_dcr_filter(self, array, dark_count_filter=None):
@@ -147,7 +211,7 @@ class ASIC:
                 self.b.ICYSHSR1.PIXEL_DISABLE_TDC_ARRAY_1(self.head_id, disable_words[i], i)
 
     def set_quench_disable(self, array, disable_map):
-        disable_words = np.zeros(7)
+        disable_words = np.zeros(7, dtype=np.int)
         for i in range(len(disable_map)):
             word_index = int(i / 32)
             if disable_map[i]:
@@ -160,7 +224,7 @@ class ASIC:
                 self.b.ICYSHSR1.PIXEL_DISABLE_QUENCH_ARRAY_1(self.head_id, disable_words[i], i)
 
     def set_ext_trigger_disable(self, array, disable_map):
-        disable_words = np.zeros(7)
+        disable_words = np.zeros(7, dtype=np.int)
         for i in range(len(disable_map)):
             word_index = int(i / 32)
             if disable_map[i]:
@@ -173,6 +237,7 @@ class ASIC:
                 self.b.ICYSHSR1.DISABLE_EXTERNAL_TRIGGER_ARRAY_1(self.head_id, disable_words[i], i)
 
     def set_weighted_average(self, array, weights):
+        # TODO
         pass
 
     # There are either 16 or 49 tdc by matrix (configuration 4 pixels to 1 tdc)
@@ -180,7 +245,7 @@ class ASIC:
         array_size = 16
         if array == 0:
             array_size = 49
-        disable_map = np.zeros(array_size)
+        disable_map = np.zeros(array_size, dtype=np.int)
         for i in enabled_tdc:
             disable_map[i] = 1
         self.set_tdc_disable(array, disable_map)
@@ -190,7 +255,7 @@ class ASIC:
         array_size = 16
         if array == 0:
             array_size = 49
-        disable_map = np.ones(array_size)
+        disable_map = np.ones(array_size, dtype=np.int)
         for i in disabled_tdc:
             disable_map[i] = 0
         self.set_tdc_disable(array, disable_map)
@@ -199,7 +264,7 @@ class ASIC:
         array_size = 64
         if array == 0:
             array_size = 196
-        disable_map = np.zeros(array_size)
+        disable_map = np.zeros(array_size, dtype=np.int)
         for i in enabled_quench:
             disable_map[i] = 1
         self.set_quench_disable(array, disable_map)
@@ -208,7 +273,7 @@ class ASIC:
         array_size = 64
         if array == 0:
             array_size = 196
-        disable_map = np.ones(array_size)
+        disable_map = np.ones(array_size, dtype=np.int)
         for i in disabled_quench:
             disable_map[i] = 1
         self.set_quench_disable(array, disable_map)
@@ -217,7 +282,7 @@ class ASIC:
         array_size = 64
         if array == 0:
             array_size = 196
-        disable_map = np.zeros(array_size)
+        disable_map = np.zeros(array_size, dtype=np.int)
         for i in enabled_ext_trig:
             disable_map[i] = 1
         self.set_ext_trigger_disable(array, disable_map)
@@ -226,34 +291,34 @@ class ASIC:
         array_size = 64
         if array == 0:
             array_size = 196
-        disable_map = np.ones(array_size)
+        disable_map = np.ones(array_size, dtype=np.int)
         for i in disabled_ext_trig:
             disable_map[i] = 1
         self.set_ext_trigger_disable(array, disable_map)
 
     def enable_all_tdc(self):
-        self.b.ICYSHSR1.enable_all_tdc_but(0, [])
-        self.b.ICYSHSR1.enable_all_tdc_but(1, [])
+        self.enable_all_tdc_but(0, [])
+        self.enable_all_tdc_but(1, [])
 
     def enable_all_quench(self):
-        self.b.ICYSHSR1.enable_all_quench_but(0, [])
-        self.b.ICYSHSR1.enable_all_quench_but(1, [])
+        self.enable_all_quench_but(0, [])
+        self.enable_all_quench_but(1, [])
 
     def enable_all_ext_trigger(self):
-        self.b.ICYSHSR1.enable_all_ext_trigger_but(0, [])
-        self.b.ICYSHSR1.enable_all_ext_trigger_but(1, [])
+        self.enable_all_ext_trigger_but(0, [])
+        self.enable_all_ext_trigger_but(1, [])
 
     def disable_all_tdc(self):
-        self.b.ICYSHSR1.disable_all_tdc_but(0, [])
-        self.b.ICYSHSR1.disable_all_tdc_but(1, [])
+        self.disable_all_tdc_but(0, [])
+        self.disable_all_tdc_but(1, [])
 
     def disable_all_quench(self):
-        self.b.ICYSHSR1.disable_all_quench_but(0, [])
-        self.b.ICYSHSR1.disable_all_quench_but(1, [])
+        self.disable_all_quench_but(0, [])
+        self.disable_all_quench_but(1, [])
 
     def disable_all_ext_trigger(self):
-        self.b.ICYSHSR1.disable_all_ext_trigger_but(0, [])
-        self.b.ICYSHSR1.disable_all_ext_trigger_but(1, [])
+        self.disable_all_ext_trigger_but(0, [])
+        self.disable_all_ext_trigger_but(1, [])
 
     #
     # Configurations
@@ -271,31 +336,31 @@ class ASIC:
 
     #Setup pour test de la PLL lente; Input: Ref_Freq_Slow; Output: Div_Freq_Slow_PLL_Test
     def test_PLL_slow(self):
-        self.b.ICYSHSR1.PLL_ENABLE(self.head_id, 0) # Disable Array PLL
-        self.b.ICYSHSR1.PLL_ENABLE_TEST(self.head_id, 1) # Enable Test PLL
-        self.b.ICYSHSR1.PLL_SELECT_TEST(self.head_id, 1) # Use PLL for test
-        self.b.ICYSHSR1.PLL_TEST_SECTION_MUX(self.head_id, 0x0001) # Output freq_slow
+        self.b.ICYSHSR1.PLL_ENABLE(self.head_id, 0, 0) # Disable Array PLL
+        self.b.ICYSHSR1.PLL_ENABLE_TEST(self.head_id, 1, 0) # Enable Test PLL
+        self.b.ICYSHSR1.PLL_SELECT_TEST(self.head_id, 1, 0) # Use PLL for test
+        self.b.ICYSHSR1.PLL_TEST_SECTION_MUX(self.head_id, 0x0001, 0) # Output freq_slow
 
     # Setup pour test de la PLL Rapide; Input: Ref_Freq_Fast; Output: Div_Freq_Fast_PLL_Test
     def test_PLL_fast(self):
-        self.b.ICYSHSR1.PLL_ENABLE(self.head_id, 0) # Disable Array PLL
-        self.b.ICYSHSR1.PLL_ENABLE_TEST(self.head_id, 1) # Enable Test PLL
-        self.b.ICYSHSR1.PLL_SELECT_TEST(self.head_id, 1) # Use PLL for test
-        self.b.ICYSHSR1.PLL_TEST_SECTION_MUX(self.head_id, 0x0002) # Output freq_fast
+        self.b.ICYSHSR1.PLL_ENABLE(self.head_id, 0, 0) # Disable Array PLL
+        self.b.ICYSHSR1.PLL_ENABLE_TEST(self.head_id, 1, 0) # Enable Test PLL
+        self.b.ICYSHSR1.PLL_SELECT_TEST(self.head_id, 1, 0) # Use PLL for test
+        self.b.ICYSHSR1.PLL_TEST_SECTION_MUX(self.head_id, 0x0002, 0) # Output freq_fast
 
     # Setup pour test du TDC Test avec PLL de Test; Input: Ref_Freq_Slow, Ref_Freq_Fast; Output: o_serialiseur_test
     def test_TDC_PLL(self):
-        self.b.ICYSHSR1.PLL_ENABLE(self.head_id, 0) # Disable Array PLL
-        self.b.ICYSHSR1.PLL_ENABLE_TEST(self.head_id, 1) # Enable Test PLL
-        self.b.ICYSHSR1.PLL_SELECT_TEST(self.head_id, 1) # Use PLL for test
-        self.b.ICYSHSR1.PLL_TEST_SECTION_MUX(self.head_id, 0x0003) # Output TDC output
+        self.b.ICYSHSR1.PLL_ENABLE(self.head_id, 0, 0) # Disable Array PLL
+        self.b.ICYSHSR1.PLL_ENABLE_TEST(self.head_id, 1, 0) # Enable Test PLL
+        self.b.ICYSHSR1.PLL_SELECT_TEST(self.head_id, 1, 0) # Use PLL for test
+        self.b.ICYSHSR1.PLL_TEST_SECTION_MUX(self.head_id, 0x0003, 0) # Output TDC output
 
     # Setup pour test du TDC Test avec tension externe; Input: V_Fast, V_Slow; Output: o_serialiseur_test
     def test_TDC_ext(self):
-        self.b.ICYSHSR1.PLL_ENABLE(self.head_id, 0) # Disable Array PLL
-        self.b.ICYSHSR1.PLL_ENABLE_TEST(self.head_id, 1) # Enable Test PLL
-        self.b.ICYSHSR1.PLL_SELECT_TEST(self.head_id, 0) # Use Vext for test
-        self.b.ICYSHSR1.PLL_TEST_SECTION_MUX(self.head_id, 0x0003) # Output TDC output
+        self.b.ICYSHSR1.PLL_ENABLE(self.head_id, 0, 0) # Disable Array PLL
+        self.b.ICYSHSR1.PLL_ENABLE_TEST(self.head_id, 1, 0) # Enable Test PLL
+        self.b.ICYSHSR1.PLL_SELECT_TEST(self.head_id, 0, 0) # Use Vext for test
+        self.b.ICYSHSR1.PLL_TEST_SECTION_MUX(self.head_id, 0x0003, 0) # Output TDC output
 
     # Readout_time is in clk cycle (4ns)
     def configure_ct_counting_mode(self, array, readout_time):
