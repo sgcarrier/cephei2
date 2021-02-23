@@ -211,7 +211,7 @@ class ASIC:
                 self.b.ICYSHSR1.PIXEL_DISABLE_TDC_ARRAY_1(self.head_id, disable_words[i], i)
 
     def set_quench_disable(self, array, disable_map):
-        disable_words = np.zeros(7)
+        disable_words = np.zeros(7, dtype=np.int)
         for i in range(len(disable_map)):
             word_index = int(i / 32)
             if disable_map[i]:
@@ -224,7 +224,7 @@ class ASIC:
                 self.b.ICYSHSR1.PIXEL_DISABLE_QUENCH_ARRAY_1(self.head_id, disable_words[i], i)
 
     def set_ext_trigger_disable(self, array, disable_map):
-        disable_words = np.zeros(7)
+        disable_words = np.zeros(7, dtype=np.int)
         for i in range(len(disable_map)):
             word_index = int(i / 32)
             if disable_map[i]:
@@ -245,7 +245,7 @@ class ASIC:
         array_size = 16
         if array == 0:
             array_size = 49
-        disable_map = np.zeros(array_size)
+        disable_map = np.zeros(array_size, dtype=np.int)
         for i in enabled_tdc:
             disable_map[i] = 1
         self.set_tdc_disable(array, disable_map)
@@ -255,7 +255,7 @@ class ASIC:
         array_size = 16
         if array == 0:
             array_size = 49
-        disable_map = np.ones(array_size)
+        disable_map = np.ones(array_size, dtype=np.int)
         for i in disabled_tdc:
             disable_map[i] = 0
         self.set_tdc_disable(array, disable_map)
@@ -264,7 +264,7 @@ class ASIC:
         array_size = 64
         if array == 0:
             array_size = 196
-        disable_map = np.zeros(array_size)
+        disable_map = np.zeros(array_size, dtype=np.int)
         for i in enabled_quench:
             disable_map[i] = 1
         self.set_quench_disable(array, disable_map)
@@ -273,7 +273,7 @@ class ASIC:
         array_size = 64
         if array == 0:
             array_size = 196
-        disable_map = np.ones(array_size)
+        disable_map = np.ones(array_size, dtype=np.int)
         for i in disabled_quench:
             disable_map[i] = 1
         self.set_quench_disable(array, disable_map)
@@ -282,7 +282,7 @@ class ASIC:
         array_size = 64
         if array == 0:
             array_size = 196
-        disable_map = np.zeros(array_size)
+        disable_map = np.zeros(array_size, dtype=np.int)
         for i in enabled_ext_trig:
             disable_map[i] = 1
         self.set_ext_trigger_disable(array, disable_map)
@@ -291,34 +291,34 @@ class ASIC:
         array_size = 64
         if array == 0:
             array_size = 196
-        disable_map = np.ones(array_size)
+        disable_map = np.ones(array_size, dtype=np.int)
         for i in disabled_ext_trig:
             disable_map[i] = 1
         self.set_ext_trigger_disable(array, disable_map)
 
     def enable_all_tdc(self):
-        self.b.ICYSHSR1.enable_all_tdc_but(0, [])
-        self.b.ICYSHSR1.enable_all_tdc_but(1, [])
+        self.enable_all_tdc_but(0, [])
+        self.enable_all_tdc_but(1, [])
 
     def enable_all_quench(self):
-        self.b.ICYSHSR1.enable_all_quench_but(0, [])
-        self.b.ICYSHSR1.enable_all_quench_but(1, [])
+        self.enable_all_quench_but(0, [])
+        self.enable_all_quench_but(1, [])
 
     def enable_all_ext_trigger(self):
-        self.b.ICYSHSR1.enable_all_ext_trigger_but(0, [])
-        self.b.ICYSHSR1.enable_all_ext_trigger_but(1, [])
+        self.enable_all_ext_trigger_but(0, [])
+        self.enable_all_ext_trigger_but(1, [])
 
     def disable_all_tdc(self):
-        self.b.ICYSHSR1.disable_all_tdc_but(0, [])
-        self.b.ICYSHSR1.disable_all_tdc_but(1, [])
+        self.disable_all_tdc_but(0, [])
+        self.disable_all_tdc_but(1, [])
 
     def disable_all_quench(self):
-        self.b.ICYSHSR1.disable_all_quench_but(0, [])
-        self.b.ICYSHSR1.disable_all_quench_but(1, [])
+        self.disable_all_quench_but(0, [])
+        self.disable_all_quench_but(1, [])
 
     def disable_all_ext_trigger(self):
-        self.b.ICYSHSR1.disable_all_ext_trigger_but(0, [])
-        self.b.ICYSHSR1.disable_all_ext_trigger_but(1, [])
+        self.disable_all_ext_trigger_but(0, [])
+        self.disable_all_ext_trigger_but(1, [])
 
     #
     # Configurations
