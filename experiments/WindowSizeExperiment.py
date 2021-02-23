@@ -76,11 +76,9 @@ class FakeExperiment(BasicExperiment):
         self.board.asic_head_0.configure_ct_counting_mode(0, 3000)
 
     def run(self, window_length, delay):
-        L = 10
+        print("Setting window length to : " + str(window_length))
+        self.board.asic_head_0.set_window_size(window_length)
 
-        print("This run will use the following setup: ")
-        print("Firsts variable is : " + str(window_length))
-        print("Seconds variable is : " + str(delay))
 
         for field in self.fields:
             r = np.random.random_integers(0, 10, L)
