@@ -50,7 +50,7 @@ class ASIC:
 
     def read_asic_id(self):
         self.b.ICYSHSR1.OUTPUT_MUX_SELECT(self.head_id, self.c.SEL_REGISTER_READ, 0)
-        return self.b.ICYSHSR1.ASIC_ID(self.head_id, 0)
+        self.b.ICYSHSR1.ASIC_ID(self.head_id, 0)
 
     #
     # Register set

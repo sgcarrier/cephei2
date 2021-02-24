@@ -204,6 +204,15 @@ class DelayLine:
         self.b = chartier
         self.ftune_slope = -30/0.5   # 30 ps / 0.5 V
         self.ftune_value = 0
+        self.dac_id = 0
+        if device_id == 0:
+            self.dac_id = 5  # Wind delay H0
+        elif device_id == 1:
+            self.dac_id = 3  # Wind delay H1
+        elif device_id == 2:
+            self.dac_id = 7  # Trig delay H0
+        else:
+            self.dac_id = 1  # Trig delay H1
 
         self.b.TCA9539.CONFIGURATIONPORT0(self.device_id, 0x0)
         self.b.TCA9539.CONFIGURATIONPORT1(self.device_id, 0x0)
@@ -212,7 +221,7 @@ class DelayLine:
 
         # Setup ftune via AD5668
         # Ftune lineaire between 0 and 0.5V
-        #self.b.AD5668.WRITE_TO_AND_UPDATE_DAC(11, TODO)
+        self.b.AD5668.WRITE_TO_AND_UPDATE_DAC(1, self.dac_id, 0)
 
     @staticmethod
     def delay_to_bit_code(delay):
@@ -247,6 +256,13 @@ class DelayLine:
     def reset_ftune(self):
         self.ftune_value = 0
         # TODO Update DAC
+
+    def set_fine_tune(self, ftune):
+        self.ftune_value = ftune
+        value = int(ftune * (2**16 - 1) / 2.5)
+        if value < 0 or value >= 2**16:
+            raise ValueError("ftune value " + str(value) + " (in volt) is outside of range 0 to 2.5V")
+        self.b.AD5668.WRITE_TO_AND_UPDATE_DAC(1, self.dac_id, value)
 
     def increment_fine_delay(self):
         self.ftune_value += 1
