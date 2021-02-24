@@ -20,8 +20,7 @@ setup(  name='cephei2',
             'matplotlib',
             'tqdm',
             'scipy',
-            'pandas',
-            'grams-device-utility @ git+ssh://git@grams-gitlab.3it.usherbrooke.ca/sgcarrier/grams-device-utility.git@master'
+            'pandas'
 
 
         ],
