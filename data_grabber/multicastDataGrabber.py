@@ -80,7 +80,9 @@ class MulticastDataGrabber():
         self.data_sock.bind(('', data_mcast_port))
 
         # multicast specific stuff - subscribing to the IGMP multicast
-        mreq = socket.inet_aton(mcast_grp) + socket.inet_aton(socket.AF_INET)
+        #mreq = socket.inet_aton(mcast_grp) + socket.inet_aton(socket.AF_INET)
+        group = socket.inet_aton(mcast_grp)
+        mreq = struct.pack('4sL', group, socket.INADDR_ANY)
         self.data_sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
         """ Setup socket to listen on multicast for meta-data"""
@@ -89,7 +91,9 @@ class MulticastDataGrabber():
         self.meta_sock.bind(('', meta_mcast_port))
 
         # multicast specific stuff - subscribing to the IGMP multicast
-        mreq = socket.inet_aton(mcast_grp) + socket.inet_aton(socket.AF_INET)
+        #mreq = socket.inet_aton(mcast_grp) + socket.inet_aton(socket.AF_INET)
+        group = socket.inet_aton(mcast_grp)
+        mreq = struct.pack('4sL', group, socket.INADDR_ANY)
         self.meta_sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
         _logger.info("Connected to the network")
@@ -98,34 +102,35 @@ class MulticastDataGrabber():
     def start_meta(self):
 
         _logger.info("Starting CEPHEI Meta data reception")
-        if not self.data_sock:
+        if not self.meta_sock:
             _logger.warn("Started listening without connecting to network. Using default connection setup.")
             self.connectToNetwork()
 
         sec = 1
         usec = 0000
         timeval = struct.pack('ll', sec, usec)
-        self.data_sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVTIMEO, timeval)
+        self.meta_sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVTIMEO, timeval)
 
         self.__running = True
         while self.__running:
             try:
-                msg = self.data_sock.recv(100 * 1024)
+                msg = self.meta_sock.recv(1024)
+                _logger.info("here")
             except BlockingIOError:
                 continue
 
-            _logger.debug("Got META data, LEN: " + str(len(msg)) + "Payload: " + msg.decode('utf-8', 'backslashreplace'))
+            _logger.info("Got META data, LEN: " + str(len(msg)) + ", Payload: " + msg.decode('utf-8', 'backslashreplace'))
             rawMeta = self.extractMeta(msg)
             if rawMeta is None:
                 continue
             else:
                 alreadyIn = self.findMetaData(rawMeta['ACQ_ID'])
                 if (alreadyIn != None):
-                    _logger.warning("Acquisition with ACQ_ID " + str(i["ACQ_ID"]) + " already in history. Ignoring...")
+                    _logger.warning("Acquisition with ACQ_ID " + str(rawMeta["ACQ_ID"]) + " already in history. Ignoring...")
                     continue
                 else :
                     self.local_acquisition_metadata.insert(0, rawMeta)
-                    _logger.info("Added " + str(rem) + " to the acquisition history")
+                    _logger.info("Added " + str(rawMeta) + " to the acquisition history")
                     if (len(self.local_acquisition_metadata) > self.max_acq_history):
                         rem = self.local_acquisition_metadata.pop()
                         _logger.info("Removed " + str(rem) + " from the acquisition history")
@@ -159,7 +164,7 @@ class MulticastDataGrabber():
             except BlockingIOError:
                 continue
 
-            _logger.debug("Got data, LEN: " + str(len(msg)) + "Payload: " + msg.decode('utf-8', 'backslashreplace'))
+            _logger.debug("Got data, LEN: " + str(len(msg)) + ", Payload: " + msg.decode('utf-8', 'backslashreplace'))
             rawData = self.extractData(msg)
 
             if rawData:
@@ -180,7 +185,7 @@ class MulticastDataGrabber():
     def reverseBits(self, n):
         b = '{:0{width}b}'.format(n, width=32)
         #return np.uint32(int(b[::-1], 2))
-        return np.fromstring(b, dtype='S1').astype(np.uint32)
+        return np.fromstring(b, dtype='S1').astype(np.uint64)
 
     def extractMeta(self, udp_msg):
         """ Extract the meta data from de UDP packet."""
@@ -239,13 +244,16 @@ class MulticastDataGrabber():
             tmp = len(msg['DATA'])
             first = msg['DATA'][0]
             count = math.floor(len(msg['DATA'])/8)
-            tmp = np.frombuffer(msg['DATA'], dtype=np.uint64, count=count) #Expecting 64 bit integers in DATA
-            vfunc = np.vectorize(self.reverseBits)
-            try:
-                msg['DATA'] = vfunc(tmp)
-            except BaseException as e:
-                _logger.error(e)
-                raise e
+            dt = np.dtype(np.uint64)
+            dt = dt.newbyteorder('<')
+            msg['DATA'] = np.frombuffer(msg['DATA'], dtype=dt, count=count) #Expecting 64 bit integers in DATA
+            #vfunc = np.vectorize(self.reverseBits)
+            #try:
+            #    test = vfunc(tmp)
+            #    msg['DATA'] = vfunc(tmp)
+            #except BaseException as e:
+            #    _logger.error(e)
+            #    raise e
 
         else:
             return None
@@ -281,3 +289,11 @@ class MulticastDataGrabber():
                     self.h[path].attrs[key] = val
 
             self.h.flush()
+
+
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
+    server = MulticastDataGrabber()
+
+    server.start_server("test.hdf5")
