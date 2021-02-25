@@ -1,7 +1,7 @@
 import math
 import time
 from platforms.CHARTIER.CHARTIER import CHARTIER
-from helper_functions_asic import ASIC
+from scripts.helper_functions_asic import ASIC
 
 # LMK03318
 class PLL:
