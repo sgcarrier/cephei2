@@ -55,6 +55,9 @@ class TDC_PLL_CORR_Experiment(BasicExperiment):
         This is where you assign setting that will not change during your experiment
         '''
 
+        # Frames are type short
+        self.board.asic_head_0.frame_type_short()
+
         #Setting external trigger
         self.board.pll.set_frequencies(10, 10, 5000)
         self.board.trigger_divider.set_divider(500, Divider.MUX_CORR)
@@ -93,6 +96,7 @@ class TDC_PLL_CORR_Experiment(BasicExperiment):
         :return:
         '''
         self.board.asic_head_0.reset_TDC_mux()
+        self.board.asic_head_0.frame_type_normal()
 
 if __name__ == '__main__':
     from utility.ExperimentRunner import ExperimentRunner

@@ -397,3 +397,10 @@ class ASIC:
         self.set_zpp_interval_spacing(spacing)
         self.mux_select(array, self.c.SEL_ZPP)
         self.set_time_driven_period(readout_time)
+
+
+    def frame_type_short(self):
+        self.b.GEN_GPIO.gpio_set("SHORT_FRAME", True)
+
+    def frame_type_normal(self):
+        self.b.GEN_GPIO.gpio_set("SHORT_FRAME", False)
