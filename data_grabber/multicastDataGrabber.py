@@ -73,7 +73,7 @@ class MulticastDataGrabber():
             self.h.close()
 
 
-    def connectToNetwork(self, mcast_grp='238.0.0.8', data_mcast_port=19002, meta_mcast_port=19001):
+    def connectToNetwork(self, mcast_grp='238.0.0.8', data_mcast_port=19002, meta_mcast_port=19001, interface_ip='192.168.0.1'):
         """ Setup socket to listen to Cephei  multicast"""
         self.data_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.data_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -82,7 +82,7 @@ class MulticastDataGrabber():
         # multicast specific stuff - subscribing to the IGMP multicast
         #mreq = socket.inet_aton(mcast_grp) + socket.inet_aton(socket.AF_INET)
         group = socket.inet_aton(mcast_grp)
-        mreq = struct.pack('4sL', group, socket.INADDR_ANY)
+        mreq = struct.pack('4sL', group, interface_ip)
         self.data_sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
         """ Setup socket to listen on multicast for meta-data"""
@@ -93,7 +93,7 @@ class MulticastDataGrabber():
         # multicast specific stuff - subscribing to the IGMP multicast
         #mreq = socket.inet_aton(mcast_grp) + socket.inet_aton(socket.AF_INET)
         group = socket.inet_aton(mcast_grp)
-        mreq = struct.pack('4sL', group, socket.INADDR_ANY)
+        mreq = struct.pack('4sL', group, interface_ip)
         self.meta_sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
         _logger.info("Connected to the network")

@@ -362,6 +362,10 @@ class ASIC:
         self.b.ICYSHSR1.PLL_SELECT_TEST(self.head_id, 0, 0) # Use Vext for test
         self.b.ICYSHSR1.PLL_TEST_SECTION_MUX(self.head_id, 0x0003, 0) # Output TDC output
 
+    # Reset the TDC mux. If this isn't reset, you can't read from registers or anything
+    def reset_TDC_mux(self):
+        self.b.ICYSHSR1.PLL_TEST_SECTION_MUX(self.head_id, 0x0000, 0)  # Output TDC output
+
     # Readout_time is in clk cycle (4ns)
     def configure_ct_counting_mode(self, array, readout_time):
         self.set_individual_spad_access(1)              # No sharing since no TDC used

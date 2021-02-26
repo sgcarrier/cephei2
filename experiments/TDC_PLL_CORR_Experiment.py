@@ -20,7 +20,7 @@ _logger = logging.getLogger(__name__)
 """
 
 
-class TDCPLLExperiment(BasicExperiment):
+class TDC_PLL_CORR_Experiment(BasicExperiment):
     '''
     This is an example of an experiment. The execution goes as follows:
 
@@ -46,7 +46,7 @@ class TDCPLLExperiment(BasicExperiment):
 
         # Custom parameters for the example, had what you want here
 
-        self.basePath = "/PLL/TDC"
+        self.basePath = "/PLL/TDC/CORR"
         self.board = Board()
 
     def setup(self):
@@ -54,9 +54,21 @@ class TDCPLLExperiment(BasicExperiment):
         The setup is executed once before all the calls to run() with different iterations.
         This is where you assign setting that will not change during your experiment
         '''
+
+        #Setting external trigger
+        self.board.pll.set_frequencies(10, 10, 5000)
+        self.board.trigger_divider.set_divider(500, Divider.MUX_CORR)
+        self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
+        self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
+        self.board.trigger_delay_head_0.set_delay_code(0)
+        self.board.asic_head_0.reset()
+
+
         self.board.asic_head_0.disable_all_tdc()
         self.board.asic_head_0.disable_all_quench()
         self.board.asic_head_0.disable_all_ext_trigger()
+
+        self.board.asic_head_0.test_TDC_PLL()
 
     def run(self, fast_freq, slow_freq):
 
@@ -67,32 +79,41 @@ class TDCPLLExperiment(BasicExperiment):
         acqID = random.randint(0, 65535)
 
         self.board.b.DMA.set_meta_data(path, acqID, 1)
-        time.sleep(1)
+        time.sleep(2)
+        # This line is blocking
         self.board.b.DMA.start_data_acquisition(acqID, self.countLimit)
         time.sleep(1)
 
+
+
     def cleanup(self):
         '''
-        This is where you do all your cleanup. Close ressources you want to free up, set back some settings to normal
+        This is where you do all your cleanup. Close resources you want to free up, set back some settings to normal
         operation.
         :return:
         '''
-        pass
+        self.board.asic_head_0.reset_TDC_mux()
 
 if __name__ == '__main__':
     from utility.ExperimentRunner import ExperimentRunner
+    from utility.loggingSetup import loggingSetup
+    import logging
 
-    logging.basicConfig(level=logging.DEBUG)
+    loggingSetup("TDC_PLL_CORR_Experiment", level=logging.DEBUG)
 
-    # Instanciate the example experiment
-    experiment = TDCPLLExperiment(filename="../output/example_NON_CORR_TEST.hdf5",
-                                  countLimit=1000)
+    # Instanciate the experiment
+    experiment = TDC_PLL_CORR_Experiment(filename="../output/example_NON_CORR_TEST.hdf5",
+                                         countLimit=10000)
 
     # Assign the experiment to the runner and tell the variables you have and if you want to iterate
-    # in this case, first_variable doesn't change, and second_variable starts at 6000, ends at 3000 by -500 steps
     runner = ExperimentRunner(experiment=experiment,
                               variables={'fast_freq': 252.5, 'slow_freq': 250})
 
     # run and stop it. Ctrl-C can stop it prematurely.
-    runner.start()
+    try:
+        runner.start()
+    except KeyboardInterrupt:
+        runner.stop()
+        exit()
+
     runner.stop()
