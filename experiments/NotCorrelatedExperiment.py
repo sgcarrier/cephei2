@@ -4,9 +4,9 @@ import numpy as np
 import logging
 import time
 
-from scripts.helper_functions import Board
-from scripts.helper_functions import Divider
-from scripts.helper_functions import MUX
+from functions.helper_functions import Board
+from functions.helper_functions import Divider
+from functions.helper_functions import MUX
 
 
 _logger = logging.getLogger(__name__)

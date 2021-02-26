@@ -15,9 +15,8 @@ class RawDataProcessor():
                                   'Energy':  {'dtype': 'u4', 'offset':  9, 'bitMask':     0x7F},
                                   'Addr':    {'dtype': 'u4', 'offset':  0, 'bitMask':    0x1FF}}
 
-    PLL_TDC_FRAME_FORMAT =  {'CorrBit': {'dtype':  'B', 'offset': 27, 'bitMask':  0x01},
-                              'Coarse': {'dtype': 'u4', 'offset': 17, 'bitMask': 0x3FF},
-                                'Fine': {'dtype': 'u4', 'offset':  7, 'bitMask': 0x3FF}}
+    PLL_TDC_FRAME_FORMAT =  { 'Coarse': {'dtype': 'u4', 'offset': 10, 'bitMask': 0x3FF},
+                                'Fine': {'dtype': 'u4', 'offset':  0, 'bitMask': 0x3FF}}
 
 
     def __init__(self):

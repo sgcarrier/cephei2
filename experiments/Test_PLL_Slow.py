@@ -1,4 +1,4 @@
-from scripts.helper_functions import Board
+from functions.helper_functions import Board
 
 board = Board()
 board.slow_oscillator_head_0.set_frequency(250)
