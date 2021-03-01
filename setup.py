@@ -18,7 +18,6 @@ setup(  name='cephei2',
             'numpy',
             'telnetlib3',
             'matplotlib',
-            'tqdm',
             'scipy',
             'pandas'
 
