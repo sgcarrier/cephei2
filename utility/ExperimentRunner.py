@@ -1,8 +1,6 @@
 import itertools
 import numpy as np
 import logging
-from tqdm import tqdm
-from utility.tqdmLoggingHandler import TqdmToLogger
 
 _logger = logging.getLogger(__name__)
 
@@ -36,8 +34,6 @@ class ExperimentRunner:
         self.__experiment.setup()
         _logger.info("Done Setup")
 
-        tqdm_out = TqdmToLogger(_logger, level=logging.INFO)
-
         currentVars = self.__variables
         allCombinations = []
         varsThatChange = []
@@ -69,10 +65,13 @@ class ExperimentRunner:
 
         _logger.info("Starting Experiment")
 
-        for varValues in tqdm(itertools.product(*allCombinations), file=tqdm_out):
+        listOfAllCombinations = itertools.product(*allCombinations)
+
+        for iterNum, varValues in enumerate(listOfAllCombinations, start=1):
             for i in range(len(varsThatChange)):
                 currentVars[varsThatChange[i]] = varValues[i]
-            _logger.info("Starting test with variables: " + str(currentVars))
+            _logger.info("Starting iteration {}/{} with variables {}".format(iterNum, len(listOfAllCombinations), currentVars))
+            #_logger.info("Starting iteration" + str(iterNum) + "/" + str(len(listOfAllCombinations)) + " with variables: " + str(currentVars))
             self.__experiment.run(**currentVars)
 
         _logger.info("Done Experiment")
