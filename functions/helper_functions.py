@@ -10,7 +10,7 @@ class PLL:
 
     # target_fvco: in MHz and should be between 4800 and 5400.
     def set_frequencies(self, freq_0_1, freq_2_3, target_fvco=5000):
-        system_clock = 80   # MHz       FIXME
+        system_clock = 250   # MHz
         #    F_VCO = (F_REF / R) × D × [(INT + NUM / DEN) / M]
         #    F_OUT = F_VCO / (P × OUTDIV)
     
@@ -58,9 +58,6 @@ class PLL:
         div_0_1 = int((target_fvco / pll_post_divider) / freq_0_1)
         div_2_3 = int((target_fvco / pll_post_divider) / freq_2_3)
 
-        self.b.LMK03318.gpio_set(0, "PDN", False)
-        self.b.LMK03318.gpio_set(0, "PDN", True)
-
         self.b.LMK03318.PLL_P(0, 7)  # Post divider value: 8
         self.b.LMK03318.CH_0_MUTE(0, 0)  # Mute disabled for channel 0
         self.b.LMK03318.CH_2_MUTE(0, 0)  # Mute disabled for channel 2
@@ -93,10 +90,52 @@ class PLL:
         self.b.LMK03318.PRI_D(0, 0)  # Input frequency doubler: 0 = Frequency doubler disabled
         self.b.LMK03318.PLL_P(0, pll_post_divider-1)  # PLL post divider: 7 = 8 (2 à 8)
 
+        self.b.LMK03318.PLL_PDN(0, 1)
+        self.b.LMK03318.PLL_PDN(0, 0)
+
         # Send a sync to enable the outputs
         self.b.LMK03318.gpio_set(0, "SYNC", False)
         self.b.LMK03318.gpio_set(0, "SYNC", True)
 
+    def set_6_25mhz(self):
+        self.b.LMK03318.PLL_P(0, 7)  # Post divider value: 8
+        self.b.LMK03318.CH_0_MUTE(0, 0)  # Mute disabled for channel 0
+        self.b.LMK03318.CH_2_MUTE(0, 0)  # Mute disabled for channel 2
+        self.b.LMK03318.CH_3_MUTE(0, 0)  # Mute disabled for channel 3
+        self.b.LMK03318.INSEL_PLL(0, 2)  # Input select: Primary input selected
+        self.b.LMK03318.OUT_3_MODE1(0, 0)  # Output Mode: 0 = LVDS
+        self.b.LMK03318.OUT_3_SEL(0, 1)  # Driver format select: 1 = AC-LVDS/AC-CML/AC-LVPECL
+
+        ## Config de base pour le output
+        self.b.LMK03318.PRIBUFSEL(0, 1)  # Input termination: 1 = Differential Input
+        self.b.LMK03318.AC_MODE_PRI(0, 0)  # Input AC mode: 0 = No AC term
+        self.b.LMK03318.DIFFTERM_PRI(0, 1)  # Termination: 1 = 100 ohm termination
+        self.b.LMK03318.TERM2GND_PRI(0, 0)  # Termination to GND: 0 = No 50 ohm terminations to GND
+        self.b.LMK03318.SECBUFSEL(0, 3)  # Secondary input sel: 3 = disabled
+
+        self.b.LMK03318.OUT_0_SEL(0, 1)  # Driver format select: 1 = AC-LVDS/AC-CML/AC-LVPECL
+        self.b.LMK03318.OUT_0_MODE1(0, 0)  # Output Mode: 0 = LVDS
+        self.b.LMK03318.OUT_2_SEL(0, 1)  # Driver format select: 1 = AC-LVDS/AC-CML/AC-LVPECL
+        self.b.LMK03318.OUT_2_MODE1(0, 0)  # Output Mode: 0 = LVDS
+        self.b.LMK03318.OUT_3_SEL(0, 1)  # Driver format select: 1 = AC-LVDS/AC-CML/AC-LVPECL
+        self.b.LMK03318.OUT_3_MODE1(0, 0)  # Output Mode: 0 = LVDS
+
+        # F_VCO = (80 MHz / 1)  × 1 × [(125 + 0)/2] = 5 GHz
+        # By default NUM = 0, DEN = 1
+        self.b.LMK03318.PLL_NDIV(0, 40)  # N divider (integer divider): 125, fract. div can be set with NUM and DEN
+        self.b.LMK03318.PLLRDIV(0, 0)  # R divider (input divider before smart mux): 0 = Bypassed = 250 MHz
+        self.b.LMK03318.PLLMDIV(0, 1)  # M divider (input divider after smart mux): 1 = div by 2 = 125 MHz
+        self.b.LMK03318.OUT_0_1_DIV(0, 99)
+        self.b.LMK03318.OUT_2_3_DIV(0, 99)  # 1 à 256: Div de sortie
+        self.b.LMK03318.PRI_D(0, 0)  # Input frequency doubler: 0 = Frequency doubler disabled
+        self.b.LMK03318.PLL_P(0, 7)  # PLL post divider: 7 = 8 (2 à 8)
+
+        self.b.LMK03318.PLL_PDN(0, 1)
+        self.b.LMK03318.PLL_PDN(0, 0)
+
+        # Send a sync to enable the outputs
+        self.b.LMK03318.gpio_set(0, "SYNC", False)
+        self.b.LMK03318.gpio_set(0, "SYNC", True)
 
 # LMK01020
 class Divider:
