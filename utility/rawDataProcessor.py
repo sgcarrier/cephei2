@@ -56,13 +56,14 @@ class RawDataProcessor():
             _logger.warning("Received incorrect dataframe format number")
             return {}
 
-        filteredData = self.filterNonDataFrames(data)
+        #filteredData = self.filterNonDataFrames(data)
+        filteredData = data
 
         outDict = {}
         for field, parameters in format.items():
             outDict[field] = (np.bitwise_and(np.right_shift(filteredData['DATA'], parameters['offset']), parameters['bitMask']))  #.as_type(parameters['dtype'])
             if self.format_reverse_bits:
-                for i in range(outDict[field]):
+                for i in range(len(outDict[field])):
                     outDict[field][i] = self.reverseBits(outDict[field][i], width=parameters['bitLen'])
 
         return outDict

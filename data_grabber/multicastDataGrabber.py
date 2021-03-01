@@ -6,6 +6,7 @@ import datetime
 import logging
 import numpy as np
 import math
+import pandas as pd
 from threading import Thread
 
 from utility.rawDataProcessor import RawDataProcessor
@@ -35,6 +36,8 @@ class MulticastDataGrabber():
         self.local_acquisition_metadata = []
         self.max_acq_history = 30
 
+        self.raw_data = 0
+
 
     def start_server(self, filename, mcast_grp='238.0.0.8', data_mcast_port=19002, meta_mcast_port=19001):
 
@@ -52,7 +55,8 @@ class MulticastDataGrabber():
         try:
             self.start_data()
         except KeyboardInterrupt:
-            _logger.warn("Received CTRL-C, terminating server")
+            _logger.warning("Received CTRL-C, terminating server")
+            #self.disp_raw_data()
             self.stop_server()
             sys.exit()
 
@@ -81,8 +85,9 @@ class MulticastDataGrabber():
 
         # multicast specific stuff - subscribing to the IGMP multicast
         #mreq = socket.inet_aton(mcast_grp) + socket.inet_aton(socket.AF_INET)
-        group = socket.inet_aton(mcast_grp)
-        mreq = struct.pack('4sL', group, interface_ip)
+        #group = socket.inet_aton(mcast_grp)
+        #mreq = struct.pack('4sL', group, interface_ip)
+        mreq = socket.inet_aton(mcast_grp) + socket.inet_aton(interface_ip)
         self.data_sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
         """ Setup socket to listen on multicast for meta-data"""
@@ -92,8 +97,9 @@ class MulticastDataGrabber():
 
         # multicast specific stuff - subscribing to the IGMP multicast
         #mreq = socket.inet_aton(mcast_grp) + socket.inet_aton(socket.AF_INET)
-        group = socket.inet_aton(mcast_grp)
-        mreq = struct.pack('4sL', group, interface_ip)
+        #group = socket.inet_aton(mcast_grp)
+        #mreq = struct.pack('4sL', group, interface_ip)
+        mreq = socket.inet_aton(mcast_grp) + socket.inet_aton(interface_ip)
         self.meta_sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
         _logger.info("Connected to the network")
@@ -156,15 +162,15 @@ class MulticastDataGrabber():
         usec = 0000
         timeval = struct.pack('ll', sec, usec)
         self.data_sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVTIMEO, timeval)
-
+        counter = 0
         self.__running = True
         while self.__running:
             try:
                 msg = self.data_sock.recv(100*1024)
             except BlockingIOError:
                 continue
-
-            _logger.debug("Got data, LEN: " + str(len(msg)) + ", Payload: " + msg.decode('utf-8', 'backslashreplace'))
+            counter = counter + 1
+            _logger.debug("Got data NUM: " + str(counter) + ", LEN: " + str(len(msg)) + ", Payload: " + msg.decode('utf-8', 'backslashreplace'))
             rawData = self.extractData(msg)
 
             if rawData:
@@ -172,6 +178,7 @@ class MulticastDataGrabber():
                 if metaData:
                     totalPath = (str(rawData['SRC']) + '/' + str(metaData['PATH']))
                     self.recordWithPath(rawData=rawData, path=totalPath, formatNum=metaData["FORMAT"])
+                    #self.record(rawData=rawData, formatNum=metaData["FORMAT"])
                 else:
                     _logger.warning("Received data with no assigned metadata, ignoring.")
                     pass
@@ -265,12 +272,30 @@ class MulticastDataGrabber():
 
         if msg['ACQ_ID']:
             #msg['ACQ_ID'] =  np.frombuffer(msg['ACQ_ID'], dtype=np.uint32, count=1)
-            msg['ACQ_ID'] = int.from_bytes(msg['ACQ_ID'], 'little')
+            #print(msg['ACQ_ID']
+            #print(msg['ACQ_ID'])
+            #msg['ACQ_ID'] = int.from_bytes(msg['ACQ_ID'], 'little')
+            msg['ACQ_ID'] = int(msg['ACQ_ID'])
+            #print(msg['ACQ_ID'])
+
         else:
             return None
 
         return msg
 
+
+    def record(self, rawData, formatNum=0, attributes=None):
+        dataDict = self.RDP.raw2dict(rawData, formatNum)
+        newFrame = pd.DataFrame.from_dict(rawData)
+
+        if isinstance(self.raw_data, pd.DataFrame):
+            self.raw_data = pd.concat([self.raw_data, newFrame])
+        else:
+            self.raw_data = newFrame
+
+
+    def disp_raw_data(self):
+        hist = self.raw_data.hist()
 
     def recordWithPath(self, rawData, path, formatNum=0, attributes=None):
 
