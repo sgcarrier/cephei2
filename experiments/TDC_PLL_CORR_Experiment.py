@@ -79,6 +79,7 @@ class TDC_PLL_CORR_Experiment(BasicExperiment):
 
         self.board.slow_oscillator_head_0.set_frequency(slow_freq)
         self.board.fast_oscillator_head_0.set_frequency(fast_freq)
+        self.board.trigger_delay_head_0.set_delay_code(int(delay))
 
         #path = self.basePath + "/FAST_" + str(fast_freq) + "/SLOW_" + str(slow_freq) + "/DELAY"
         path = "{0}/FAST_{1}/SLOW_{2}/DELAY_{3}".format(self.basePath, fast_freq, slow_freq, delay)
@@ -114,7 +115,7 @@ if __name__ == '__main__':
 
     # Assign the experiment to the runner and tell the variables you have and if you want to iterate
     runner = ExperimentRunner(experiment=experiment,
-                              variables={'fast_freq': 252.5, 'slow_freq': 250, 'delay':(0, 1000, 200)})
+                              variables={'fast_freq': 255, 'slow_freq': 250, 'delay':(0, 1000, 200)})
 
     # run and stop it. Ctrl-C can stop it prematurely.
     try:

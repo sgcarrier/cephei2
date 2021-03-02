@@ -213,14 +213,14 @@ class MulticastDataGrabber():
         # Meta data extraction
         if msg['ACQ_ID']:
             #msg['ACQ_ID'] =  np.frombuffer(msg['ACQ_ID'], dtype=np.uint32, count=1)
-            #msg['ACQ_ID'] = int.from_bytes(msg['ACQ_ID'], 'little')
-            msg['ACQ_ID'] = int(msg['ACQ_ID'])
+            msg['ACQ_ID'] = int.from_bytes(msg['ACQ_ID'], 'little')
+            #msg['ACQ_ID'] = int(msg['ACQ_ID'])
         else:
             return None
 
         if msg['FORMAT']:
-            #msg['FORMAT'] = int.from_bytes(msg['FORMAT'], 'little')
-            msg['FORMAT'] = int(msg['FORMAT'])
+            msg['FORMAT'] = int.from_bytes(msg['FORMAT'], 'little')
+            #msg['FORMAT'] = int(msg['FORMAT'])
         else:
             return None
 
@@ -323,4 +323,4 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     server = MulticastDataGrabber()
 
-    server.start_server("test.hdf5")
+    server.start_server("NON_CORR.hdf5")

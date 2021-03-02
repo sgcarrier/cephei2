@@ -28,8 +28,12 @@ class BasicHistogram():
             for i, v in enumerate(list(ds.keys()), start=1):
                 ax = plt.subplot(number_of_subplots, 1, i)
                 data = self.post_processing(ds, v, formatNum)
-                hist = np.bincount(data.astype('int64'))
-                ax.bar(np.arange(len(hist)), hist, align='center')
+                data = data.astype('int64')
+                #hist = np.bincount(data.astype('int64'))
+                #ax.bar(np.arange(len(hist)), hist, align='center')
+                print(min(data))
+                bins = range(min(data), max(data)+2)
+                ax.hist(data, bins=list(bins))
                 ax.set_title(v)
                 ax.xaxis.set_major_locator(MaxNLocator(integer=True))
 
@@ -46,9 +50,12 @@ class BasicHistogram():
 
     def post_processing_PLL_FORMAT(self, h, fieldName):
         if (fieldName == "Coarse"):
-            return (np.array(h[fieldName], dtype=h[fieldName].dtype) - np.array(h['Fine'], dtype=h['Fine'].dtype))
+            ret = (np.array(h[fieldName], dtype=h[fieldName].dtype) - np.array(h['Fine'], dtype=h['Fine'].dtype))
+            return ret
+
         else:
-            return np.array(h[fieldName], dtype=h[fieldName].dtype)
+            dat =np.array(h[fieldName], dtype=h[fieldName].dtype)
+            return dat
 
 if __name__ == '__main__':
     import logging
@@ -57,6 +64,6 @@ if __name__ == '__main__':
 
     BH = BasicHistogram()
 
-    BH.hist_norm("../output/test.hdf5", "CHARTIER/ASIC0/test/CORR", formatNum=1)
+    BH.hist_norm("../data_grabber/NON_CORR.hdf5", "CHARTIER/ASIC0/PLL/TDC/NON_CORR/FAST_252/SLOW_250", formatNum=1)
 
     plt.show()

@@ -38,6 +38,8 @@ class RawDataProcessor():
         data['DATA'] = [value for value in data['DATA'] if value != 0xAAAAAAAAAAAAAAAA]
         # The stop frame
         data['DATA'] = [value for value in data['DATA'] if value != 0xAAAAAAABAAAAAAAB]
+        #garbage frames
+        data['DATA'] = [value for value in data['DATA'] if value != 0xFFFFFFFFFFFFFFFF]
         # Frame type
         data['DATA'] = [value for value in data['DATA'] if value > 0x5]
 
@@ -56,8 +58,8 @@ class RawDataProcessor():
             _logger.warning("Received incorrect dataframe format number")
             return {}
 
-        #filteredData = self.filterNonDataFrames(data)
-        filteredData = data
+        filteredData = self.filterNonDataFrames(data)
+        #filteredData = data
 
         outDict = {}
         for field, parameters in format.items():
