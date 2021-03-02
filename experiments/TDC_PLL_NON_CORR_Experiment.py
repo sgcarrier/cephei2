@@ -1,6 +1,4 @@
 from utility.BasicExperiment import BasicExperiment
-import h5py
-import numpy as np
 import logging
 import time
 import random
@@ -85,7 +83,7 @@ class TDC_PLL_NON_CORR_Experiment(BasicExperiment):
         self.board.b.DMA.set_meta_data(path, acqID, 1)
         time.sleep(2)
         # This line is blocking
-        self.board.b.DMA.start_data_acquisition(acqID, self.countLimit, minimumBuffer=40)
+        self.board.b.DMA.start_data_acquisition(acqID, self.countLimit, minimumBuffer=0)
         time.sleep(1)
 
 
