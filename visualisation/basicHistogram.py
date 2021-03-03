@@ -22,16 +22,17 @@ class BasicHistogram():
             ds = h[basePath]
 
             number_of_subplots = len(ds.keys())
+            number_of_subplots =2
 
             plt.title(basePath)
 
-            for i, v in enumerate(list(ds.keys()), start=1):
+            for i, v in enumerate(["Fine", "Coarse"], start=1):
                 ax = plt.subplot(number_of_subplots, 1, i)
                 data = self.post_processing(ds, v, formatNum)
                 data = data.astype('int64')
                 #hist = np.bincount(data.astype('int64'))
                 #ax.bar(np.arange(len(hist)), hist, align='center')
-                print(min(data))
+                #print(min(data))
                 bins = range(min(data), max(data)+2)
                 ax.hist(data, bins=list(bins))
                 ax.set_title(v)
@@ -46,11 +47,11 @@ class BasicHistogram():
         if (formatNum == 1):
             return self.post_processing_PLL_FORMAT(h, fieldName)
         else:
-            return h[fieldName]
+            return np.array(h[fieldName], dtype='int64')
 
     def post_processing_PLL_FORMAT(self, h, fieldName):
         if (fieldName == "Coarse"):
-            ret = (np.array(h[fieldName], dtype=h[fieldName].dtype) - np.array(h['Fine'], dtype=h['Fine'].dtype))
+            ret = (np.array(h[fieldName], dtype='int64') - np.array(h['Fine'], dtype='int64'))
             return ret
 
         else:
@@ -64,6 +65,6 @@ if __name__ == '__main__':
 
     BH = BasicHistogram()
 
-    BH.hist_norm("../data_grabber/NON_CORR.hdf5", "CHARTIER/ASIC0/PLL/TDC/NON_CORR/FAST_252/SLOW_250", formatNum=1)
+    BH.hist_norm("../data_grabber/NON_CORR_TDC_mar3_single.hdf5", "CHARTIER/ASIC0/TDC/NON_CORR/FAST_255/SLOW_250/ARRAY_0/ADDR_13", formatNum=0)
 
     plt.show()

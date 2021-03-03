@@ -12,8 +12,8 @@ class RawDataProcessor():
                                   'Coarse':  {'dtype': 'u4', 'offset': 48, 'bitMask':      0xF, 'bitLen':  4},
                                   'Fine':    {'dtype': 'u4', 'offset': 38, 'bitMask':    0x3FF, 'bitLen': 10},
                                   'Global':  {'dtype': 'u4', 'offset': 17, 'bitMask': 0x1FFFFF, 'bitLen': 21},
-                                  'Energy':  {'dtype': 'u4', 'offset':  9, 'bitMask':     0x7F, 'bitLen':  7},
-                                  'Addr':    {'dtype': 'u4', 'offset':  0, 'bitMask':    0x1FF, 'bitLen': 9}}
+                                  'Energy':  {'dtype': 'u4', 'offset':  9, 'bitMask':     0xFF, 'bitLen':  8},
+                                  'Addr':    {'dtype': 'u4', 'offset':  0, 'bitMask':    0x1FF, 'bitLen':  9}}
 
     PLL_TDC_FRAME_FORMAT =  {   'Fine': {'dtype': 'u4', 'offset': 10, 'bitMask': 0x3FF, 'bitLen': 10},
                               'Coarse': {'dtype': 'u4', 'offset':  0, 'bitMask': 0x3FF, 'bitLen': 10}}
@@ -59,6 +59,7 @@ class RawDataProcessor():
             return {}
 
         filteredData = self.filterNonDataFrames(data)
+        _logger.info("RAW = " + str(hex(filteredData['DATA'][0])))
         #filteredData = data
 
         outDict = {}
