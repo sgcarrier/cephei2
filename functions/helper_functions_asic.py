@@ -275,7 +275,7 @@ class ASIC:
             array_size = 196
         disable_map = np.ones(array_size, dtype=np.int)
         for i in disabled_quench:
-            disable_map[i] = 1
+            disable_map[i] = 0
         self.set_quench_disable(array, disable_map)
 
     def enable_all_ext_trigger_but(self, array, enabled_ext_trig):
@@ -293,7 +293,7 @@ class ASIC:
             array_size = 196
         disable_map = np.ones(array_size, dtype=np.int)
         for i in disabled_ext_trig:
-            disable_map[i] = 1
+            disable_map[i] = 0
         self.set_ext_trigger_disable(array, disable_map)
 
     def enable_all_tdc(self):
