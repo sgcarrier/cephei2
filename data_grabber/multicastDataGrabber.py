@@ -326,4 +326,4 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     server = MulticastDataGrabber()
 
-    server.start_server("NON_CORR_TDC_mar3_single.hdf5")
+    server.start_server("NON_CORR_TDC_mar3_30.hdf5")

@@ -24,39 +24,54 @@ class BasicHistogram():
             number_of_subplots = len(ds.keys())
             number_of_subplots =2
 
-            plt.title(basePath)
+            for tdcNum in range(49):
+                #plt.title
 
-            for i, v in enumerate(["Fine", "Coarse"], start=1):
-                ax = plt.subplot(number_of_subplots, 1, i)
-                data = self.post_processing(ds, v, formatNum)
-                data = data.astype('int64')
-                #hist = np.bincount(data.astype('int64'))
-                #ax.bar(np.arange(len(hist)), hist, align='center')
-                #print(min(data))
-                bins = range(min(data), max(data)+2)
-                ax.hist(data, bins=list(bins))
-                ax.set_title(v)
-                ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+                plt.figure(tdcNum)
 
-            _logger.info("reached here")
-            plt.figure(figureNum)
+                for i, v in enumerate(["Fine", "Coarse"], start=1):
+                    ax = plt.subplot(number_of_subplots, 1, i)
+                    data = self.post_processing(ds, v, formatNum, (tdcNum))
+                    data = data.astype('int64')
+                    #hist = np.bincount(data.astype('int64'))
+                    #ax.bar(np.arange(len(hist)), hist, align='center')
+                    #print(min(data))
+                    hist_data = np.bincount(data)
+                    ax.bar(np.arange(len(hist_data)), hist_data, align='center')
+                    #bins = range(min(data), max(data)+2)
+                    #ax.hist(data, bins=list(bins))
+                    ax.set_title(v + " TDC : " + str(tdcNum))
+                    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
 
 
 
-    def post_processing(self, h, fieldName, formatNum):
+
+
+    def post_processing(self, h, fieldName, formatNum, tdcNum):
         if (formatNum == 1):
             return self.post_processing_PLL_FORMAT(h, fieldName)
         else:
-            return np.array(h[fieldName], dtype='int64')
+            mask = np.array(h['Addr'], dtype='int64')
+            return np.array(h[fieldName], dtype='int64')[mask == (tdcNum*4)]
 
     def post_processing_PLL_FORMAT(self, h, fieldName):
         if (fieldName == "Coarse"):
-            ret = (np.array(h[fieldName], dtype='int64') - np.array(h['Fine'], dtype='int64'))
+            ret = (np.array(h[fieldName], dtype='int64') - (np.array(h['Fine'], dtype='int64') - 2))
             return ret
 
-        else:
-            dat =np.array(h[fieldName], dtype=h[fieldName].dtype)
+        elif (fieldName == "Fine"):
+            dat =np.array(h[fieldName], dtype='int64') - 2
             return dat
+
+    # def post_processing_PLL_FORMAT(self, h, fieldName):
+    #     if (fieldName == "Coarse"):
+    #         ret = (np.array(h[fieldName], dtype='int64') - np.array(h['Fine'], dtype='int64'))
+    #         return h[fieldName][ret == -1]
+    #
+    #     else:
+    #         ret = (np.array(h["Coarse"], dtype='int64') - np.array(h['Fine'], dtype='int64'))
+    #         dat =np.array(h[fieldName], dtype='int64')
+    #         return dat[ret == -1]
 
 if __name__ == '__main__':
     import logging
@@ -65,6 +80,6 @@ if __name__ == '__main__':
 
     BH = BasicHistogram()
 
-    BH.hist_norm("../data_grabber/NON_CORR_TDC_mar3_single.hdf5", "CHARTIER/ASIC0/TDC/NON_CORR/FAST_255/SLOW_250/ARRAY_0/ADDR_13", formatNum=0)
+    BH.hist_norm("../data_grabber/NON_CORR_TDC_mar3_ALL_20min.hdf5", "CHARTIER/ASIC0/TDC/NON_CORR/FAST_255/SLOW_250/ARRAY_0", formatNum=0)
 
     plt.show()

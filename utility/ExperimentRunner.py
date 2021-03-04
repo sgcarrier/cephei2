@@ -38,7 +38,7 @@ class ExperimentRunner:
         allCombinations = []
         varsThatChange = []
         for key, val in currentVars.items():
-            if isinstance(val, int):
+            if isinstance(val, int) or isinstance(val, float):
                 currentVars[key] = val
             elif isinstance(val, tuple):
                 currentVars[key] = val[0]
@@ -70,7 +70,7 @@ class ExperimentRunner:
         for iterNum, varValues in enumerate(listOfAllCombinations, start=1):
             for i in range(len(varsThatChange)):
                 currentVars[varsThatChange[i]] = varValues[i]
-            _logger.info("Starting iteration {}/{} with variables {}".format(iterNum, len(listOfAllCombinations), currentVars))
+            _logger.info("Starting iteration {}/? with variables {}".format(iterNum, currentVars))
             #_logger.info("Starting iteration" + str(iterNum) + "/" + str(len(listOfAllCombinations)) + " with variables: " + str(currentVars))
             self.__experiment.run(**currentVars)
 
