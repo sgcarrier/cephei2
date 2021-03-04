@@ -24,7 +24,7 @@ class BasicHistogram():
             number_of_subplots = len(ds.keys())
             number_of_subplots =2
 
-            for tdcNum in range(49):
+            for tdcNum in [0]:
                 #plt.title
 
                 plt.figure(tdcNum)

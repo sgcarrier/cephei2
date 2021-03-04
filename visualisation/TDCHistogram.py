@@ -70,6 +70,6 @@ if __name__ == '__main__':
 
     BH = TDCHistogram()
 
-    BH.tdcHist("../data_grabber/NON_CORR_TDC_mar3_single_kek.hdf5", "CHARTIER/ASIC0/TDC/NON_CORR/FAST_255/SLOW_250/ARRAY_0/ADDR_13", formatNum=0)
+    BH.tdcHist("../data_grabber/NON_CORR_TDC_mar3_single_kek.hdf5", "CHARTIER/ASIC0/TDC/NON_CORR/FAST_255/SLOW_250/ARRAY_0/ADDR_13",formatNum=0)
 
     plt.show()
