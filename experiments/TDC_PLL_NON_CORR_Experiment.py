@@ -57,7 +57,7 @@ class TDC_PLL_NON_CORR_Experiment(BasicExperiment):
         self.board.asic_head_0.frame_type_short()
 
         self.board.trigger_oscillator.set_frequency(20)  # div by 2 later
-        self.board.trigger_divider.set_divider(2, Divider.MUX_NOT_CORR)
+        self.board.trigger_divider.set_divider(50, Divider.MUX_NOT_CORR)
         self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
         self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
         self.board.trigger_delay_head_0.set_delay_code(0)
@@ -110,7 +110,7 @@ if __name__ == '__main__':
 
     # Assign the experiment to the runner and tell the variables you have and if you want to iterate
     runner = ExperimentRunner(experiment=experiment,
-                              variables={'fast_freq': 252.5, 'slow_freq': 250})
+                              variables={'fast_freq': 252, 'slow_freq': 250})
 
     # run and stop it. Ctrl-C can stop it prematurely.
     try:
