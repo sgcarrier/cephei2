@@ -424,3 +424,10 @@ class ASIC:
 
     def frame_type_normal(self):
         self.b.GEN_GPIO.gpio_set("SHORT_FRAME", False)
+
+    def single_frame_mode(self):
+        self.b.ICYSHSR1.SERIAL_READOUT_TYPE(self.head_id, 1)
+
+    def multi_frame_mode(self):
+        # This is the default
+        self.b.ICYSHSR1.SERIAL_READOUT_TYPE(self.head_id, 0)

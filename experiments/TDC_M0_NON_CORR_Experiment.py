@@ -54,10 +54,10 @@ class TDC_M0_NON_CORR_Experiment(BasicExperiment):
         '''
 
         # Frames are type short
-        self.board.asic_head_0.frame_type_short()
+        self.board.asic_head_0.frame_type_normal()
 
         self.board.trigger_oscillator.set_frequency(20)  # div by 2 later
-        self.board.trigger_divider.set_divider(2, Divider.MUX_NOT_CORR)
+        self.board.trigger_divider.set_divider(500, Divider.MUX_NOT_CORR)
         self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
         self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
         self.board.trigger_delay_head_0.set_delay_code(0)
@@ -65,9 +65,9 @@ class TDC_M0_NON_CORR_Experiment(BasicExperiment):
 
         time.sleep(1)
 
-        self.board.asic_head_0.disable_all_tdc()
+        #self.board.asic_head_0.disable_all_tdc()
         self.board.asic_head_0.disable_all_quench()
-        self.board.asic_head_0.disable_all_ext_trigger()
+        #self.board.asic_head_0.disable_all_ext_trigger()
 
     def run(self, fast_freq, slow_freq, array, tdc_addr):
 
@@ -76,10 +76,7 @@ class TDC_M0_NON_CORR_Experiment(BasicExperiment):
         self.board.fast_oscillator_head_0.set_frequency(fast_freq)
 
         self.board.asic_head_0.disable_all_tdc_but(array=array, tdc_addr=[int(tdc_addr)])
-        #self.board.asic_head_0.disable_all_quench_but(array=array, tdc_addr=[int(tdc_addr)])
         self.board.asic_head_0.disable_all_ext_trigger_but(array=array, tdc_addr=[int(tdc_addr)])
-
-        self.board.asic_head_0.mux_select(array, post_processing=0)
 
         self.board.b.ICYSHSR1.PLL_ENABLE(0, 1, 0)
 
@@ -101,9 +98,7 @@ class TDC_M0_NON_CORR_Experiment(BasicExperiment):
         operation.
         :return:
         '''
-        self.board.asic_head_0.disable_all_tdc()
-        self.board.asic_head_0.disable_all_quench()
-        self.board.asic_head_0.disable_all_ext_trigger()
+        pass
 
 if __name__ == '__main__':
     from utility.ExperimentRunner import ExperimentRunner

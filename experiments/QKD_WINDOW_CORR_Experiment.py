@@ -68,10 +68,6 @@ class QKD_WINDOW_NON_CORR_Experiment(BasicExperiment):
 
         time.sleep(1)
 
-        #Set trigger mode
-
-        #
-
     def run(self, fast_freq, slow_freq, delay, window_length):
 
         # Set PLL Frequencies and enable
@@ -79,7 +75,7 @@ class QKD_WINDOW_NON_CORR_Experiment(BasicExperiment):
         self.board.fast_oscillator_head_0.set_frequency(fast_freq)
         self.board.b.ICYSHSR1.PLL_ENABLE(0, 1, 0)
 
-        # Set window delay
+        # Set trigger delay
         self.board.trigger_delay_head_0.set_delay_code(int(delay))
 
         # Set Window length
