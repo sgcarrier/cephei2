@@ -32,6 +32,50 @@ class DNLGraph():
         return max(coarse_data)
 
 
+    def INL_no_jitter_cleanup(self, filename, basePath, formatNum, TDCNum, figureNum=1):
+
+        with h5py.File(filename, "r") as h:
+            ds = h[basePath]
+
+            plt.figure(figureNum)
+            title_string = "INL for TDC# " + str(TDCNum)
+            plt.title(title_string + "\n" +basePath, fontsize=10)
+            ax = plt.subplot(1, 1, 1)
+
+            corrected_coarse = self.post_processing(ds, "Coarse", formatNum, TDCNum) # Apply post processing on Coarse
+
+            corrected_fine = self.post_processing(ds, "Fine", formatNum, TDCNum)
+
+            trueMaxFine = self.findTrueMaxFine(corrected_coarse, corrected_fine, 0.4)
+            trueMaxCoarse = self.findTrueMaxCoarse(corrected_coarse, 0.1)
+
+            filtered_coarse = corrected_coarse[corrected_fine <= trueMaxFine]
+            filtered_fine = corrected_fine[corrected_fine <= trueMaxFine]
+
+            filtered_fine = filtered_fine[filtered_coarse <= trueMaxCoarse]
+            filtered_coarse = filtered_coarse[filtered_coarse <= trueMaxCoarse]
+
+            numberOfCodes = ((trueMaxCoarse - 1) * trueMaxFine) + max(filtered_fine[filtered_coarse == trueMaxCoarse])
+            LSB = 4000 / numberOfCodes
+
+            tdc_codes = (filtered_coarse * (trueMaxFine)) + filtered_fine
+            hist_codes = np.bincount(tdc_codes)
+            averageHitsPerCode = np.mean(hist_codes[hist_codes != 0])
+            possible_TDC_codes = list(range(min(tdc_codes), max(tdc_codes)))
+            DNL = ((hist_codes/averageHitsPerCode)-1) * LSB
+
+            DNL_cumulative = np.cumsum(DNL)
+
+            textstr = '\n'.join((
+                r'LSB=%.2f' % (LSB,),
+                r'#Codes=%.2f' % (numberOfCodes,),
+                r'Avg#PerCode=%.2f' % (averageHitsPerCode,)))
+
+            ax.step(list(range(len(hist_codes))), DNL_cumulative)
+
+            ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14,
+                    verticalalignment='top')
+
     def DNL_no_jitter_cleanup(self, filename, basePath, formatNum, TDCNum, figureNum=1):
 
         with h5py.File(filename, "r") as h:
@@ -62,16 +106,14 @@ class DNLGraph():
             hist_codes = np.bincount(tdc_codes)
             averageHitsPerCode = np.mean(hist_codes[hist_codes != 0])
             possible_TDC_codes = list(range(min(tdc_codes), max(tdc_codes)))
-            DNL = ((hist_codes/averageHitsPerCode)) * LSB
-
-            DNL_cumulative = np.cumsum(DNL)
+            DNL = ((hist_codes/averageHitsPerCode) - 1) * LSB
 
             textstr = '\n'.join((
                 r'LSB=%.2f' % (LSB,),
                 r'#Codes=%.2f' % (numberOfCodes,),
                 r'Avg#PerCode=%.2f' % (averageHitsPerCode,)))
 
-            ax.step(DNL_cumulative, list(range(len(hist_codes))))
+            ax.plot(list(range(len(hist_codes))), DNL)
 
             ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14,
                     verticalalignment='top')
@@ -124,7 +166,7 @@ class DNLGraph():
             return self.post_processing_PLL_FORMAT(h, fieldName)
         elif (formatNum == 0):
             mask = np.array(h['Addr'], dtype='int64')
-            return self.post_processing_TDC_0_FORMAT(h, fieldName)[mask == (tdcNum*4)]
+            return self.post_processing_TDC_0_FORMAT(h, fieldName, tdcNum*4)
         else:
             mask = np.array(h['Addr'], dtype='int64')
             return np.array(h[fieldName], dtype='int64')[mask == (tdcNum*4)]
@@ -138,12 +180,19 @@ class DNLGraph():
             dat =np.array(h[fieldName], dtype='int64') - 2
             return dat
 
-    def post_processing_TDC_0_FORMAT(self, h, fieldName):
+    def post_processing_TDC_0_FORMAT(self, h, fieldName, tdcNum):
         if (fieldName == "Coarse"):
-            return np.array(h[fieldName], dtype='int64')
+            ret = np.array(h[fieldName], dtype='int64')-1
+            addr = np.array(h["Addr"], dtype='int64')
+            mask = np.logical_and((ret >= 0), (addr == tdcNum))
+            return ret[mask]
 
         elif (fieldName == "Fine"):
-            return (np.array(h[fieldName], dtype='int64') - 2)
+            coarse = np.array(h["Coarse"], dtype='int64')-1
+            ret = (np.array(h[fieldName], dtype='int64') - 2)
+            addr = np.array(h["Addr"], dtype='int64')
+            mask = np.logical_and((coarse >= 0), (addr == tdcNum))
+            return ret[mask]
 
     # def post_processing_PLL_FORMAT(self, h, fieldName):
     #     if (fieldName == "Coarse"):
@@ -163,5 +212,8 @@ if __name__ == '__main__':
     BH = DNLGraph()
 
     BH.DNL_no_jitter_cleanup("../data_grabber/NON_CORR_TDC_mar3_ALL_20min.hdf5", "CHARTIER/ASIC0/TDC/NON_CORR/FAST_255/SLOW_250/ARRAY_0", TDCNum=13, formatNum=0, figureNum=1)
+    BH.INL_no_jitter_cleanup("../data_grabber/NON_CORR_TDC_mar3_ALL_20min.hdf5",
+                             "CHARTIER/ASIC0/TDC/NON_CORR/FAST_255/SLOW_250/ARRAY_0", TDCNum=13, formatNum=0,
+                             figureNum=3)
     BH.tdcHist("../data_grabber/NON_CORR_TDC_mar3_ALL_20min.hdf5", "CHARTIER/ASIC0/TDC/NON_CORR/FAST_255/SLOW_250/ARRAY_0", TDCNum=13, formatNum=0, figureNum=2)
     plt.show()
