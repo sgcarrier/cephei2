@@ -8,6 +8,7 @@ import numpy as np
 import math
 import pandas as pd
 from threading import Thread
+import cProfile
 
 from utility.rawDataProcessor import RawDataProcessor
 
@@ -37,15 +38,19 @@ class MulticastDataGrabber():
         self.max_acq_history = 30
 
         self.raw_data = 0
+        self.previous_id_checked =0
+
+        self.currentFilename = None
+        self.pr = cProfile.Profile()
 
 
-    def start_server(self, filename, mcast_grp='238.0.0.8', data_mcast_port=19002, meta_mcast_port=19001):
-
+    def start_server(self, interface_ip='192.168.0.1', mcast_grp='238.0.0.8', data_mcast_port=19002, meta_mcast_port=19001):
+        self.pr.disable()
         """Connect to the network"""
-        self.connectToNetwork(mcast_grp=mcast_grp, data_mcast_port=data_mcast_port, meta_mcast_port=meta_mcast_port)
+        self.connectToNetwork(mcast_grp=mcast_grp, data_mcast_port=data_mcast_port, meta_mcast_port=meta_mcast_port, interface_ip=interface_ip)
 
-        """Open HDF5 file"""
-        self.open(filename=filename)
+        #"""Open HDF5 file"""
+        #self.open(filename=filename)
 
         """Start Meta data receptions"""
         thread = Thread(target= self.start_meta)
@@ -63,6 +68,7 @@ class MulticastDataGrabber():
     def stop_server(self):
         self.stop()
         self.close()
+        self.pr.dump_stats('out.prof')
         time.sleep(2)
 
 
@@ -70,11 +76,15 @@ class MulticastDataGrabber():
         self.h = h5py.File(filename, "a", libver='latest')
         self.h.swmr_mode = True
         self.compression = compression
+        self.currentFilename = filename
+        _logger.info("Opened file " + filename)
 
     def close(self):
         ##self.h.flush()
         if self.h:
             self.h.close()
+            _logger.info("Closed file " + self.currentFilename)
+        self.currentFilename = None
 
 
     def connectToNetwork(self, mcast_grp='238.0.0.8', data_mcast_port=19002, meta_mcast_port=19001, interface_ip='192.168.0.1'):
@@ -137,6 +147,13 @@ class MulticastDataGrabber():
                 else :
                     self.local_acquisition_metadata.insert(0, rawMeta)
                     _logger.info("Added " + str(rawMeta) + " to the acquisition history")
+
+                    if self.currentFilename == None:
+                        self.open(rawMeta['FILENAME'])
+                    elif (self.currentFilename != rawMeta['FILENAME']):
+                        self.close()
+                        self.open(rawMeta['FILENAME'])
+
                     if (len(self.local_acquisition_metadata) > self.max_acq_history):
                         rem = self.local_acquisition_metadata.pop()
                         _logger.info("Removed " + str(rem) + " from the acquisition history")
@@ -162,25 +179,27 @@ class MulticastDataGrabber():
         usec = 0000
         timeval = struct.pack('ll', sec, usec)
         self.data_sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVTIMEO, timeval)
-        self.data_sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 2097152)
+        self.data_sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 4097152)
         counter = 0
         self.__running = True
         while self.__running:
             try:
-                msg = self.data_sock.recv(1024)
+                msg = self.data_sock.recv(100*1024)
             except BlockingIOError:
                 continue
 
             counter = counter + 1
+            self.pr.enable()
 
-            _logger.debug("Got data NUM: " + str(counter) + ", LEN: " + str(len(msg)) + ", Payload: " + msg.decode('utf-8', 'backslashreplace'))
+
+            _logger.debug("Got data NUM: " + str(counter)) # + ", LEN: " + str(len(msg)) + ", Payload: " + msg.decode('utf-8', 'backslashreplace'))
             rawData = self.extractData(msg)
 
             if rawData:
                 metaData = self.findMetaData(rawData['ACQ_ID'])
                 if metaData:
                     totalPath = (str(rawData['SRC']) + '/' + str(metaData['PATH']))
-                    self.recordWithPath(rawData=rawData, path=totalPath, formatNum=metaData["FORMAT"])
+                    self.recordWithPath(rawData=rawData, path=totalPath, acq_id=rawData['ACQ_ID'], formatNum=metaData["FORMAT"])
                     #self.record(rawData=rawData, formatNum=metaData["FORMAT"])
                 else:
                     _logger.warning("Received data with no assigned metadata, ignoring.")
@@ -201,7 +220,7 @@ class MulticastDataGrabber():
         """ Extract the meta data from de UDP packet."""
 
         msg = {}
-        fields = [b'ACQ_ID', b'PATH', b'FORMAT', b'END']
+        fields = [b'ACQ_ID', b'FILENAME', b'PATH', b'FORMAT', b'END']
         for fieldPos in range(len(fields)-1):
             posStart = udp_msg.find(fields[fieldPos]) + len(fields[fieldPos]) + 1
             if posStart == -1:
@@ -224,6 +243,11 @@ class MulticastDataGrabber():
         if msg['FORMAT']:
             msg['FORMAT'] = int.from_bytes(msg['FORMAT'], 'little')
             #msg['FORMAT'] = int(msg['FORMAT'])
+        else:
+            return None
+
+        if msg['FILENAME']:
+            msg['FILENAME'] = (msg['FILENAME']).decode('utf-8')
         else:
             return None
 
@@ -302,23 +326,21 @@ class MulticastDataGrabber():
     def disp_raw_data(self):
         hist = self.raw_data.hist()
 
-    def recordWithPath(self, rawData, path, formatNum=0, attributes=None):
+    def recordWithPath(self, rawData, path, acq_id, formatNum=0, attributes=None):
 
-        dataDict = self.RDP.raw2dict(rawData, formatNum)
+        dataArr = self.RDP.raw2compArray(rawData, formatNum)
+        if (path) not in self.h.keys():
+            self.h.create_dataset(path, (0,), maxshape=(None,), dtype=dataArr.dtype, compression=self.compression)
 
-        for fieldName, data in dataDict.items():
-            if (path + "/" + fieldName) not in self.h.keys():
-                self.h.create_dataset(path + '/' + fieldName, (0,), maxshape=(None,), dtype=data.dtype, compression=self.compression)
+        L = dataArr.shape[0]
+        self.h[path].resize((self.h[path].shape[0] + L), axis=0)
+        self.h[path][-L:] = dataArr
 
-            L = data.shape[0]
-            self.h[path + "/" + fieldName].resize((self.h[path + "/" + fieldName].shape[0] + L), axis=0)
-            self.h[path + "/" + fieldName][-L:] = data
+        if attributes:
+            for key, val in attributes.items():
+                self.h[path].attrs[key] = val
 
-            if attributes:
-                for key, val in attributes.items():
-                    self.h[path].attrs[key] = val
-
-            self.h.flush()
+        self.h.flush()
 
 
 
@@ -326,4 +348,4 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     server = MulticastDataGrabber()
 
-    server.start_server("NON_CORR_TDC_mar3_30.hdf5")
+    server.start_server(interface_ip='192.168.0.1')

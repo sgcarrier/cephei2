@@ -14,6 +14,8 @@ _logger = logging.getLogger(__name__)
     - run() can have any number of arguments as you wish
 """
 
+temp_dtype = np.dtype({'names': ['col1', 'col2'], 'formats': ['i4', 'i4']})
+
 
 class FakeExperiment(BasicExperiment):
     '''
@@ -52,9 +54,11 @@ class FakeExperiment(BasicExperiment):
         self.h = h5py.File(self.filename, "a", libver='latest')
         self.h.swmr_mode = True
 
-        for field in self.fields:
-            if (self.basePath + "/" + field) not in self.h:
-                self.h.create_dataset(self.basePath + '/' + field, (0,), maxshape=(None,))
+
+        # for field in self.fields:
+        #     if (self.basePath + "/" + field) not in self.h:
+        #         self.h.create_dataset(self.basePath + '/' + field, (0,), maxshape=(None,), dtype=temp_dtype)
+        self.h.create_dataset(self.basePath, (0,), maxshape=(None,), dtype=temp_dtype)
 
 
     def run(self, first_variable, second_variable):
@@ -71,10 +75,15 @@ class FakeExperiment(BasicExperiment):
         print("Firsts variable is : " + str(first_variable))
         print("Seconds variable is : " + str(second_variable))
 
-        for field in self.fields:
-            r = np.random.random_integers(0, 10, L)
-            self.h[self.basePath + '/' + field].resize((self.h[self.basePath + '/' + field].shape[0] + L), axis=0)
-            self.h[self.basePath + '/' + field][-L:] = r
+        #for field in self.fields:
+        col1 = np.random.random_integers(0, 10, L)
+        col2 = np.array([0,1,2,3,4,5,6,7,8,9])
+
+        to_write = np.array(np.dstack((col1,col2)), dtype=temp_dtype)
+
+        path = "/VAR1_{0}/VAR2_{1}".format(first_variable,second_variable)
+        self.h[self.basePath].resize((self.h[self.basePath].shape[0] + L), axis=0)
+        self.h[self.basePath][-L:] = to_write
 
         self.h.attrs['CurrSetRef'] = self.h[self.basePath].ref
 
@@ -99,7 +108,7 @@ if __name__ == '__main__':
 
 
     # Instanciate the example experiment
-    experiment = FakeExperiment(filename="../output/example_NON_CORR_TEST.hdf5",
+    experiment = FakeExperiment(filename="../output/test_compound.hdf5",
                                          countLimit=50000)
 
     # Assign the experiment to the runner and tell the variables you have and if you want to iterate

@@ -5,6 +5,12 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
+RAW_TIMESTAMP_FRAME_DTYPE = np.dtype({'names': ['Addr', 'Energy', 'Global', 'Fine', 'Coarse', 'CorrBit' ],
+                                      'formats': ['u4', 'u4', 'u4', 'u4', 'u4', 'B']})
+
+PLL_TDC_FRAME_DTYPE = np.dtype({'names': ['Coarse', 'Fine'],
+                                'formats': ['u4', 'u4']})
+
 class RawDataProcessor():
 
 
@@ -33,6 +39,14 @@ class RawDataProcessor():
         else:
             return -1
 
+    def getFrameDtype(self, num):
+        if num == 0:
+            return RAW_TIMESTAMP_FRAME_DTYPE
+        elif num == 1:
+            return PLL_TDC_FRAME_DTYPE
+        else:
+            return -1
+
     def filterNonDataFrames(self, data):
         # The start frams
         data['DATA'] = [value for value in data['DATA'] if value != 0xAAAAAAAAAAAAAAAA]
@@ -52,6 +66,27 @@ class RawDataProcessor():
         tmp = '{:0{width}b}'.format(data, width=width)
         return int(tmp[::-1], 2)
 
+
+    def raw2compArray(self, data, frameFormatNum):
+        format = self.getFrameFormat(frameFormatNum)
+        if (format == -1):
+            _logger.warning("Received incorrect dataframe format number")
+            return None
+
+        filteredData = self.filterNonDataFrames(data)
+
+        dataLen = len(data)
+        dtype= self.getFrameDtype(frameFormatNum)
+        outArr = np.zeros(dataLen, dtype=dtype)
+
+        for field, parameters in format.items():
+            outArr[field] = (np.bitwise_and(np.right_shift(filteredData['DATA'], parameters['offset']), parameters['bitMask']))  #.as_type(parameters['dtype'])
+            if self.format_reverse_bits:
+                for i in range(len(outArr[field])):
+                    outArr[field][i] = self.reverseBits(outArr[field][i], width=parameters['bitLen'])
+
+        return outArr
+
     def raw2dict(self, data, frameFormatNum):
         format = self.getFrameFormat(frameFormatNum)
         if (format == -1):
@@ -59,7 +94,8 @@ class RawDataProcessor():
             return {}
 
         filteredData = self.filterNonDataFrames(data)
-        _logger.info("RAW = " + str(hex(filteredData['DATA'][0])))
+        #filteredData = data
+        _logger.info("RAW = " + str(len(filteredData['DATA'])))
         #filteredData = data
 
         outDict = {}
