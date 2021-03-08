@@ -79,11 +79,12 @@ class TDC_PLL_CORR_Experiment(BasicExperiment):
         self.board.fast_oscillator_head_0.set_frequency(fast_freq)
         self.board.trigger_delay_head_0.set_delay_code(int(delay))
 
+
         #path = self.basePath + "/FAST_" + str(fast_freq) + "/SLOW_" + str(slow_freq) + "/DELAY"
         path = "{0}/FAST_{1}/SLOW_{2}/DELAY_{3}".format(self.basePath, fast_freq, slow_freq, delay)
         acqID = random.randint(0, 65535)
 
-        self.board.b.DMA.set_meta_data(path, acqID, 1)
+        self.board.b.DMA.set_meta_data(self.filename, path, acqID, 1)
         time.sleep(2)
         # This line is blocking
         self.board.b.DMA.start_data_acquisition(acqID, self.countLimit, minimumBuffer=40)

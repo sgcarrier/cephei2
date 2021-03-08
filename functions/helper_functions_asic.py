@@ -398,6 +398,26 @@ class ASIC:
         self.mux_select(array, self.c.SEL_ZPP)
         self.set_time_driven_period(readout_time)
 
+    def confgure_QKD_mode(self, array, timeBins, threshold):
+        self.mux_select(array, self.c.SEL_QKD_TIME_BIN)  # Set the output mux
+        self.set_trigger_type(self.c.TRIG_WINDOW_DRIVEN)  # Set time driven
+        self.b.ICYSHSR1.TDC_GATING_MODE(self.head_id, 1, 0)
+        self.b.ICYSHSR1.TRIGGER_WINDOW_DRIVEN_THRESHOLD(self.head_id, threshold, 0)  # Set the readout time
+        self.window_is_stop()
+        self.set_time_bins(timeBins)
+
+    def set_time_bins(self, timeBins):
+        self.b.ICYSHSR1.TIME_BIN_BOUNDS_0(self.head_id, timeBins[0], 0)
+        self.b.ICYSHSR1.TIME_BIN_BOUNDS_0_1(self.head_id, timeBins[1], 0)
+        self.b.ICYSHSR1.TIME_BIN_BOUNDS_1_2(self.head_id, timeBins[2], 0)
+        self.b.ICYSHSR1.TIME_BIN_BOUNDS_2(self.head_id, timeBins[3], 0)
+
+    def clock_is_stop(self):
+        self.b.ICYSHSR1.TDC_STOP_SIGNAL(self.head_id, 0, 0)
+
+    def window_is_stop(self):
+        self.b.ICYSHSR1.TDC_STOP_SIGNAL(self.head_id, 1, 0)
+
 
     def frame_type_short(self):
         self.b.GEN_GPIO.gpio_set("SHORT_FRAME", True)

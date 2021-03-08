@@ -18,7 +18,7 @@ _logger = logging.getLogger(__name__)
 """
 
 
-class TDC_PLL_NON_CORR_Experiment(BasicExperiment):
+class QKD_WINDOW_NON_CORR_Experiment(BasicExperiment):
     '''
     This is an example of an experiment. The execution goes as follows:
 
@@ -32,7 +32,7 @@ class TDC_PLL_NON_CORR_Experiment(BasicExperiment):
     Follow along in the logs and see how the experiement is doing.
     '''
 
-    def __init__(self, filename, countLimit):
+    def __init__(self, filename, countLimit=-1, timeLimit=-1):
         '''
 
         :param filename: Filename you will write to.
@@ -41,10 +41,11 @@ class TDC_PLL_NON_CORR_Experiment(BasicExperiment):
         super().__init__()
         self.filename = filename
         self.countLimit = countLimit
+        self.timeLimit = timeLimit
 
         # Custom parameters for the example, had what you want here
 
-        self.basePath = "/PLL/TDC/NON_CORR"
+        self.basePath = "/M0/QKD/NON_CORR"
         self.board = Board()
 
     def setup(self):
@@ -56,8 +57,10 @@ class TDC_PLL_NON_CORR_Experiment(BasicExperiment):
         # Frames are type short
         self.board.asic_head_0.frame_type_short()
 
-        self.board.trigger_oscillator.set_frequency(20)  # div by 2 later
-        self.board.trigger_divider.set_divider(50, Divider.MUX_NOT_CORR)
+        #Setting external trigger
+        #self.board.pll.set_frequencies(10, 10, 5000)
+        self.board.pll.set_6_25mhz()
+        self.board.trigger_divider.set_divider(500, Divider.MUX_CORR)
         self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
         self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
         self.board.trigger_delay_head_0.set_delay_code(0)
@@ -65,25 +68,35 @@ class TDC_PLL_NON_CORR_Experiment(BasicExperiment):
 
         time.sleep(1)
 
-        self.board.asic_head_0.disable_all_tdc()
-        self.board.asic_head_0.disable_all_quench()
-        self.board.asic_head_0.disable_all_ext_trigger()
+        #Set trigger mode
 
-        self.board.asic_head_0.test_TDC_PLL()
+        #
 
-    def run(self, fast_freq, slow_freq):
+    def run(self, fast_freq, slow_freq, delay, window_length):
 
+        # Set PLL Frequencies and enable
         self.board.slow_oscillator_head_0.set_frequency(slow_freq)
         self.board.fast_oscillator_head_0.set_frequency(fast_freq)
+        self.board.b.ICYSHSR1.PLL_ENABLE(0, 1, 0)
 
-        path = self.basePath + "/FAST" + str(fast_freq) + "/SLOW" + str(slow_freq)
-        path = "{0}/FAST_{1}/SLOW_{2}".format(self.basePath, fast_freq, slow_freq)
+        # Set window delay
+        self.board.trigger_delay_head_0.set_delay_code(int(delay))
+
+        # Set Window length
+        self.board.asic_head_0.set_window_size(window_length)
+
+        # Set timebins and other QKD registers
+        timeBins = [0, (window_length // 3), 2*(window_length // 3), window_length]
+        self.board.asic_head_0.confgure_QKD_mode(0, timeBins, threshold=1)
+
+
+        path = "{0}/FAST_{1}/SLOW_{2}/DELAY_{3}/WINDOW_LEN_{4}".format(self.basePath, fast_freq, slow_freq, delay, window_length)
         acqID = random.randint(0, 65535)
 
         self.board.b.DMA.set_meta_data(self.filename, path, acqID, 1)
         time.sleep(2)
         # This line is blocking
-        self.board.b.DMA.start_data_acquisition(acqID, self.countLimit, minimumBuffer=0)
+        self.board.b.DMA.start_data_acquisition(acqID, maxSamples=self.countLimit, maxTime=self.timeLimit, minimumBuffer=40)
         time.sleep(1)
 
 
@@ -96,21 +109,27 @@ class TDC_PLL_NON_CORR_Experiment(BasicExperiment):
         '''
         self.board.asic_head_0.reset_TDC_mux()
         self.board.asic_head_0.frame_type_normal()
+        self.board.asic_head_0.reset()
 
 if __name__ == '__main__':
     from utility.ExperimentRunner import ExperimentRunner
     from utility.loggingSetup import loggingSetup
     import logging
 
-    loggingSetup("TDC_PLL_NON_CORR_Experiment", level=logging.DEBUG)
+    loggingSetup("QKD_WINDOW_NON_CORR_Experiment", level=logging.DEBUG)
 
     # Instanciate the experiment
-    experiment = TDC_PLL_NON_CORR_Experiment(filename="../output/example_NON_CORR_TEST.hdf5",
-                                         countLimit=10000)
+    filename = "QKD_WINDOW_NON_CORR_TEST-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
+    experiment = QKD_WINDOW_NON_CORR_Experiment(filename=filename,
+                                                countLimit=10000,
+                                                timeLimit=30)
 
     # Assign the experiment to the runner and tell the variables you have and if you want to iterate
     runner = ExperimentRunner(experiment=experiment,
-                              variables={'fast_freq': 252, 'slow_freq': 250})
+                              variables={'fast_freq': 255,
+                                         'slow_freq': 250,
+                                         'delay': (0, 1000, 200),
+                                         'window_length': 500})
 
     # run and stop it. Ctrl-C can stop it prematurely.
     try:
