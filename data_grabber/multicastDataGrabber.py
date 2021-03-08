@@ -6,6 +6,7 @@ import datetime
 import logging
 import numpy as np
 import math
+import ast
 import pandas as pd
 from threading import Thread
 import cProfile
@@ -199,7 +200,7 @@ class MulticastDataGrabber():
                 metaData = self.findMetaData(rawData['ACQ_ID'])
                 if metaData:
                     totalPath = (str(rawData['SRC']) + '/' + str(metaData['PATH']))
-                    self.recordWithPath(rawData=rawData, path=totalPath, acq_id=rawData['ACQ_ID'], formatNum=metaData["FORMAT"])
+                    self.recordWithPath(rawData=rawData, path=totalPath, formatNum=metaData['FORMAT'], attributes=metaData['ATTRIBUTES'])
                     #self.record(rawData=rawData, formatNum=metaData["FORMAT"])
                 else:
                     _logger.warning("Received data with no assigned metadata, ignoring.")
@@ -220,7 +221,7 @@ class MulticastDataGrabber():
         """ Extract the meta data from de UDP packet."""
 
         msg = {}
-        fields = [b'ACQ_ID', b'FILENAME', b'PATH', b'FORMAT', b'END']
+        fields = [b'ACQ_ID', b'FILENAME', b'PATH', b'FORMAT', b'ATTRIBUTES', b'END']
         for fieldPos in range(len(fields)-1):
             posStart = udp_msg.find(fields[fieldPos]) + len(fields[fieldPos]) + 1
             if posStart == -1:
@@ -248,6 +249,11 @@ class MulticastDataGrabber():
 
         if msg['FILENAME']:
             msg['FILENAME'] = (msg['FILENAME']).decode('utf-8')
+        else:
+            return None
+
+        if msg['ATTRIBUTES']:
+            msg['ATTRIBUTES'] = ast.literal_eval(msg['ATTRIBUTES']).decode('utf-8')
         else:
             return None
 
@@ -326,7 +332,7 @@ class MulticastDataGrabber():
     def disp_raw_data(self):
         hist = self.raw_data.hist()
 
-    def recordWithPath(self, rawData, path, acq_id, formatNum=0, attributes=None):
+    def recordWithPath(self, rawData, path,formatNum=0, attributes=None):
 
         dataArr = self.RDP.raw2compArray(rawData, formatNum)
         if (path) not in self.h.keys():

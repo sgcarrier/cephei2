@@ -55,15 +55,15 @@ class QKD_WINDOW_NON_CORR_Experiment(BasicExperiment):
         '''
 
         # Frames are type short
-        self.board.asic_head_0.frame_type_short()
-
-        #Setting external trigger
-        #self.board.pll.set_frequencies(10, 10, 5000)
-        self.board.pll.set_6_25mhz()
+        self.board.pll.set_frequencies(10, 10, 5000)
+        self.board.window_divider.set_divider(500, Divider.MUX_CORR)
         self.board.trigger_divider.set_divider(500, Divider.MUX_CORR)
+        self.board.mux_window_laser.select_input(MUX.DIVIDER_INPUT)
         self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
+        self.board.mux_window_external.select_input(MUX.PCB_INPUT)
         self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
-        self.board.trigger_delay_head_0.set_delay_code(0)
+        self.board.window_delay_head_0.set_delay_code(0)
+        self.board.trigger_delay_head_0.set_delay_code(511)     # Max delay
         self.board.asic_head_0.reset()
 
         time.sleep(1)
@@ -128,7 +128,7 @@ if __name__ == '__main__':
     runner = ExperimentRunner(experiment=experiment,
                               variables={'fast_freq': 255,
                                          'slow_freq': 250,
-                                         'delay': (0, 1000, 200),
+                                         'delay': 0,
                                          'window_length': 500})
 
     # run and stop it. Ctrl-C can stop it prematurely.
