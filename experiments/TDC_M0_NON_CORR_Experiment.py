@@ -75,8 +75,8 @@ class TDC_M0_NON_CORR_Experiment(BasicExperiment):
         self.board.slow_oscillator_head_0.set_frequency(slow_freq)
         self.board.fast_oscillator_head_0.set_frequency(fast_freq)
 
-        self.board.asic_head_0.disable_all_tdc_but(array=array, tdc_addr=[int(tdc_addr)])
-        self.board.asic_head_0.disable_all_ext_trigger_but(array=array, tdc_addr=[int(tdc_addr)])
+        self.board.asic_head_0.disable_all_tdc_but(array, [int(tdc_addr)])
+        self.board.asic_head_0.disable_all_ext_trigger_but(array, [int(tdc_addr)])
 
         self.board.b.ICYSHSR1.PLL_ENABLE(0, 1, 0)
 
