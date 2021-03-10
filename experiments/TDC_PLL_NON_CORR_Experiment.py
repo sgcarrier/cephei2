@@ -96,6 +96,7 @@ class TDC_PLL_NON_CORR_Experiment(BasicExperiment):
         '''
         self.board.asic_head_0.reset_TDC_mux()
         self.board.asic_head_0.frame_type_normal()
+        self.board.asic_head_0.reset()
 
 if __name__ == '__main__':
     from utility.ExperimentRunner import ExperimentRunner

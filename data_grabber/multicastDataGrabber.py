@@ -138,6 +138,7 @@ class MulticastDataGrabber():
 
             _logger.info("Got META data, LEN: " + str(len(msg)) + ", Payload: " + msg.decode('utf-8', 'backslashreplace'))
             rawMeta = self.extractMeta(msg)
+            print(rawMeta)
             if rawMeta is None:
                 continue
             else:
@@ -162,6 +163,8 @@ class MulticastDataGrabber():
 
     def findMetaData(self, id):
         for i in self.local_acquisition_metadata:
+            print(str(i['ACQ_ID']) + " and " + str(id))
+
             if (i['ACQ_ID'] == id):
                 return i
 
@@ -237,6 +240,8 @@ class MulticastDataGrabber():
         if msg['ACQ_ID']:
             #msg['ACQ_ID'] =  np.frombuffer(msg['ACQ_ID'], dtype=np.uint32, count=1)
             msg['ACQ_ID'] = int.from_bytes(msg['ACQ_ID'], 'little')
+            print("ACQ_ID is ")
+            print(msg['ACQ_ID'])
             #msg['ACQ_ID'] = int(msg['ACQ_ID'])
         else:
             return None
@@ -252,15 +257,15 @@ class MulticastDataGrabber():
         else:
             return None
 
-        if msg['ATTRIBUTES']:
-            msg['ATTRIBUTES'] = ast.literal_eval(msg['ATTRIBUTES']).decode('utf-8')
-        else:
-            return None
-
         if msg['PATH']:
             msg['PATH'] = (msg['PATH']).decode('utf-8')
         else:
             return None
+
+        if msg['ATTRIBUTES'] and (msg['ATTRIBUTES'] != b'None'):
+            msg['ATTRIBUTES'] = ast.literal_eval(msg['ATTRIBUTES']).decode('utf-8')
+        else:
+            msg['ATTRIBUTES'] = None
 
         return msg
 
@@ -311,7 +316,7 @@ class MulticastDataGrabber():
             #print(msg['ACQ_ID'])
             #msg['ACQ_ID'] = int.from_bytes(msg['ACQ_ID'], 'little')
             msg['ACQ_ID'] = int(msg['ACQ_ID'])
-            #print(msg['ACQ_ID'])
+            print(msg['ACQ_ID'])
 
         else:
             return None

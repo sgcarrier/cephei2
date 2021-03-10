@@ -32,7 +32,7 @@ class TDC_M0_NON_CORR_Experiment(BasicExperiment):
     Follow along in the logs and see how the experiement is doing.
     '''
 
-    def __init__(self, filename, countLimit):
+    def __init__(self, filename, countLimit, timeLimit):
         '''
 
         :param filename: Filename you will write to.
@@ -41,10 +41,11 @@ class TDC_M0_NON_CORR_Experiment(BasicExperiment):
         super().__init__()
         self.filename = filename
         self.countLimit = countLimit
+        self.timeLimit = timeLimit
 
         # Custom parameters for the example, had what you want here
 
-        self.basePath = "/PLL/TDC/NON_CORR"
+        self.basePath = "/MO/TDC/NON_CORR"
         self.board = Board()
 
     def setup(self):
@@ -75,8 +76,8 @@ class TDC_M0_NON_CORR_Experiment(BasicExperiment):
         self.board.slow_oscillator_head_0.set_frequency(slow_freq)
         self.board.fast_oscillator_head_0.set_frequency(fast_freq)
 
-        self.board.asic_head_0.disable_all_tdc_but(array=array, tdc_addr=[int(tdc_addr)])
-        self.board.asic_head_0.disable_all_ext_trigger_but(array=array, tdc_addr=[int(tdc_addr)])
+        self.board.asic_head_0.disable_all_tdc_but(array, [int(tdc_addr)])
+        self.board.asic_head_0.disable_all_ext_trigger_but(array, [int(tdc_addr)])
 
         self.board.b.ICYSHSR1.PLL_ENABLE(0, 1, 0)
 
@@ -84,10 +85,10 @@ class TDC_M0_NON_CORR_Experiment(BasicExperiment):
         path = "{0}/FAST_{1}/SLOW_{2}/ARRAY_{3}/ADDR_{4}".format(self.basePath, fast_freq, slow_freq, array, tdc_addr)
         acqID = random.randint(0, 65535)
 
-        self.board.b.DMA.set_meta_data(self.filename, path, acqID, 1)
+        self.board.b.DMA.set_meta_data(self.filename, path, acqID, 0)
         time.sleep(2)
         # This line is blocking
-        self.board.b.DMA.start_data_acquisition(acqID, self.countLimit, minimumBuffer=0)
+        self.board.b.DMA.start_data_acquisition(acqID, self.countLimit, self.timeLimit, minimumBuffer=0)
         time.sleep(1)
 
 
@@ -98,7 +99,7 @@ class TDC_M0_NON_CORR_Experiment(BasicExperiment):
         operation.
         :return:
         '''
-        pass
+        self.board.asic_head_0.reset()
 
 if __name__ == '__main__':
     from utility.ExperimentRunner import ExperimentRunner
@@ -110,7 +111,7 @@ if __name__ == '__main__':
     # Instanciate the experiment
     filename = "NON_CORR_TEST-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
     experiment = TDC_M0_NON_CORR_Experiment(filename=filename,
-                                         countLimit=10000)
+                                            countLimit=-1,timeLimit=300)
 
     # Assign the experiment to the runner and tell the variables you have and if you want to iterate
     runner = ExperimentRunner(experiment=experiment,

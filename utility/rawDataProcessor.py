@@ -106,7 +106,7 @@ class RawDataProcessor():
 
         filteredData = self.filterNonDataFrames(data)
 
-        dataLen = len(data)
+        dataLen = len(filteredData['DATA'])
         dtype= self.getFrameDtype(frameFormatNum)
         outArr = np.zeros(dataLen, dtype=dtype)
 
