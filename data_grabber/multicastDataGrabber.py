@@ -257,15 +257,16 @@ class MulticastDataGrabber():
         else:
             return None
 
+
+        if msg['ATTRIBUTES'] and msg['ATTRIBUTES'] != b'None':
+            msg['ATTRIBUTES'] = ast.literal_eval(msg['ATTRIBUTES']).decode('utf-8')
+        else:
+            msg['ATTRIBUTES'] = None
+
         if msg['PATH']:
             msg['PATH'] = (msg['PATH']).decode('utf-8')
         else:
             return None
-
-        if msg['ATTRIBUTES'] and (msg['ATTRIBUTES'] != b'None'):
-            msg['ATTRIBUTES'] = ast.literal_eval(msg['ATTRIBUTES']).decode('utf-8')
-        else:
-            msg['ATTRIBUTES'] = None
 
         return msg
 
