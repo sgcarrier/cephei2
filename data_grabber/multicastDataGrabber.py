@@ -340,7 +340,7 @@ class MulticastDataGrabber():
 
     def recordWithPath(self, rawData, path,formatNum=0, attributes=None):
 
-        dataArr = self.RDP.raw2compArray(rawData, formatNum)
+        dataArr = self.RDP.raw2compArray(rawData, formatNum, keepRaw=True)
         if (path) not in self.h.keys():
             self.h.create_dataset(path, (0,), maxshape=(None,), dtype=dataArr.dtype, compression=self.compression)
 
