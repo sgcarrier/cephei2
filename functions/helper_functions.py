@@ -321,6 +321,18 @@ class DelayLine:
         return True
 
 
+class TemperatureProbe:
+    PLL_DIVIDER_PROBE = 0
+    DELAY_PROBE = 1
+
+    def __init__(self, chartier, device_id):
+        self.device_id = device_id
+        self.b = chartier
+
+    def get_temp(self):
+        return self.b.TMP1075.T(self.device_id)
+
+
 # Controlled through TCA9539
 class MUX:
     LASER_INPUT = 0
