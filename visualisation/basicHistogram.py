@@ -14,18 +14,16 @@ class BasicHistogram():
     def __init__(self):
         pass
 
-    def hist_norm(self, filename, basePath, formatNum, figureNum=1):
+    def hist_norm(self, filename, basePath, formatNum, tdcNums, figureNum=1):
 
         _logger.info("Generating histogram")
 
         with h5py.File(filename, "r") as h:
             ds = h[basePath]
 
-            number_of_subplots = len(ds.keys())
-            number_of_subplots =2
+            number_of_subplots = len(tdcNums)
 
-            for tdcNum in [0]:
-                #plt.title
+            for tdcNum in tdcNums:
 
                 plt.figure(tdcNum)
 

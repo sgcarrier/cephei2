@@ -141,16 +141,6 @@ class CoarseFineHeatmap():
             dat =np.array(h[fieldName], dtype='int64') - 2
             return dat
 
-    # def post_processing_PLL_FORMAT(self, h, fieldName):
-    #     if (fieldName == "Coarse"):
-    #         ret = (np.array(h[fieldName], dtype='int64') - np.array(h['Fine'], dtype='int64'))
-    #         return h[fieldName][ret == -1]
-    #
-    #     else:
-    #         ret = (np.array(h["Coarse"], dtype='int64') - np.array(h['Fine'], dtype='int64'))
-    #         dat =np.array(h[fieldName], dtype='int64')
-    #         return dat[ret == -1]
-
 if __name__ == '__main__':
     import logging
 
