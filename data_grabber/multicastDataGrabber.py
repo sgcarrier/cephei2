@@ -11,7 +11,7 @@ import pandas as pd
 from threading import Thread
 import cProfile
 
-from utility.rawDataProcessor import RawDataProcessor
+from processing.rawDataProcessor import RawDataProcessor
 
 _logger = logging.getLogger(__name__)
 
