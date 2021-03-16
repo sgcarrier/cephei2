@@ -92,7 +92,7 @@ class QKD_WINDOW_NON_CORR_Experiment(BasicExperiment):
         self.board.b.DMA.set_meta_data(self.filename, path, acqID, 1)
         time.sleep(2)
         # This line is blocking
-        self.board.b.DMA.start_data_acquisition(acqID, maxSamples=self.countLimit, maxTime=self.timeLimit, minimumBuffer=40)
+        self.board.b.DMA.start_data_acquisition(acqID, maxSamples=self.countLimit, maxTime=self.timeLimit, maxEmptyTimeout=100)
         time.sleep(1)
 
 

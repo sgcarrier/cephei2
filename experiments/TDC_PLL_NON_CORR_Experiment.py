@@ -83,7 +83,7 @@ class TDC_PLL_NON_CORR_Experiment(BasicExperiment):
         self.board.b.DMA.set_meta_data(self.filename, path, acqID, 1)
         time.sleep(2)
         # This line is blocking
-        self.board.b.DMA.start_data_acquisition(acqID, self.countLimit, minimumBuffer=0)
+        self.board.b.DMA.start_data_acquisition(acqID, self.countLimit, maxEmptyTimeout=100)
         time.sleep(1)
 
 
