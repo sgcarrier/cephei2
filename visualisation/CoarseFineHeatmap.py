@@ -118,14 +118,14 @@ if __name__ == '__main__':
     # FormatNum :
     #             0 = Normal 64 bits no post-processing
     #             1 = PLL 20 bits
-    BH.heatmap(filename="../data_grabber/NON_CORR_TDC_mar3_ALL_20min.hdf5",
-               basePath="CHARTIER/ASIC0/TDC/NON_CORR/FAST_255/SLOW_250/ARRAY_0",
+    BH.heatmap(filename="/home2/cars2019/Documents/DATA/NON_CORR_TDC_SINGLE_TEST_12mars.hdf5",
+               basePath="CHARTIER/ASIC0/MO/TDC/NON_CORR/FAST_255/SLOW_250/ARRAY_0",
                formatNum=0,
                figureNum=1,
                numberOfTDCs=49)
 
-    BH.heatmap_with_filtering(filename="../data_grabber/NON_CORR_TDC_mar3_ALL_20min.hdf5",
-                              basePath="CHARTIER/ASIC0/TDC/NON_CORR/FAST_255/SLOW_250/ARRAY_0",
+    BH.heatmap_with_filtering(filename="/home2/cars2019/Documents/DATA/NON_CORR_TDC_SINGLE_TEST_12mars.hdf5",
+                              basePath="CHARTIER/ASIC0/MO/TDC/NON_CORR/FAST_255/SLOW_250/ARRAY_0",
                               formatNum=0,
                               figureNum=2,
                               numberOfTDCs=49)
