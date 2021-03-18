@@ -18,7 +18,7 @@ _logger = logging.getLogger(__name__)
 """
 
 
-class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
+class ZPP_Experiment(BasicExperiment):
     '''
     This is an example of an experiment. The execution goes as follows:
 
@@ -45,7 +45,7 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
 
         # Custom parameters for the example, had what you want here
 
-        self.basePath = "/MO/TDC/NON_CORR"
+        self.basePath = "/MO/ZPP"
         self.board = Board()
 
     def setup(self):
@@ -54,38 +54,38 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
         This is where you assign setting that will not change during your experiment
         '''
 
-        # Frames are type short
         self.board.asic_head_0.frame_type_normal()
 
-        self.board.trigger_oscillator.set_frequency(20)  # div by 2 later
-        self.board.trigger_divider.set_divider(500, Divider.MUX_NOT_CORR)
-        self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
-        self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
-        self.board.trigger_delay_head_0.set_delay_code(0)
+        # self.board.trigger_oscillator.set_frequency(20)  # div by 2 later
+        # self.board.trigger_divider.set_divider(500, Divider.MUX_NOT_CORR)
+        # self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
+        # self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
+        # self.board.trigger_delay_head_0.set_delay_code(0)
         self.board.asic_head_0.reset()
 
         time.sleep(1)
 
-        #self.board.asic_head_0.disable_all_tdc()
+        self.board.asic_head_0.disable_all_tdc()
         self.board.asic_head_0.disable_all_quench()
-        #self.board.asic_head_0.disable_all_ext_trigger()
+        self.board.asic_head_0.disable_all_ext_trigger()
+        self.board.asic_head_0.configure_zpp_mode(0, 400, 200, 200)
 
-    def run(self, fast_freq, slow_freq, array):
+    def run(self, array, pixel, readout, width, spacing):
 
         # Set PLL frequencies
-        self.board.slow_oscillator_head_0.set_frequency(slow_freq)
-        self.board.fast_oscillator_head_0.set_frequency(fast_freq)
+        # Could be interesting to see if enabling the PLL has an impact on DCR
+        # self.board.slow_oscillator_head_0.set_frequency(slow_freq)
+        # self.board.fast_oscillator_head_0.set_frequency(fast_freq)
+        # self.board.b.ICYSHSR1.PLL_ENABLE(0, 1, 0)
 
-        self.board.asic_head_0.enable_all_tdc()
-        self.board.asic_head_0.enable_all_ext_trigger()
-
-        self.board.b.ICYSHSR1.PLL_ENABLE(0, 1, 0)
+        self.board.asic_head_0.disable_all_quench_but(array, pixel)
+        self.board.asic_head_0.configure_zpp_mode(array, readout, width, spacing)
 
 
-        path = "{0}/FAST_{1}/SLOW_{2}/ARRAY_{3}".format(self.basePath, fast_freq, slow_freq, array)
+        path = "ARRAY_{0}/PIXEL{1}/readout{2}/width{3}/spacing{4}".format(self.basePath, array, pixel, readout, width, spacing)
         acqID = random.randint(0, 65535)
 
-        self.board.b.DMA.set_meta_data(self.filename, path, acqID, 0)
+        self.board.b.DMA.set_meta_data(self.filename, path, acqID, 4)
         time.sleep(2)
         # This line is blocking
         self.board.b.DMA.start_data_acquisition(acqID, self.countLimit, self.timeLimit, maxEmptyTimeout=100)
@@ -106,16 +106,16 @@ if __name__ == '__main__':
     from utility.loggingSetup import loggingSetup
     import logging
 
-    loggingSetup("TDC_PLL_NON_CORR_Experiment", level=logging.DEBUG)
+    loggingSetup("ZPP_Experiment", level=logging.DEBUG)
 
     # Instanciate the experiment
-    filename = "NON_CORR_TEST_ALL-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
-    experiment = TDC_M0_NON_CORR_All_Experiment(filename=filename,
-                                                countLimit=-1,timeLimit=300)
+    filename = "ZPP-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
+    experiment = ZPP_Experiment(filename=filename,
+                                countLimit=5000, timeLimit=300)
 
     # Assign the experiment to the runner and tell the variables you have and if you want to iterate
     runner = ExperimentRunner(experiment=experiment,
-                              variables={'fast_freq': 252, 'slow_freq': 250, 'array': 0})
+                              variables={'array': 0, 'pixel': 0, 'readout': 400, 'width': 50, 'spacing': 50})
 
     # run and stop it. Ctrl-C can stop it prematurely.
     try:
