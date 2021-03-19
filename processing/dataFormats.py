@@ -13,6 +13,10 @@ QKD_FRAME_DTYPE = np.dtype({'names': ['DCA', 'Bin', 'Addr', 'Timestamp', 'Window
 PLL_TDC_FRAME_DTYPE = np.dtype({'names': ['Coarse', 'Fine'],
                                 'formats': ['u4', 'u4']})
 
+ZPP_FRAME_DTYPE = np.dtype({'names': ['TCR', 'DCR'],
+                            'formats': ['u4', 'u4']})
+
+
 RAW_TIMESTAMP_FRAME_DTYPE_WRAW = np.dtype({'names': ['Addr', 'Energy', 'Global', 'Fine', 'Coarse', 'CorrBit', 'RESERVED', 'RAW'],
                                       'formats': ['u4', 'u4', 'u4', 'u4', 'u4', 'B', 'u4', 'u8']})
 
@@ -24,6 +28,9 @@ QKD_FRAME_DTYPE_WRAW = np.dtype({'names': ['DCA', 'Bin', 'Addr', 'Timestamp', 'W
 
 PLL_TDC_FRAME_DTYPE_WRAW = np.dtype({'names': ['Coarse', 'Fine', 'RAW'],
                                 'formats': ['u4', 'u4', 'u8']})
+
+ZPP_FRAME_DTYPE_WRAW = np.dtype({'names': ['TCR', 'DCR', 'RAW'],
+                                 'formats': ['u4', 'u4', 'u8']})
 
 
 ########################
@@ -53,6 +60,9 @@ QKD_FRAME_FORMAT = {'Parity': {'dtype': 'B', 'offset': 63, 'bitMask': 0x1, 'bitL
 
 PLL_TDC_FRAME_FORMAT = {'Fine': {'dtype': 'u4', 'offset': 10, 'bitMask': 0x3FF, 'bitLen': 10},
                         'Coarse': {'dtype': 'u4', 'offset': 0, 'bitMask': 0x3FF, 'bitLen': 10}}
+
+ZPP_FRAME_FORMAT = {'DCR': {'dtype': 'u4', 'offset': 32, 'bitMask': 0xFFFFFFFF, 'bitLen': 32},
+                    'TCR': {'dtype': 'u4', 'offset': 0, 'bitMask': 0xFFFFFFFF, 'bitLen': 32}}
 
 RAW_TIMESTAMP_FRAME_FORMAT_WRAW = {'RAW': {'dtype': 'u8', 'offset': 0, 'bitMask': 0xFFFFFFFFFFFFFFFF, 'bitLen': 64},
                                    'RESERVED': {'dtype': 'u4', 'offset': 53, 'bitMask': 0x7FF, 'bitLen': 11},
@@ -84,7 +94,9 @@ PLL_TDC_FRAME_FORMAT_WRAW = {'RAW': {'dtype': 'u8', 'offset': 0, 'bitMask': 0xFF
                              'Fine': {'dtype': 'u4', 'offset': 10, 'bitMask': 0x3FF, 'bitLen': 10},
                              'Coarse': {'dtype': 'u4', 'offset': 0, 'bitMask': 0x3FF, 'bitLen': 10}}
 
-
+ZPP_FRAME_FORMAT_WRAW = {'RAW': {'dtype': 'u8', 'offset': 0, 'bitMask': 0xFFFFFFFFFFFFFFFF, 'bitLen': 64},
+                         'DCR': {'dtype': 'u4', 'offset': 32, 'bitMask': 0xFFFFFFFF, 'bitLen': 32},
+                         'TCR': {'dtype': 'u4', 'offset': 0, 'bitMask': 0xFFFFFFFF, 'bitLen': 32}}
 
 ##############################
 
@@ -114,6 +126,12 @@ def getFrameFormat(self, num, keepRaw=False):
             return QKD_FRAME_FORMAT_WRAW, format_reverse_bits
         else:
             return QKD_FRAME_FORMAT, format_reverse_bits
+    elif num == 4:
+        format_reverse_bits = False
+        if keepRaw:
+            return ZPP_FRAME_FORMAT_WRAW, format_reverse_bits
+        else:
+            return ZPP_FRAME_FORMAT, format_reverse_bits
     else:
         return -1
 
@@ -139,5 +157,10 @@ def getFrameDtype(self, num, keepRaw=False):
             return QKD_FRAME_DTYPE_WRAW
         else:
             return QKD_FRAME_DTYPE
+    elif num == 4:
+        if keepRaw:
+            return ZPP_FRAME_DTYPE_WRAW
+        else:
+            return ZPP_FRAME_DTYPE
     else:
         return -1
