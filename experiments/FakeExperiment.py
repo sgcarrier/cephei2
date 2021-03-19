@@ -79,7 +79,7 @@ class FakeExperiment(BasicExperiment):
         col1 = np.random.random_integers(0, 10, L)
         col2 = np.array([0,1,2,3,4,5,6,7,8,9])
 
-        to_write = np.array(np.dstack((col1,col2)), dtype=temp_dtype)
+        to_write = np.array(list(zip(col1,col2)), dtype=temp_dtype)
 
         path = "/VAR1_{0}/VAR2_{1}".format(first_variable,second_variable)
         self.h[self.basePath].resize((self.h[self.basePath].shape[0] + L), axis=0)
