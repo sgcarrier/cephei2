@@ -35,6 +35,15 @@ class BasicHistogram():
                     ax.set_title(v + " TDC : " + str(tdcNum))
                     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
 
+                    maxValue = np.max(data)
+
+                    textstr = '\n'.join((
+                        r'Samples=%.2f' % (len(data),),
+                        r'MaxValue=%.2f' % (maxValue,)))
+
+                    ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14,
+                            verticalalignment='top')
+
         _logger.info("Done generating histogram and closed file")
 
 
@@ -55,8 +64,8 @@ if __name__ == '__main__':
     #             0 = Normal 64 bits no post-processing
     #             1 = PLL 20 bits
     # tdcNums = Array of tdcs addresses to display
-    BH.hist_norm(filename="/home2/cars2019/Documents/DATA/NON_CORR_TDC_SINGLE_TEST_12mars.hdf5",
-                 basePath="CHARTIER/ASIC0/MO/TDC/NON_CORR/FAST_255/SLOW_250/ARRAY_0",
+    BH.hist_norm(filename="/home2/cars2019/Documents/DATA/NON_CORR_TEST_ALL-20210319-203909.hdf5",
+                 basePath="CHARTIER/ASIC0/MO/TDC/NON_CORR/ALL/FAST_255/SLOW_250/ARRAY_0",
                  formatNum=0,
                  tdcNums=[0])
 

@@ -101,7 +101,7 @@ ZPP_FRAME_FORMAT_WRAW = {'RAW': {'dtype': 'u8', 'offset': 0, 'bitMask': 0xFFFFFF
 ##############################
 
 
-def getFrameFormat(self, num, keepRaw=False):
+def getFrameFormat(num, keepRaw=False):
     if num == 0:
         format_reverse_bits = False
         if keepRaw:
@@ -136,7 +136,7 @@ def getFrameFormat(self, num, keepRaw=False):
         return -1
 
 
-def getFrameDtype(self, num, keepRaw=False):
+def getFrameDtype(num, keepRaw=False):
     if num == 0:
         if keepRaw:
             return RAW_TIMESTAMP_FRAME_DTYPE_WRAW

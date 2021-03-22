@@ -89,11 +89,12 @@ class ExperimentRunner:
 
 
 
-def genPathName(testSection, ):
+def genPathName(boardName, ASICNum, applicationName, matrixNum,  TDC  ):
     testSectionOptions = ['PLL', 'QKD', 'CT', 'GENERIC']
     triggerSourceOptions = ['EXT', 'SPAD_ARRAY', 'EXT_SPAD']
     matrixOptions = ['M0', 'M1']
     postProcessingOptions = [0, 1, 2, 3, 4, 5]
     TDCoptions = ['SINGLE_TDC', 'MULTI_TDC']
     TDCServiceOptions = ['EXT_DAC', 'PLL']
+
     pass

@@ -45,7 +45,7 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
 
         # Custom parameters for the example, had what you want here
 
-        self.basePath = "/MO/TDC/NON_CORR"
+        self.basePath = "/M0/TDC/NON_CORR"
         self.board = Board()
 
     def setup(self):

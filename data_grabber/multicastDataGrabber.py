@@ -202,7 +202,7 @@ class MulticastDataGrabber():
             if rawData:
                 metaData = self.findMetaData(rawData['ACQ_ID'])
                 if metaData:
-                    totalPath = (str(rawData['SRC']) + '/' + str(metaData['PATH']))
+                    totalPath = (str(metaData['PATH']))
                     self.recordWithPath(rawData=rawData, path=totalPath, formatNum=metaData['FORMAT'], attributes=metaData['ATTRIBUTES'])
                     #self.record(rawData=rawData, formatNum=metaData["FORMAT"])
                 else:
