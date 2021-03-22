@@ -20,8 +20,7 @@ setup(  name='cephei2',
             'matplotlib',
             'scipy',
             'pandas'
-
-
         ],
+        scripts=['experiments/FakeExperiment.py'],
         include_package_data=True,
         zip_safe=False)

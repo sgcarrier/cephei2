@@ -18,7 +18,7 @@ _logger = logging.getLogger(__name__)
 """
 
 
-class TDC_M0_NON_CORR_Experiment(BasicExperiment):
+class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
     '''
     This is an example of an experiment. The execution goes as follows:
 
@@ -70,19 +70,19 @@ class TDC_M0_NON_CORR_Experiment(BasicExperiment):
         self.board.asic_head_0.disable_all_quench()
         #self.board.asic_head_0.disable_all_ext_trigger()
 
-    def run(self, fast_freq, slow_freq, array, tdc_addr):
+    def run(self, fast_freq, slow_freq, array):
 
         # Set PLL frequencies
         self.board.slow_oscillator_head_0.set_frequency(slow_freq)
         self.board.fast_oscillator_head_0.set_frequency(fast_freq)
 
-        self.board.asic_head_0.disable_all_tdc_but(array, [int(tdc_addr)])
-        self.board.asic_head_0.disable_all_ext_trigger_but(array, [int(tdc_addr)])
+        self.board.asic_head_0.enable_all_tdc()
+        self.board.asic_head_0.enable_all_ext_trigger()
 
         self.board.b.ICYSHSR1.PLL_ENABLE(0, 1, 0)
 
 
-        path = "{0}/FAST_{1}/SLOW_{2}/ARRAY_{3}/ADDR_{4}".format(self.basePath, fast_freq, slow_freq, array, tdc_addr)
+        path = "{0}/FAST_{1}/SLOW_{2}/ARRAY_{3}".format(self.basePath, fast_freq, slow_freq, array)
         acqID = random.randint(0, 65535)
 
         self.board.b.DMA.set_meta_data(self.filename, path, acqID, 0)
@@ -109,13 +109,13 @@ if __name__ == '__main__':
     loggingSetup("TDC_PLL_NON_CORR_Experiment", level=logging.DEBUG)
 
     # Instanciate the experiment
-    filename = "NON_CORR_TEST-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
-    experiment = TDC_M0_NON_CORR_Experiment(filename=filename,
-                                            countLimit=-1,timeLimit=300)
+    filename = "NON_CORR_TEST_ALL-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
+    experiment = TDC_M0_NON_CORR_All_Experiment(filename=filename,
+                                                countLimit=-1,timeLimit=300)
 
     # Assign the experiment to the runner and tell the variables you have and if you want to iterate
     runner = ExperimentRunner(experiment=experiment,
-                              variables={'fast_freq': 252, 'slow_freq': 250, 'array': 0, 'tdc_addr': 0})
+                              variables={'fast_freq': 252, 'slow_freq': 250, 'array': 0})
 
     # run and stop it. Ctrl-C can stop it prematurely.
     try:

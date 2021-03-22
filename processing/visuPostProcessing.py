@@ -1,5 +1,5 @@
 import numpy as np
-
+import h5py
 
 def post_processing(h, fieldName, formatNum, tdcNum):
     if (formatNum == 1):
@@ -13,10 +13,11 @@ def post_processing_RAW_FORMAT(h, fieldName, tdcNum):
     We are only interested in the ones with the corresponding TDC number
     Do the x4 to the TDC number because there is 1 TDC per 4 pixels
     """
-    if 'Addr' in h:  # This is for cases we did all TDC at the same time
-        mask = np.array(h['Addr'], dtype='int64')
-        return np.array(h[fieldName], dtype='int64')[mask == (tdcNum * 4)]
+
+    if isinstance(h, h5py.Dataset):  # This is for cases we did all TDC at the same time
+        return np.array(h[fieldName], dtype='int64')[h['Addr'] == (tdcNum * 4)]
     else:  # This is for cases where we did one TDC at a time
+        print("shit")
         newBasePath = "ADDR_{}".format(tdcNum)
         return np.array(h[newBasePath][fieldName], dtype='int64')
 
