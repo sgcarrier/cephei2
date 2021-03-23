@@ -51,7 +51,7 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
 
         # Custom parameters for the example, had what you want here
 
-        self.basePath = "/M0/TDC/NON_CORR"
+        self.basePath = "/MO/TDC/NON_CORR_ALL"
         self.board = Board()
 
     def setup(self):
@@ -137,11 +137,12 @@ if __name__ == '__main__':
     # Instanciate the experiment
     filename = "NON_CORR_TEST_ALL-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
     experiment = TDC_M0_NON_CORR_All_Experiment(filename=filename,
-                                                countLimit=520000000,timeLimit=-1)
+                                                countLimit=-1,timeLimit=900)
 
     # Assign the experiment to the runner and tell the variables you have and if you want to iterate
     runner = ExperimentRunner(experiment=experiment,
-                              variables={'fast_freq': (252, 256, 3), 'slow_freq': 250, 'array': 0})
+                              variables={'fast_freq': 255, 'slow_freq': 250, 'array': 0})
+
 
     # run and stop it. Ctrl-C can stop it prematurely.
     try:

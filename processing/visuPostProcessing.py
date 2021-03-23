@@ -60,3 +60,35 @@ def findTrueMaxCoarseWThreshold(coarse_data, threshold):
         if hist_coarse[c] < (np.mean(hist_coarse)*threshold):
             return c-1
     return max(coarse_data)
+
+def findTrueMaxCoarseDecimal(coarse_data, threshold):
+    """
+    Find the true number of coarse using the threshold method.
+    This is used to avoid glitched high coarses from skewing the results
+    Recommended threshold = 0.1
+    """
+    hist_coarse = np.bincount(coarse_data)
+    for c in range(1, max(coarse_data)):
+        if hist_coarse[c] < (np.mean(hist_coarse)*threshold):
+            decimal = hist_coarse[c-1]/np.mean(hist_coarse[1:c-2])
+            return c-2+decimal
+
+    return max(coarse_data)
+
+def findCoarseTiming(coarse_data):
+    """
+    Find the true number of fine using threshold method.
+    This checks the count in every valid coarse and assigns a fractional number to the max coarse.
+    This is because the last fines are often just caused by jitter.
+    """
+    coarseTiming = 4000/coarse_data
+    return coarseTiming
+
+def findResolution(coarse_data, fine_data):
+    """
+    Find the true number of fine using threshold method.
+    This checks the count in every valid coarse and assigns a fractional number to the max coarse.
+    This is because the last fines are often just caused by jitter.
+    """
+    resolution = round(4000/(coarse_data*fine_data))
+    return resolution

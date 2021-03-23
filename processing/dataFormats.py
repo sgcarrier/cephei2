@@ -30,8 +30,7 @@ PLL_TDC_FRAME_DTYPE_WRAW = np.dtype({'names': ['Coarse', 'Fine', 'RAW'],
                                 'formats': ['u4', 'u4', 'u8']})
 
 ZPP_FRAME_DTYPE_WRAW = np.dtype({'names': ['TCR', 'DCR', 'RAW'],
-                                 'formats': ['u4', 'u4', 'u8']})
-
+                                'formats': ['u4', 'u4', 'u8']})
 
 ########################
 
