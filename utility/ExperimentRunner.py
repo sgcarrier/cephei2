@@ -89,12 +89,41 @@ class ExperimentRunner:
 
 
 
-def genPathName(boardName, ASICNum, applicationName, matrixNum,  TDC  ):
-    testSectionOptions = ['PLL', 'QKD', 'CT', 'GENERIC']
-    triggerSourceOptions = ['EXT', 'SPAD_ARRAY', 'EXT_SPAD']
-    matrixOptions = ['M0', 'M1']
-    postProcessingOptions = [0, 1, 2, 3, 4, 5]
-    TDCoptions = ['SINGLE_TDC', 'MULTI_TDC']
-    TDCServiceOptions = ['EXT_DAC', 'PLL']
+def genPathName_TDC(boardName, ASICNum, matrixNum, TDCsActive, controlSource, fastVal, slowVal, testType, triggerType):
 
-    pass
+    if isinstance(TDCsActive, list):
+        numTDC = len(TDCsActive)
+        nameString = ""
+        for i in TDCsActive:
+            nameString += str(i) + '_'
+        nameString = nameString[:-1]
+    elif isinstance(TDCsActive, str):
+        numTDC = TDCsActive
+        nameString = TDCsActive
+    else:
+        _logger.error("TDCsActive must be a list or str")
+        return None
+
+    path = boardName + '/'
+    path += "ASIC" + str(ASICNum) + '/'
+    path += "TDC/"
+    path += "M" + str(matrixNum) + '/'
+    path += str(numTDC) + "_TDC_ACTIVE/"
+    path += controlSource + '/'
+    path += "FAST_" + str(fastVal) + '/'
+    path += "SLOW_" + str(slowVal) + '/'
+    path += testType + '/'
+    path += triggerType + '/'
+    path += "ADDR_" + nameString
+
+    return path
+
+
+
+    #testSectionOptions = ['PLL', 'QKD', 'CT', 'GENERIC']
+    #triggerSourceOptions = ['EXT', 'SPAD_ARRAY', 'EXT_SPAD']
+    #matrixOptions = ['M0', 'M1']
+    #postProcessingOptions = [0, 1, 2, 3, 4, 5]
+    #TDCoptions = ['SINGLE_TDC', 'MULTI_TDC']
+    #TDCServiceOptions = ['EXT_DAC', 'PLL']
+

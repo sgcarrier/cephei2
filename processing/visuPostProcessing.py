@@ -15,7 +15,7 @@ def post_processing_RAW_FORMAT(h, fieldName, tdcNum):
     """
 
     if isinstance(h, h5py.Dataset):  # This is for cases we did all TDC at the same time
-        return np.array(h[fieldName], dtype='int64')[h['Addr'] == (tdcNum * 4)]
+        return np.array(h[fieldName])[h['Addr'] == (tdcNum * 4)]
     else:  # This is for cases where we did one TDC at a time
         print("shit")
         newBasePath = "ADDR_{}".format(tdcNum)
