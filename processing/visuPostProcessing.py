@@ -1,5 +1,6 @@
 import numpy as np
 import h5py
+from tqdm import tqdm
 
 def post_processing(h, fieldName, formatNum, tdcNum):
     if (formatNum == 1):
@@ -26,7 +27,7 @@ def post_processing_PLL_FORMAT(h, fieldName):
     Post-Processing for the PLL frames. They are 20 bits long.
     """
     if (fieldName == "Coarse"):
-        ret = (np.array(h[fieldName], dtype='int64') - (np.array(h['Fine'], dtype='int64') + 1))
+        ret = (np.array(h[fieldName], dtype='int64') - (np.array(h['Fine'], dtype='int64'))) + 1
         return ret
 
     elif (fieldName == "Fine"):
@@ -92,3 +93,42 @@ def findResolution(coarse_data, fine_data):
     """
     resolution = round(4000/(coarse_data*fine_data))
     return resolution
+
+
+def findMatchingTDCEvents(tdc1Num, tdc2Num, data):
+    '''
+    Finds the events with the same Global Counter (the same event) and returns the Coarse and Fine columns for both
+    TDCs. They are ordered in matching pairs.
+    :param tdc1Num: Number of the TDC # 1 to use
+    :param tdc2Num: Number of the TDC # 2 to use
+    :param data: Raw data, dont filter out the column names
+    :return: the coarse,fine columns of all matched events for TDC#1 and TDC#2
+    '''
+    TDC1Data = data[(data["Addr"] == tdc1Num)]
+    TDC2Data = data[(data["Addr"] == tdc2Num)]
+
+    # Set columns Coarse and Fine
+    data_type = np.dtype({'names': ['Coarse', 'Fine'], 'formats': ['u4', 'u4']})
+
+    data1 = np.empty(0, dtype=data_type)
+    data2 = np.empty(0, dtype=data_type)
+
+    print(len(TDC1Data))
+
+    for i in tqdm(range(len(TDC1Data))):
+        for j in range(-50, 51, 1):
+            if ((i+j) < 0) or ((i+j) >= len(TDC2Data['Global'])):
+                continue
+            if TDC1Data['Global'][i] == TDC2Data['Global'][i+j]:
+
+                data1 = np.append(data1, np.array(TDC1Data[['Coarse', 'Fine']][i], dtype=data_type))
+                data2 = np.append(data2, np.array(TDC2Data[['Coarse', 'Fine']][i+j], dtype=data_type))
+
+
+    print(len(data1))
+    return data1, data2
+
+
+
+
+
