@@ -2,11 +2,17 @@ from utility.BasicExperiment import BasicExperiment
 import logging
 import time
 import random
+from tqdm import tqdm
+
+
+
+
 
 from functions.helper_functions import Board
 from functions.helper_functions import Divider
 from functions.helper_functions import MUX
 
+from utility.ExperimentRunner import genPathName_TDC
 
 _logger = logging.getLogger(__name__)
 
@@ -45,7 +51,7 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
 
         # Custom parameters for the example, had what you want here
 
-        self.basePath = "/M0/TDC/NON_CORR"
+        self.basePath = "/MO/TDC/NON_CORR_ALL"
         self.board = Board()
 
     def setup(self):
@@ -70,7 +76,10 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
         self.board.asic_head_0.disable_all_quench()
         #self.board.asic_head_0.disable_all_ext_trigger()
 
+        self.pbar = tqdm(total=self.countLimit)
+
     def run(self, fast_freq, slow_freq, array):
+
 
         # Set PLL frequencies
         self.board.slow_oscillator_head_0.set_frequency(slow_freq)
@@ -81,8 +90,18 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
 
         self.board.b.ICYSHSR1.PLL_ENABLE(0, 1, 0)
 
+        path = genPathName_TDC( boardName="CHARTIER",
+                                ASICNum=1,
+                                matrixNum=array,
+                                TDCsActive="ALL",
+                                controlSource="PLL",
+                                fastVal=fast_freq,
+                                slowVal=slow_freq,
+                                testType="NON_CORR",
+                                triggerType="EXT")
 
-        path = "{0}/FAST_{1}/SLOW_{2}/ARRAY_{3}".format(self.basePath, fast_freq, slow_freq, array)
+
+        #path = "{0}/FAST_{1}/SLOW_{2}/ARRAY_{3}".format(self.basePath, fast_freq, slow_freq, array)
         acqID = random.randint(0, 65535)
 
         self.board.b.DMA.set_meta_data(self.filename, path, acqID, 0)
@@ -100,6 +119,13 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
         :return:
         '''
         self.board.asic_head_0.reset()
+        self.pbar.close()
+
+
+    def progressBar(self):
+        if self.countLimit != -1:
+            self.pbar = tqdm(total=self.countLimit)
+            self.pbar.close()
 
 if __name__ == '__main__':
     from utility.ExperimentRunner import ExperimentRunner
@@ -111,11 +137,12 @@ if __name__ == '__main__':
     # Instanciate the experiment
     filename = "NON_CORR_TEST_ALL-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
     experiment = TDC_M0_NON_CORR_All_Experiment(filename=filename,
-                                                countLimit=-1,timeLimit=300)
+                                                countLimit=-1,timeLimit=900)
 
     # Assign the experiment to the runner and tell the variables you have and if you want to iterate
     runner = ExperimentRunner(experiment=experiment,
-                              variables={'fast_freq': 252, 'slow_freq': 250, 'array': 0})
+                              variables={'fast_freq': 255, 'slow_freq': 250, 'array': 0})
+
 
     # run and stop it. Ctrl-C can stop it prematurely.
     try:
