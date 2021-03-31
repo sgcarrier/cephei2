@@ -17,7 +17,6 @@ def post_processing_RAW_FORMAT(h, fieldName, tdcNum):
     if isinstance(h, h5py.Dataset):  # This is for cases we did all TDC at the same time
         return np.array(h[fieldName], dtype='int64')[h['Addr'] == (tdcNum * 4)]
     else:  # This is for cases where we did one TDC at a time
-        print("shit")
         newBasePath = "ADDR_{}".format(tdcNum)
         return np.array(h[newBasePath][fieldName], dtype='int64')
 
@@ -40,10 +39,11 @@ def findTrueMaxFineWThreshold(coarse_data, fine_data, threshold):
     This checks the count in every valid coarse and assigns a fractional number to the max coarse.
     This is because the last fines are often just caused by jitter.
     """
-    trueMaxCoarse = findTrueMaxCoarseWThreshold(coarse_data, threshold=0.1)
+    trueMaxCoarse = findTrueMaxCoarseWThreshold(coarse_data, threshold=0.01)
+    fineWGoodCoarse = fine_data[coarse_data <= trueMaxCoarse]
 
-    hist_fine = np.bincount(fine_data[coarse_data <= trueMaxCoarse])
-    for f in range(int(max(fine_data)/2), max(fine_data)):
+    hist_fine = np.bincount(fineWGoodCoarse)
+    for f in range(10, max(fineWGoodCoarse)):
         if hist_fine[f] < (max(hist_fine)*threshold):
             return f-1
 
@@ -68,12 +68,14 @@ def findTrueMaxCoarseDecimal(coarse_data, threshold):
     Recommended threshold = 0.1
     """
     hist_coarse = np.bincount(coarse_data)
-    for c in range(1, max(coarse_data)):
+    for c in range(1, max(coarse_data)+1):
         if hist_coarse[c] < (np.mean(hist_coarse)*threshold):
             decimal = hist_coarse[c-1]/np.mean(hist_coarse[1:c-2])
             return c-2+decimal
 
-    return max(coarse_data)
+    decimal = hist_coarse[max(coarse_data)]/np.mean(hist_coarse[1:max(coarse_data)-1])
+
+    return max(coarse_data)-1+decimal
 
 def findCoarseTiming(coarse_data):
     """
