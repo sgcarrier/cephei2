@@ -45,6 +45,9 @@ class RawDataProcessor():
         dtype = getFrameDtype(frameFormatNum, keepRaw=keepRaw)
         outArr = np.zeros(dataLen, dtype=dtype)
 
+        if dataLen == 0:
+            return None
+
         for field, parameters in format.items():
             outArr[field] = (np.bitwise_and(np.right_shift(filteredData['DATA'], parameters['offset']), parameters['bitMask']))  #.as_type(parameters['dtype'])
             if self.format_reverse_bits:

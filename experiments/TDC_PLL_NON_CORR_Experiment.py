@@ -44,7 +44,7 @@ class TDC_PLL_NON_CORR_Experiment(BasicExperiment):
 
         # Custom parameters for the example, had what you want here
 
-        self.basePath = "/PLL/TDC/NON_CORR"
+        self.basePath = "CHARTIER/ASIC0/PLL/NON_CORR"
         self.board = Board()
 
     def setup(self):
@@ -76,7 +76,7 @@ class TDC_PLL_NON_CORR_Experiment(BasicExperiment):
         self.board.slow_oscillator_head_0.set_frequency(slow_freq)
         self.board.fast_oscillator_head_0.set_frequency(fast_freq)
 
-        path = self.basePath + "/FAST" + str(fast_freq) + "/SLOW" + str(slow_freq)
+        #path = self.basePath + "/FAST" + str(fast_freq) + "/SLOW" + str(slow_freq)
         path = "{0}/FAST_{1}/SLOW_{2}".format(self.basePath, fast_freq, slow_freq)
         acqID = random.randint(0, 65535)
 
@@ -106,12 +106,13 @@ if __name__ == '__main__':
     loggingSetup("TDC_PLL_NON_CORR_Experiment", level=logging.DEBUG)
 
     # Instanciate the experiment
-    experiment = TDC_PLL_NON_CORR_Experiment(filename="../output/example_NON_CORR_TEST.hdf5",
-                                         countLimit=10000)
+    filename = "example_NON_CORR_TEST-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
+    experiment = TDC_PLL_NON_CORR_Experiment(filename=filename,
+                                         countLimit=10000000)
 
     # Assign the experiment to the runner and tell the variables you have and if you want to iterate
     runner = ExperimentRunner(experiment=experiment,
-                              variables={'fast_freq': 252, 'slow_freq': 250})
+                              variables={'fast_freq': 255, 'slow_freq': 250})
 
     # run and stop it. Ctrl-C can stop it prematurely.
     try:

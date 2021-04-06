@@ -2,11 +2,17 @@ from utility.BasicExperiment import BasicExperiment
 import logging
 import time
 import random
+from tqdm import tqdm
+
+
+
+
 
 from functions.helper_functions import Board
 from functions.helper_functions import Divider
 from functions.helper_functions import MUX
 
+from utility.ExperimentRunner import genPathName_TDC
 
 _logger = logging.getLogger(__name__)
 
@@ -18,7 +24,7 @@ _logger = logging.getLogger(__name__)
 """
 
 
-class QKD_WINDOW_NON_CORR_Experiment(BasicExperiment):
+class SERIAL_COMM_TEST(BasicExperiment):
     '''
     This is an example of an experiment. The execution goes as follows:
 
@@ -32,7 +38,7 @@ class QKD_WINDOW_NON_CORR_Experiment(BasicExperiment):
     Follow along in the logs and see how the experiement is doing.
     '''
 
-    def __init__(self, filename, countLimit=-1, timeLimit=-1):
+    def __init__(self, filename, countLimit, timeLimit):
         '''
 
         :param filename: Filename you will write to.
@@ -44,8 +50,6 @@ class QKD_WINDOW_NON_CORR_Experiment(BasicExperiment):
         self.timeLimit = timeLimit
 
         # Custom parameters for the example, had what you want here
-
-        self.basePath = "/M0/QKD/NON_CORR"
         self.board = Board()
 
     def setup(self):
@@ -55,44 +59,44 @@ class QKD_WINDOW_NON_CORR_Experiment(BasicExperiment):
         '''
 
         # Frames are type short
-        self.board.pll.set_frequencies(10, 10, 5000)
-        self.board.window_divider.set_divider(500, Divider.MUX_CORR)
-        self.board.trigger_divider.set_divider(500, Divider.MUX_CORR)
-        self.board.mux_window_laser.select_input(MUX.DIVIDER_INPUT)
+        self.board.asic_head_0.frame_type_normal()
+
+        self.board.trigger_oscillator.set_frequency(20)  # div by 2 later
+        self.board.trigger_divider.set_divider(500, Divider.MUX_NOT_CORR)
         self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
-        self.board.mux_window_external.select_input(MUX.PCB_INPUT)
         self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
-        self.board.window_delay_head_0.set_delay_code(0)
-        self.board.trigger_delay_head_0.set_delay_code(511)     # Max delay
+        self.board.trigger_delay_head_0.set_delay_code(0)
         self.board.asic_head_0.reset()
 
         time.sleep(1)
 
-    def run(self, fast_freq, slow_freq, delay, window_length):
+        #self.board.asic_head_0.disable_all_tdc()
+        self.board.asic_head_0.disable_all_quench()
+        #self.board.asic_head_0.disable_all_ext_trigger()
 
-        # Set PLL Frequencies and enable
-        self.board.slow_oscillator_head_0.set_frequency(slow_freq)
-        self.board.fast_oscillator_head_0.set_frequency(fast_freq)
-        self.board.b.ICYSHSR1.PLL_ENABLE(0, 1, 0)
+        self.pbar = tqdm(total=self.countLimit)
 
-        # Set trigger delay
-        self.board.trigger_delay_head_0.set_delay_code(int(delay))
+    def run(self, fast_freq, slow_freq, array):
 
-        # Set Window length
-        self.board.asic_head_0.set_window_size(window_length)
+        self.board.b.GEN_GPIO.gpio_set("MUX_COMM_SELECT", 1)
 
-        # Set timebins and other QKD registers
-        timeBins = [0, (window_length // 3), 2*(window_length // 3), window_length]
-        self.board.asic_head_0.confgure_QKD_mode(0, timeBins, threshold=1)
+        path = genPathName_TDC( boardName="CHARTIER",
+                                ASICNum=0,
+                                matrixNum=array,
+                                TDCsActive="ALL",
+                                controlSource="PLL",
+                                fastVal=fast_freq,
+                                slowVal=slow_freq,
+                                testType="NON_CORR",
+                                triggerType="EXT")
 
+        groupName = path.split("/")
+        groupName = "/".join(groupName[:-1])
 
-        path = "{0}/FAST_{1}/SLOW_{2}/DELAY_{3}/WINDOW_LEN_{4}".format(self.basePath, fast_freq, slow_freq, delay, window_length)
-        acqID = random.randint(0, 65535)
-
-        self.board.b.DMA.set_meta_data(self.filename, path, acqID, 1)
-        time.sleep(2)
+        time.sleep(1)
+        self.board.b.GEN_GPIO.gpio_set("EN_COMM_COUNTER", 1)
         # This line is blocking
-        self.board.b.DMA.start_data_acquisition(acqID, maxSamples=self.countLimit, maxTime=self.timeLimit, maxEmptyTimeout=100)
+        self.board.b.DMA.start_data_acquisition_HDF(self.filename, groupName, path, self.countLimit, maxEmptyTimeout=-1)
         time.sleep(1)
 
 
@@ -103,29 +107,31 @@ class QKD_WINDOW_NON_CORR_Experiment(BasicExperiment):
         operation.
         :return:
         '''
-        self.board.asic_head_0.reset_TDC_mux()
-        self.board.asic_head_0.frame_type_normal()
         self.board.asic_head_0.reset()
+        self.pbar.close()
+
+
+    def progressBar(self):
+        if self.countLimit != -1:
+            self.pbar = tqdm(total=self.countLimit)
+            self.pbar.close()
 
 if __name__ == '__main__':
     from utility.ExperimentRunner import ExperimentRunner
     from utility.loggingSetup import loggingSetup
     import logging
 
-    loggingSetup("QKD_WINDOW_NON_CORR_Experiment", level=logging.DEBUG)
+    loggingSetup("TDC_PLL_NON_CORR_Experiment", level=logging.DEBUG)
 
     # Instanciate the experiment
-    filename = "QKD_WINDOW_NON_CORR_TEST-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
-    experiment = QKD_WINDOW_NON_CORR_Experiment(filename=filename,
-                                                countLimit=10000,
-                                                timeLimit=30)
+    filename = "NON_CORR_TEST_ALL-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
+    experiment = SERIAL_COMM_TEST(filename=filename,
+                                                countLimit=1000000, timeLimit=-1)
 
     # Assign the experiment to the runner and tell the variables you have and if you want to iterate
     runner = ExperimentRunner(experiment=experiment,
-                              variables={'fast_freq': 255,
-                                         'slow_freq': 250,
-                                         'delay': 0,
-                                         'window_length': 500})
+                              variables={'fast_freq': 255, 'slow_freq': 250, 'array': 0})
+
 
     # run and stop it. Ctrl-C can stop it prematurely.
     try:
@@ -135,4 +141,3 @@ if __name__ == '__main__':
         exit()
 
     runner.stop()
-

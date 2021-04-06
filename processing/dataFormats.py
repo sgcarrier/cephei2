@@ -10,6 +10,9 @@ PROCESSED_TIMESTAMP_FRAME_DTYPE = np.dtype({'names': ['Addr', 'Energy', 'Timesta
 QKD_FRAME_DTYPE = np.dtype({'names': ['DCA', 'Bin', 'Addr', 'Timestamp', 'Window', 'PP_Type', 'Message_Type', 'Parity'],
                                       'formats': ['B', 'u4', 'u4', 'u4', 'u4', 'u4', 'u4', 'B']})
 
+RAW_TIMESTAMP_FRAME_FORMAT_SINGLE_DTYPE = np.dtype({'names': ['Addr', 'Energy', 'Global', 'Fine', 'Coarse', 'CorrBit', 'RESERVED', 'PP_Type', 'Message_Type', 'Parity'],
+                                                   'formats': ['u2', 'u1', 'u4', 'u2', 'u1', 'B', 'u2', 'u4', 'u4', 'B']})
+
 PLL_TDC_FRAME_DTYPE = np.dtype({'names': ['Coarse', 'Fine'],
                                 'formats': ['u4', 'u4']})
 
@@ -56,6 +59,17 @@ QKD_FRAME_FORMAT = {'Parity': {'dtype': 'B', 'offset': 63, 'bitMask': 0x1, 'bitL
                     'Addr': {'dtype': 'u4', 'offset': 4, 'bitMask': 0x1FF, 'bitLen': 9},
                     'Bin': {'dtype': 'u4', 'offset': 1, 'bitMask': 0x7, 'bitLen': 3},
                     'DCA': {'dtype': 'B', 'offset': 0, 'bitMask': 0x1, 'bitLen': 1}}
+
+RAW_TIMESTAMP_FRAME_FORMAT_SINGLE = {'Parity': {'dtype': 'B', 'offset': 63, 'bitMask': 0x1, 'bitLen': 1},
+                    'Message_Type': {'dtype': 'u4', 'offset': 60, 'bitMask': 0x7, 'bitLen': 3},
+                    'PP_Type': {'dtype': 'u4', 'offset': 56, 'bitMask': 0xF, 'bitLen': 4},
+                    'RESERVED': {'dtype': 'u2', 'offset': 53, 'bitMask': 0x7, 'bitLen': 3},
+                    'CorrBit': {'dtype': 'B', 'offset': 52, 'bitMask': 0x01, 'bitLen': 1},
+                    'Coarse': {'dtype': 'u1', 'offset': 48, 'bitMask': 0xF, 'bitLen': 4},
+                    'Fine': {'dtype': 'u2', 'offset': 38, 'bitMask': 0x3FF, 'bitLen': 10},
+                    'Global': {'dtype': 'u4', 'offset': 17, 'bitMask': 0x1FFFFF, 'bitLen': 21},
+                    'Energy': {'dtype': 'u1', 'offset': 9, 'bitMask': 0xFF, 'bitLen': 8},
+                    'Addr': {'dtype': 'u2', 'offset': 0, 'bitMask': 0x1FF, 'bitLen': 9}}
 
 PLL_TDC_FRAME_FORMAT = {'Fine': {'dtype': 'u4', 'offset': 10, 'bitMask': 0x3FF, 'bitLen': 10},
                         'Coarse': {'dtype': 'u4', 'offset': 0, 'bitMask': 0x3FF, 'bitLen': 10}}
@@ -131,6 +145,13 @@ def getFrameFormat(num, keepRaw=False):
             return ZPP_FRAME_FORMAT_WRAW, format_reverse_bits
         else:
             return ZPP_FRAME_FORMAT, format_reverse_bits
+
+    elif num == 5:
+        format_reverse_bits = False
+        if keepRaw:
+            return RAW_TIMESTAMP_FRAME_FORMAT_SINGLE, format_reverse_bits
+        else:
+            return RAW_TIMESTAMP_FRAME_FORMAT_SINGLE, format_reverse_bits
     else:
         return -1
 
@@ -161,5 +182,10 @@ def getFrameDtype(num, keepRaw=False):
             return ZPP_FRAME_DTYPE_WRAW
         else:
             return ZPP_FRAME_DTYPE
+    elif num == 5:
+        if keepRaw:
+            return RAW_TIMESTAMP_FRAME_FORMAT_SINGLE_DTYPE
+        else:
+            return RAW_TIMESTAMP_FRAME_FORMAT_SINGLE_DTYPE
     else:
         return -1

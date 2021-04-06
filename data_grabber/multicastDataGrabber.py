@@ -259,7 +259,7 @@ class MulticastDataGrabber():
 
 
         if msg['ATTRIBUTES'] and msg['ATTRIBUTES'] != b'None':
-            msg['ATTRIBUTES'] = ast.literal_eval(msg['ATTRIBUTES']).decode('utf-8')
+            msg['ATTRIBUTES'] = ast.literal_eval(msg['ATTRIBUTES'].decode('utf-8'))
         else:
             msg['ATTRIBUTES'] = None
 
@@ -341,18 +341,20 @@ class MulticastDataGrabber():
     def recordWithPath(self, rawData, path,formatNum=0, attributes=None):
 
         dataArr = self.RDP.raw2compArray(rawData, formatNum, keepRaw=True)
-        if (path) not in self.h.keys():
-            self.h.create_dataset(path, (0,), maxshape=(None,), dtype=dataArr.dtype, compression=self.compression)
 
-        L = dataArr.shape[0]
-        self.h[path].resize((self.h[path].shape[0] + L), axis=0)
-        self.h[path][-L:] = dataArr
+        if dataArr:
+            if (path) not in self.h.keys():
+                self.h.create_dataset(path, (0,), maxshape=(None,), dtype=dataArr.dtype, compression=self.compression)
 
-        if attributes:
-            for key, val in attributes.items():
-                self.h[path].attrs[key] = val
+            L = dataArr.shape[0]
+            self.h[path].resize((self.h[path].shape[0] + L), axis=0)
+            self.h[path][-L:] = dataArr
 
-        self.h.flush()
+            if attributes:
+                for key, val in attributes.items():
+                    self.h[path].attrs[key] = val
+
+            self.h.flush()
 
 
 

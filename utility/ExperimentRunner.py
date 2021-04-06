@@ -118,6 +118,38 @@ def genPathName_TDC(boardName, ASICNum, matrixNum, TDCsActive, controlSource, fa
 
     return path
 
+def genPathName_QKD(boardName, ASICNum, matrixNum, TDCsActive, controlSource, fastVal, slowVal, testType,
+                    triggerType, windowLength, delay):
+
+    if isinstance(TDCsActive, list):
+        numTDC = len(TDCsActive)
+        nameString = ""
+        for i in TDCsActive:
+            nameString += str(i) + '_'
+        nameString = nameString[:-1]
+    elif isinstance(TDCsActive, str):
+        numTDC = TDCsActive
+        nameString = TDCsActive
+    else:
+        _logger.error("TDCsActive must be a list or str")
+        return None
+
+    path = boardName + '/'
+    path += "ASIC" + str(ASICNum) + '/'
+    path += "QKD/"
+    path += "M" + str(matrixNum) + '/'
+    path += str(numTDC) + "_TDC_ACTIVE/"
+    path += controlSource + '/'
+    path += "FAST_" + str(fastVal) + '/'
+    path += "SLOW_" + str(slowVal) + '/'
+    path += testType + '/'
+    path += triggerType + '/'
+    path += "WND_LEN_" + str(windowLength) + '/'
+    path += "DELAY_" + str(delay) + '/'
+    path += "ADDR_" + nameString
+
+    return path
+
 
 
     #testSectionOptions = ['PLL', 'QKD', 'CT', 'GENERIC']
