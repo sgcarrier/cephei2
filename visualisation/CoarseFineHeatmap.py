@@ -204,10 +204,10 @@ if __name__ == '__main__':
     #                          numberOfTDCs=49)
 
     BH.heatmap_with_decimal(filename="C:\\Users\\labm1507\\Documents\\DATA\\NON_CORR_TEST_ALL-20210319-203909.hdf5",
-                              basePath="CHARTIER/ASIC0/MO/TDC/NON_CORR/ALL/FAST_255/SLOW_250/ARRAY_0",
-                              formatNum=0,
-                              figureNum=3,
-                              numberOfTDCs=49)
+                            basePath="CHARTIER/ASIC0/MO/TDC/NON_CORR/ALL/FAST_255/SLOW_250/ARRAY_0",
+                            formatNum=0,
+                            figureNum=3,
+                            numberOfTDCs=49)
 
     # Actually display the graphs
     plt.show()
