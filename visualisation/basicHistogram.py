@@ -17,6 +17,18 @@ class BasicHistogram():
             # Get the data pointer
             ds = h[basePath]
 
+            globalCounters = np.zeros(len(ds))
+            for i in range(len(ds)):
+                globalCounters[i] = (ds[i] >> np.uint64(17)) & np.uint64(0x1FFFFF)
+
+            plt.figure(1)
+            ax = plt.subplot(1, 1, 1)
+            ax.plot(globalCounters)
+
+            plt.show()
+
+            exit()
+
             number_of_subplots = 2 # 2 because we have fine and coarse
             for tdcNum in tdcNums:
                 plt.figure(tdcNum)
@@ -64,8 +76,8 @@ if __name__ == '__main__':
     #             0 = Normal 64 bits no post-processing
     #             1 = PLL 20 bits
     # tdcNums = Array of tdcs addresses to display
-    BH.hist_norm(filename="/home2/cars2019/Documents/DATA/NON_CORR_TEST_ALL-20210322-210304.hdf5",
-                 basePath="CHARTIER/ASIC0/MO/TDC/NON_CORR/ALL/FAST_255/SLOW_250/ARRAY_0",
+    BH.hist_norm(filename="/home2/cars2019/Documents/DATA/NON_CORR_TEST_ALL-20210407-194310.hdf5",
+                 basePath="CHARTIER/ASIC0/TDC/M0/ALL_TDC_ACTIVE/PLL/FAST_255/SLOW_250/NON_CORR/EXT/ADDR_ALL",
                  formatNum=0,
                  tdcNums=[0])
 

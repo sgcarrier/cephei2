@@ -1,19 +1,19 @@
+#!/usr/bin/python3
 from utility.BasicExperiment import BasicExperiment
 import h5py
 import numpy as np
 import logging
 import time
 
-
+from functions.agilent_scope_functions import delayLineAgilent
 from functions.helper_functions import Board
 from functions.helper_functions import Divider
 from functions.helper_functions import MUX
-from functions.helper_functions import TemperatureProbe
 
 
 _logger = logging.getLogger(__name__)
 
-temp_dtype = np.dtype({'names': ['col1', 'col2'], 'formats': ['i4', 'i4']})
+delay_line_type = np.dtype({'names': ['delay_code_bit', 'hits', 'mean', 'std_dev', 'start_temp', 'end_temp'], 'formats': ['i4', 'i4', 'f4', 'f4', 'f4', 'f4']})
 
 
 class DelayLineExperiment(BasicExperiment):
@@ -42,19 +42,32 @@ class DelayLineExperiment(BasicExperiment):
 
         # Custom parameters for the example, had what you want here
         self.h = None
-        self.basePath = ""
+        self.basePath = "/BOARD_0/TRIGGER"
+
+        self.board = Board()
 
     def setup(self):
         '''
         The setup is executed once before all the calls to run() with different iterations.
         This is where you assign setting that will not change during your experiment
         '''
+        VISA_ADDRESS = 'TCPIP0::10.51.92.166::inst0::INSTR'
+        dataFolder = "C:/Users/Administrator/Documents/SimonCarrier/DATA"
+        setupFile = "C:/Users/Administrator/Documents/SimonCarrier/SETUP/delay_line_setup.set"
+        self.agilent = delayLineAgilent(VISA_ADDRESS, dataFolder, setupFile)
         self.h = h5py.File(self.filename, "a", libver='latest')
+        self.h.create_dataset(self.basePath, (0,), maxshape=(None,), dtype=delay_line_type)
 
-        self.h.create_dataset(self.basePath, (0,), maxshape=(None,), dtype=temp_dtype)
+        self.board.trigger_oscillator.set_frequency(20)  # div by 2 later
+        self.board.trigger_divider.set_divider(500, Divider.MUX_NOT_CORR)
+        self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
+        self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
+        self.board.trigger_delay_head_0.set_delay_code(0)
+
+        self.datafile_prefix = "delay_line_charac-" + time.strftime("%Y%m%d-%H%M%S")
 
 
-    def run(self):
+    def run(self, delay_code_bit):
         '''
         This is the main running function. This where you setup your experiments with specific variables for your
         acquisition. This function MUST be blocking because you are acquiring data and writing that data to an open
@@ -62,25 +75,23 @@ class DelayLineExperiment(BasicExperiment):
         :param first_variable:  The first custom variable you need
         :param second_variable: The second
         '''
-        L = 10
 
+        delay_code = 1 << delay_code_bit
+        self.board.trigger_delay_head_0.set_delay_code(delay_code)
 
+        time.sleep(3)
 
-        #for field in self.fields:
-        col1 = np.random.random_integers(0, 10, L)
-        col2 = np.array([0,1,2,3,4,5,6,7,8,9])
+        start_temp = self.board.temp_probe.get_temp()
 
-        to_write = np.array(list(zip(col1,col2)), dtype=temp_dtype)
+        datafile_name = self.datafile_prefix+"_delay_" + str(delay_code)
+        n_hits, mean, std_dev = self.agilent.start_acq(self.countLimit, datafile_name)
 
-        path = "/VAR1_{0}/VAR2_{1}".format(first_variable,second_variable)
-        self.h[self.basePath].resize((self.h[self.basePath].shape[0] + L), axis=0)
-        self.h[self.basePath][-L:] = to_write
+        end_temp = self.board.temp_probe.get_temp()
 
-        self.h.attrs['CurrSetRef'] = self.h[self.basePath].ref
+        data = np.array([(delay_code_bit, n_hits, mean, std_dev, start_temp, end_temp)], dtype=delay_line_type)
 
-
-
-
+        self.h[self.basePath].resize((self.h[self.basePath].shape[0] + 1), axis=0)
+        self.h[self.basePath][-1:] = data
 
         self.h.flush()
 
@@ -103,13 +114,13 @@ if __name__ == '__main__':
 
 
     # Instanciate the example experiment
-    experiment = FakeExperiment(filename="../output/test_compound.hdf5",
-                                         countLimit=50000)
+    filename = "DELAY_LINE-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
+    experiment = DelayLineExperiment(filename=filename,
+                                         countLimit=1000000)
 
     # Assign the experiment to the runner and tell the variables you have and if you want to iterate
-    # in this case, first_variable doesn't change, and second_variable starts at 6000, ends at 3000 by -500 steps
     runner = ExperimentRunner(experiment=experiment,
-                              variables={'first_variable': 15000, 'second_variable':(6000,3000,-500)})
+                              variables={'delay_code_bit': (0, 10, 1)})
 
     #run and stop it. Ctrl-C can stop it prematurely.
     runner.start()

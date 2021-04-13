@@ -19,7 +19,8 @@ setup(  name='cephei2',
             'telnetlib3',
             'matplotlib',
             'scipy',
-            'pandas'
+            'pandas',
+            'PyVISA'
         ],
         scripts=['experiments/FakeExperiment.py'],
         include_package_data=True,

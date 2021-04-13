@@ -470,3 +470,4 @@ class Board:
         self.v_slow_head_1 = VoltageSource2V5(self.b, 4)
         self.asic_head_0 = ASIC(self.b, 0)
         self.asic_head_1 = ASIC(self.b, 1)
+        self.temp_probe = TemperatureProbe(self.b, 1)

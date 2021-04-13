@@ -1,4 +1,6 @@
-from experiments.BasicExperiment import BasicExperiment
+#!/usr/bin/python3
+
+from utility.BasicExperiment import BasicExperiment
 import h5py
 import numpy as np
 import logging

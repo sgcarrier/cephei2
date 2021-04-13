@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 from utility.BasicExperiment import BasicExperiment
 import logging
 import time
@@ -58,6 +60,9 @@ class SERIAL_COMM_TEST(BasicExperiment):
         This is where you assign setting that will not change during your experiment
         '''
 
+        self.board.b.GEN_GPIO.gpio_set("MUX_COMM_SELECT", True)
+        self.board.b.GEN_GPIO.gpio_set("EN_COMM_COUNTER", True)
+
         # Frames are type short
         self.board.asic_head_0.frame_type_normal()
 
@@ -78,7 +83,7 @@ class SERIAL_COMM_TEST(BasicExperiment):
 
     def run(self, fast_freq, slow_freq, array):
 
-        self.board.b.GEN_GPIO.gpio_set("MUX_COMM_SELECT", 1)
+
 
         path = genPathName_TDC( boardName="CHARTIER",
                                 ASICNum=0,
@@ -94,7 +99,7 @@ class SERIAL_COMM_TEST(BasicExperiment):
         groupName = "/".join(groupName[:-1])
 
         time.sleep(1)
-        self.board.b.GEN_GPIO.gpio_set("EN_COMM_COUNTER", 1)
+        #self.board.b.GEN_GPIO.gpio_set("EN_COMM_COUNTER", True)
         # This line is blocking
         self.board.b.DMA.start_data_acquisition_HDF(self.filename, groupName, path, self.countLimit, maxEmptyTimeout=-1)
         time.sleep(1)
@@ -109,6 +114,8 @@ class SERIAL_COMM_TEST(BasicExperiment):
         '''
         self.board.asic_head_0.reset()
         self.pbar.close()
+        self.board.b.GEN_GPIO.gpio_set("EN_COMM_COUNTER", False)
+        self.board.b.GEN_GPIO.gpio_set("MUX_COMM_SELECT", False)
 
 
     def progressBar(self):
@@ -121,12 +128,12 @@ if __name__ == '__main__':
     from utility.loggingSetup import loggingSetup
     import logging
 
-    loggingSetup("TDC_PLL_NON_CORR_Experiment", level=logging.DEBUG)
+    loggingSetup("SERIAL_COMM_TEST", level=logging.DEBUG)
 
     # Instanciate the experiment
-    filename = "NON_CORR_TEST_ALL-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
+    filename = "SERIAL_COMM_TEST-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
     experiment = SERIAL_COMM_TEST(filename=filename,
-                                                countLimit=1000000, timeLimit=-1)
+                                                countLimit=1500000, timeLimit=-1)
 
     # Assign the experiment to the runner and tell the variables you have and if you want to iterate
     runner = ExperimentRunner(experiment=experiment,

@@ -47,6 +47,10 @@ class ExperimentRunner:
                     varsThatChange.append(key)
                 else:
                     _logger.error("Error in val formating. Tuples must be onf size 3: (start, stop, step)")
+            elif isinstance(val, list):
+                currentVars[key] = val[0]
+                allCombinations.append(val)
+                varsThatChange.append(key)
             else:
                 _logger.error("Error in val formating. Expecting int or tuple")
                 return
@@ -149,9 +153,18 @@ def genPathName_QKD(boardName, ASICNum, matrixNum, TDCsActive, controlSource, fa
     path += "ADDR_" + nameString
 
     return path
-
-
-
+"""
+def autoGenPath(boardInst, type, headNum, asicNum):
+    boardName = repr(boardInst.b)
+    ASICNum = asicNum
+    matrixNum = boardInst.b.ICYSHSR1.OUTPUT_MUX_SELECT(headNum, 0)
+    TDCsActive = 
+    controlSource
+    fastVal
+    slowVal
+    testType
+    triggerType
+"""
     #testSectionOptions = ['PLL', 'QKD', 'CT', 'GENERIC']
     #triggerSourceOptions = ['EXT', 'SPAD_ARRAY', 'EXT_SPAD']
     #matrixOptions = ['M0', 'M1']
