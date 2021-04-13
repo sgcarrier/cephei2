@@ -17,18 +17,6 @@ class BasicHistogram():
             # Get the data pointer
             ds = h[basePath]
 
-            globalCounters = np.zeros(len(ds))
-            for i in range(len(ds)):
-                globalCounters[i] = (ds[i] >> np.uint64(17)) & np.uint64(0x1FFFFF)
-
-            plt.figure(1)
-            ax = plt.subplot(1, 1, 1)
-            ax.plot(globalCounters)
-
-            plt.show()
-
-            exit()
-
             number_of_subplots = 2 # 2 because we have fine and coarse
             for tdcNum in tdcNums:
                 plt.figure(tdcNum)
