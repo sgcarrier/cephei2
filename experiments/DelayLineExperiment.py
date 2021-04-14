@@ -67,7 +67,7 @@ class DelayLineExperiment(BasicExperiment):
         self.datafile_prefix = "delay_line_charac-" + time.strftime("%Y%m%d-%H%M%S")
 
 
-    def run(self, delay_code_bit):
+    def run(self, delay_code_bit, ftune):
         '''
         This is the main running function. This where you setup your experiments with specific variables for your
         acquisition. This function MUST be blocking because you are acquiring data and writing that data to an open
@@ -78,12 +78,13 @@ class DelayLineExperiment(BasicExperiment):
 
         delay_code = 1 << delay_code_bit
         self.board.trigger_delay_head_0.set_delay_code(delay_code)
+        self.board.trigger_delay_head_0.set_fine_tune(ftune)
 
         time.sleep(3)
 
         start_temp = self.board.temp_probe.get_temp()
 
-        datafile_name = self.datafile_prefix+"_delay_" + str(delay_code)
+        datafile_name = self.datafile_prefix+"_delay_" + str(delay_code) + "_ftune_" + str(ftune)
         n_hits, mean, std_dev = self.agilent.start_acq(self.countLimit, datafile_name)
 
         end_temp = self.board.temp_probe.get_temp()
@@ -120,7 +121,7 @@ if __name__ == '__main__':
 
     # Assign the experiment to the runner and tell the variables you have and if you want to iterate
     runner = ExperimentRunner(experiment=experiment,
-                              variables={'delay_code_bit': (0, 10, 1)})
+                              variables={'delay_code_bit': (0, 10, 1), 'ftune': (0, 65536, 257)})
 
     #run and stop it. Ctrl-C can stop it prematurely.
     runner.start()

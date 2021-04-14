@@ -119,7 +119,8 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
         time.sleep(1)
         # This line is blocking
         #self.board.b.DMA.start_data_acquisition(acqID, self.countLimit, self.timeLimit, maxEmptyTimeout=100)
-        self.board.b.DMA.start_data_acquisition_HDF(self.filename, groupName, datasetPath, self.countLimit, maxEmptyTimeout=-1)
+        self.board.b.DMA.start_data_acquisition_HDF(self.filename, groupName, datasetPath, self.countLimit, maxEmptyTimeout=-1,
+                                                    type=1, compression=0)
         time.sleep(1)
 
 
@@ -147,7 +148,7 @@ if __name__ == '__main__':
     loggingSetup("TDC_PLL_NON_CORR_Experiment", level=logging.DEBUG)
 
     # Instanciate the experiment
-    filename = "NON_CORR_TEST_ALL-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
+    filename = "mnt/NON_CORR_TEST_ALL-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
     experiment = TDC_M0_NON_CORR_All_Experiment(filename=filename,
                                                 countLimit=1000000,timeLimit=-1)
 
