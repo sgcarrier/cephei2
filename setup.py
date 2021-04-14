@@ -13,7 +13,7 @@ setup(  name='cephei2',
         install_requires=[
             'pip>=19.1',
             'markdown',
-            'h5py==2.9.0',
+            'h5py>=2.9.0',
             'requests',
             'numpy',
             'telnetlib3',

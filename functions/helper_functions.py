@@ -328,10 +328,10 @@ class TemperatureProbe:
     def __init__(self, chartier, device_id):
         self.device_id = device_id
         self.b = chartier
-        self.TMP1075_LSB = 0.00625
+        self.TMP1075_LSB = 0.0625
 
     def get_temp(self):
-        return (self.b.TMP1075.T(self.device_id) >> 4) * self.TMP1075_LSB
+        return (self.b.TMP1075.T(self.device_id)) * self.TMP1075_LSB
 
 
 # Controlled through TCA9539
