@@ -33,6 +33,36 @@ class RawDataProcessor():
         return int(tmp[::-1], 2)
 
 
+    def packagedData(self, data):
+        """Currently drops frames between packets. This can be fixed using class members to
+        store the state of the acquisition when we know for sure that there is no data dropped
+        by other systems """
+        ack = 0
+        first_frame = False
+        index = 0
+        for value in data['DATA']:
+            if value == 0xAAAAAAAAAAAAAAAA:
+                ack = 1
+                first_frame = True
+            elif value == 0xAAAAAAABAAAAAAAB:
+                ack = 0
+                first_frame = False
+            elif value == 0xFFFFFFFFFFFFFFFF:
+                ack = 0
+                first_frame = False
+            elif first_frame and ack:
+                # TODO: value = firstFrame
+                first_frame = False
+            elif ack:
+                # TODO: value = data
+                index += 1
+            else:
+                # Droped data
+                pass
+        # TODO
+        return data
+
+
     def raw2compArray(self, data, frameFormatNum, keepRaw=False):
         format, self.format_reverse_bits = getFrameFormat(frameFormatNum, keepRaw=keepRaw)
         if (format == -1):
