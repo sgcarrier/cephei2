@@ -115,10 +115,10 @@ def findMatchingTDCEvents(tdc1Num, tdc2Num, data):
     data1 = np.empty(0, dtype=data_type)
     data2 = np.empty(0, dtype=data_type)
 
-    print(len(TDC1Data))
+    print("len pre traitement TDC1 = ", len(TDC1Data))
 
     for i in tqdm(range(len(TDC1Data))):
-        for j in range(-50, 51, 1):
+        for j in range(-5, 6, 1):
             if ((i+j) < 0) or ((i+j) >= len(TDC2Data['Global'])):
                 continue
             if TDC1Data['Global'][i] == TDC2Data['Global'][i+j]:
@@ -130,7 +130,47 @@ def findMatchingTDCEvents(tdc1Num, tdc2Num, data):
     print(len(data1))
     return data1, data2
 
+def findMatchingTDCEventsFast(tdc1Num, tdc2Num, data):
+    '''
+    Finds the events with the same Global Counter (the same event) and returns the Coarse and Fine columns for both
+    TDCs. They are ordered in matching pairs.
+    :param tdc1Num: Number of the TDC # 1 to use
+    :param tdc2Num: Number of the TDC # 2 to use
+    :param data: Raw data, dont filter out the column names
+    :return: the coarse,fine columns of all matched events for TDC#1 and TDC#2
+    '''
+    TDC1Data = data[(data["Addr"] == tdc1Num)]
+    TDC2Data = data[(data["Addr"] == tdc2Num)]
 
+    # Set columns Coarse and Fine
+    data_type = np.dtype({'names': ['Coarse', 'Fine', 'Global'], 'formats': ['u4', 'u4', 'u4']})
+
+    data1 = np.empty(0, dtype=data_type)
+    data2 = np.empty(0, dtype=data_type)
+
+    print("len pre traitement TDC1 = ", len(TDC1Data))
+
+    if len(TDC1Data) > len(TDC2Data):
+        TDCtemp = TDC2Data
+        TDC2Data = TDC1Data
+        TDC1Data = TDCtemp
+
+    shift = len(TDC1Data) - len(TDC2Data)
+    step = 0
+
+    for i in tqdm(range(len(TDC1Data))):
+        if (i + step) >= len(TDC2Data['Global']):
+            continue
+        if 1 >= TDC1Data['Global'][i] - TDC2Data['Global'][i+step] >= -1:
+            data1 = np.append(data1, np.array(TDC1Data[['Coarse', 'Fine', 'Global']][i], dtype=data_type))
+            data2 = np.append(data2, np.array(TDC2Data[['Coarse', 'Fine', 'Global']][i], dtype=data_type))
+        else:
+            step = step+shift
+            data1 = np.append(data1, np.array(TDC1Data[['Coarse', 'Fine', 'Global']][i], dtype=data_type))
+            data2 = np.append(data2, np.array(TDC2Data[['Coarse', 'Fine', 'Global']][i+step], dtype=data_type))
+
+    print(len(data1))
+    return data1, data2
 
 
 

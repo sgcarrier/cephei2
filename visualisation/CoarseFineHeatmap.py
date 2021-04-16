@@ -203,8 +203,8 @@ if __name__ == '__main__':
     #                          figureNum=2,
     #                          numberOfTDCs=49)
 
-    BH.heatmap_with_decimal(filename="C:\\Users\\labm1507\\Documents\\DATA\\NON_CORR_TEST_ALL-20210319-203909.hdf5",
-                            basePath="CHARTIER/ASIC0/MO/TDC/NON_CORR/ALL/FAST_255/SLOW_250/ARRAY_0",
+    BH.heatmap_with_decimal(filename="C:\\Users\\labm1507\\Documents\\DATA\\NON_CORR_TEST_ALL-20210413-172315.hdf5",
+                            basePath="CHARTIER/ASIC0/TDC/M0/ALL_TDC_ACTIVE/PLL/FAST_255/SLOW_250/NON_CORR/EXT/ADDR_ALL/RAW",
                             formatNum=0,
                             figureNum=3,
                             numberOfTDCs=49)
