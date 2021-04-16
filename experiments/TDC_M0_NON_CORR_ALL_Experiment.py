@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 from utility.BasicExperiment import BasicExperiment
 import logging
 import time
@@ -71,6 +73,8 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
         self.board.asic_head_0.reset()
 
         time.sleep(1)
+        self.board.b.GEN_GPIO.gpio_set("MUX_COMM_SELECT", False)
+        self.board.b.GEN_GPIO.gpio_set("EN_COMM_COUNTER", False)
 
         #self.board.asic_head_0.disable_all_tdc()
         self.board.asic_head_0.disable_all_quench()
@@ -78,8 +82,9 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
 
         self.pbar = tqdm(total=self.countLimit)
 
-    def run(self, fast_freq, slow_freq, array):
 
+    def run(self, fast_freq, slow_freq, array):
+        self.board.b.ICYSHSR1.SERIAL_READOUT_TYPE(0, 0, 0)
 
         # Set PLL frequencies
         self.board.slow_oscillator_head_0.set_frequency(slow_freq)
@@ -90,8 +95,12 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
 
         self.board.b.ICYSHSR1.PLL_ENABLE(0, 1, 0)
 
+        #self.board.b.ICYSHSR1.SERIAL_READOUT_TYPE(0, 1, 0)
+        self.board.asic_head_0.set_trigger_type(1)
+        self.board.b.ICYSHSR1.TRIGGER_EVENT_DRIVEN_COLUMN_THRESHOLD(0, 1, 0)
+
         path = genPathName_TDC( boardName="CHARTIER",
-                                ASICNum=1,
+                                ASICNum=0,
                                 matrixNum=array,
                                 TDCsActive="ALL",
                                 controlSource="PLL",
@@ -100,14 +109,18 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
                                 testType="NON_CORR",
                                 triggerType="EXT")
 
+        groupName = path
+        datasetPath = path + "/RAW"
 
         #path = "{0}/FAST_{1}/SLOW_{2}/ARRAY_{3}".format(self.basePath, fast_freq, slow_freq, array)
         acqID = random.randint(0, 65535)
 
-        self.board.b.DMA.set_meta_data(self.filename, path, acqID, 0)
-        time.sleep(2)
+        #self.board.b.DMA.set_meta_data(self.filename, path, acqID, 0)
+        time.sleep(1)
         # This line is blocking
-        self.board.b.DMA.start_data_acquisition(acqID, self.countLimit, self.timeLimit, maxEmptyTimeout=100)
+        #self.board.b.DMA.start_data_acquisition(acqID, self.countLimit, self.timeLimit, maxEmptyTimeout=100)
+        self.board.b.DMA.start_data_acquisition_HDF(self.filename, groupName, datasetPath, self.countLimit, maxEmptyTimeout=-1,
+                                                    type=1, compression=0)
         time.sleep(1)
 
 
@@ -135,9 +148,9 @@ if __name__ == '__main__':
     loggingSetup("TDC_PLL_NON_CORR_Experiment", level=logging.DEBUG)
 
     # Instanciate the experiment
-    filename = "NON_CORR_TEST_ALL-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
+    filename = "mnt/NON_CORR_TEST_ALL-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
     experiment = TDC_M0_NON_CORR_All_Experiment(filename=filename,
-                                                countLimit=-1,timeLimit=900)
+                                                countLimit=1000000,timeLimit=-1)
 
     # Assign the experiment to the runner and tell the variables you have and if you want to iterate
     runner = ExperimentRunner(experiment=experiment,

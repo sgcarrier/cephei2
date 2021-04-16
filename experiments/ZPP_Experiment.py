@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 from utility.BasicExperiment import BasicExperiment
 import logging
 import time
@@ -45,7 +47,7 @@ class ZPP_Experiment(BasicExperiment):
 
         # Custom parameters for the example, had what you want here
 
-        self.basePath = "/MO/ZPP"
+        self.basePath = "CHARTIER/ASIC0/ZPP"
         self.board = Board()
 
     def setup(self):
@@ -78,11 +80,11 @@ class ZPP_Experiment(BasicExperiment):
         # self.board.fast_oscillator_head_0.set_frequency(fast_freq)
         # self.board.b.ICYSHSR1.PLL_ENABLE(0, 1, 0)
 
-        self.board.asic_head_0.disable_all_quench_but(array, pixel)
+        self.board.asic_head_0.disable_all_quench_but(array, [pixel])
         self.board.asic_head_0.configure_zpp_mode(array, readout, width, spacing)
 
 
-        path = "ARRAY_{0}/PIXEL{1}/readout{2}/width{3}/spacing{4}".format(self.basePath, array, pixel, readout, width, spacing)
+        path = "{0}/M{1}/PIXEL{2}/readout{3}/width{4}/spacing{5}".format(self.basePath, array, pixel, readout, width, spacing)
         acqID = random.randint(0, 65535)
 
         self.board.b.DMA.set_meta_data(self.filename, path, acqID, 4)
