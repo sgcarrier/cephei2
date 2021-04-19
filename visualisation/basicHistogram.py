@@ -64,10 +64,10 @@ if __name__ == '__main__':
     #             0 = Normal 64 bits no post-processing
     #             1 = PLL 20 bits
     # tdcNums = Array of tdcs addresses to display
-    BH.hist_norm(filename="/home2/cars2019/Documents/DATA/NON_CORR_TEST_ALL-20210407-194310.hdf5",
-                 basePath="CHARTIER/ASIC0/TDC/M0/ALL_TDC_ACTIVE/PLL/FAST_255/SLOW_250/NON_CORR/EXT/ADDR_ALL",
+    BH.hist_norm(filename="C:\\Users\\labm1507\\Documents\\DATA\\NON_CORR_TEST_0_4-20210331-201117.hdf5",
+                 basePath="CHARTIER/ASIC0/TDC/M0/2_TDC_ACTIVE/PLL/FAST_255/SLOW_250/NON_CORR/EXT/ADDR_0_1",
                  formatNum=0,
-                 tdcNums=[0])
+                 tdcNums=list(range(2)))
 
     # Actually display
     plt.show()
