@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import logging
 from processing.dataFormats import *
+from tqdm import tqdm
 
 
 _logger = logging.getLogger(__name__)
@@ -75,7 +76,10 @@ class RawDataProcessor():
         dtype = getFrameDtype(frameFormatNum, keepRaw=keepRaw)
         outArr = np.zeros(dataLen, dtype=dtype)
 
-        for field, parameters in format.items():
+        if dataLen == 0:
+            return None
+
+        for field, parameters in tqdm(format.items()):
             outArr[field] = (np.bitwise_and(np.right_shift(filteredData['DATA'], parameters['offset']), parameters['bitMask']))  #.as_type(parameters['dtype'])
             if self.format_reverse_bits:
                 for i in range(len(outArr[field])):

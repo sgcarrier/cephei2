@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 from utility.BasicExperiment import BasicExperiment
 import logging
 import time
@@ -135,3 +137,4 @@ if __name__ == '__main__':
         exit()
 
     runner.stop()
+

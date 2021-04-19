@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 from utility.BasicExperiment import BasicExperiment
 import logging
 import time
@@ -18,7 +20,7 @@ _logger = logging.getLogger(__name__)
 """
 
 
-class TDC_M0_NON_CORR_Experiment(BasicExperiment):
+class TDC_NON_CORR_Experiment(BasicExperiment):
     '''
     This is an example of an experiment. The execution goes as follows:
 
@@ -104,18 +106,58 @@ class TDC_M0_NON_CORR_Experiment(BasicExperiment):
 if __name__ == '__main__':
     from utility.ExperimentRunner import ExperimentRunner
     from utility.loggingSetup import loggingSetup
-    import logging
+    import argparse
+    import ast
 
-    loggingSetup("TDC_PLL_NON_CORR_Experiment", level=logging.DEBUG)
+    loggingSetup("TDC_M0_NON_CORR_Experiment", level=logging.DEBUG)
+
+    # Setup the argument parser
+    parser = argparse.ArgumentParser()
+    parser.add_argument("fast_freq", help="Frequency of the fast pll")
+    parser.add_argument("slow_freq", help="Frequency of the slow pll")
+    parser.add_argument("array", help="Array to use on the chip (0-1)")
+    parser.add_argument("tdc_addr", help="TDC address to keep active")
+    parser.add_argument("-f", help="Filename of HDF5 file")
+    parser.add_argument("-d", help="Folder destination of HDF5 file")
+    parser.add_argument("-c", type=int, help="Data count limit")
+    args = parser.parse_args()
+
+    fast_freq = ast.literal_eval(args.fast_freq)
+    slow_freq = ast.literal_eval(args.slow_freq)
+    array = ast.literal_eval(args.array)
+    tdc_addr = ast.literal_eval(args.tdc_addr)
+
+    _logger.info("fast_freq set to :" + str(fast_freq))
+    _logger.info("slow_freq set to :" + str(slow_freq))
+    _logger.info("array set to :" + str(array))
+    _logger.info("tdc_addr set to :" + str(tdc_addr))
+
+    # Set destination data filename
+    if args.f:
+        filename = args.f
+    else:
+        filename = "TDC_NON_CORR-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
+
+    if args.d:
+        if (args.d[-1] == '/'):
+            filename = args.d + filename
+        else:
+            filename = args.d + "/" + filename
+
+    if args.c:
+        countLimit = args.c
+    else:
+        _logger.warning("No countlimit set, setting to 10000 by default")
+        countLimit = 10000
 
     # Instanciate the experiment
-    filename = "NON_CORR_TEST-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
-    experiment = TDC_M0_NON_CORR_Experiment(filename=filename,
-                                            countLimit=-1,timeLimit=300)
+    experiment = TDC_NON_CORR_Experiment(filename=filename,
+                                         countLimit=countLimit,
+                                         timeLimit=-1)
 
     # Assign the experiment to the runner and tell the variables you have and if you want to iterate
     runner = ExperimentRunner(experiment=experiment,
-                              variables={'fast_freq': 252, 'slow_freq': 250, 'array': 0, 'tdc_addr': 0})
+                              variables={'fast_freq': fast_freq, 'slow_freq': slow_freq, 'array': array, 'tdc_addr': tdc_addr})
 
     # run and stop it. Ctrl-C can stop it prematurely.
     try:
