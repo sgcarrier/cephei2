@@ -110,18 +110,52 @@ class DelayLineExperiment(BasicExperiment):
 
 if __name__ == '__main__':
     from utility.ExperimentRunner import ExperimentRunner
+    from utility.loggingSetup import loggingSetup
+    import argparse
+    import ast
 
-    logging.basicConfig(level=logging.DEBUG)
+    loggingSetup("DelayLineExperiment", level=logging.DEBUG)
 
+    # Setup the argument parser
+    parser = argparse.ArgumentParser()
+    parser.add_argument("delay_code_bit", help="Bit to set to 1 in the 10 bit delay code (0-9)")
+    parser.add_argument("ftune", help="Ftune value of the SY89296U delay line. Controlled by the DAC (0-65535)")
+    parser.add_argument("-f", help="Filename of HDF5 file")
+    parser.add_argument("-d", help="Folder destination of HDF5 file")
+    parser.add_argument("-c", type=int, help="Data count limit")
+    args = parser.parse_args()
+
+    delay_code_bit = ast.literal_eval(args.delay_code_bit)
+    ftune = ast.literal_eval(args.ftune)
+
+    _logger.info("delay_code_bit set to :" + str(delay_code_bit))
+    _logger.info("ftune set to :" + str(ftune))
+
+    #Set destination data filename
+    if args.f:
+        filename = args.f
+    else:
+        filename = "DELAY_LINE-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
+
+    if args.d:
+        if (args.d[-1] == '/'):
+            filename = args.d + filename
+        else:
+            filename = args.d + "/" + filename
+
+    if args.c:
+        countLimit = args.c
+    else:
+        _logger.warning("No countlimit set, setting to 10000 by default")
+        countLimit = 10000
 
     # Instanciate the example experiment
-    filename = "DELAY_LINE-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
     experiment = DelayLineExperiment(filename=filename,
-                                         countLimit=1000000)
+                                     countLimit=countLimit)
 
     # Assign the experiment to the runner and tell the variables you have and if you want to iterate
     runner = ExperimentRunner(experiment=experiment,
-                              variables={'delay_code_bit': (0, 10, 1), 'ftune': (0, 65536, 257)})
+                              variables={'delay_code_bit': delay_code_bit, 'ftune': ftune})
 
     #run and stop it. Ctrl-C can stop it prematurely.
     runner.start()

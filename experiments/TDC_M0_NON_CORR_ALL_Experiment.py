@@ -143,18 +143,54 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
 if __name__ == '__main__':
     from utility.ExperimentRunner import ExperimentRunner
     from utility.loggingSetup import loggingSetup
-    import logging
+    import argparse
+    import ast
 
-    loggingSetup("TDC_PLL_NON_CORR_Experiment", level=logging.DEBUG)
+    loggingSetup("TDC_M0_NON_CORR_All_Experiment", level=logging.DEBUG)
 
-    # Instanciate the experiment
-    filename = "mnt/NON_CORR_TEST_ALL-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
+    # Setup the argument parser
+    parser = argparse.ArgumentParser()
+    parser.add_argument("fast_freq", help="Frequency of the fast pll")
+    parser.add_argument("slow_freq", help="Frequency of the slow pll")
+    parser.add_argument("array", help="Array to use on the chip (0-1)")
+    parser.add_argument("-f", help="Filename of HDF5 file")
+    parser.add_argument("-d", help="Folder destination of HDF5 file")
+    parser.add_argument("-c", type=int, help="Data count limit")
+    args = parser.parse_args()
+
+    fast_freq = ast.literal_eval(args.fast_freq)
+    slow_freq = ast.literal_eval(args.slow_freq)
+    array = ast.literal_eval(args.array)
+
+    _logger.info("fast_freq set to :" + str(fast_freq))
+    _logger.info("slow_freq set to :" + str(slow_freq))
+    _logger.info("array set to :" + str(array))
+
+    # Set destination data filename
+    if args.f:
+        filename = args.f
+    else:
+        filename = "TDC_M0_NON_CORR_All-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
+
+    if args.d:
+        if (args.d[-1] == '/'):
+            filename = args.d + filename
+        else:
+            filename = args.d + "/" + filename
+
+    if args.c:
+        countLimit = args.c
+    else:
+        _logger.warning("No countlimit set, setting to 10000 by default")
+        countLimit = 10000
+
     experiment = TDC_M0_NON_CORR_All_Experiment(filename=filename,
-                                                countLimit=1000000,timeLimit=-1)
+                                                countLimit=countLimit,
+                                                timeLimit=-1)
 
     # Assign the experiment to the runner and tell the variables you have and if you want to iterate
     runner = ExperimentRunner(experiment=experiment,
-                              variables={'fast_freq': 255, 'slow_freq': 250, 'array': 0})
+                              variables={'fast_freq': fast_freq, 'slow_freq': slow_freq, 'array': array})
 
 
     # run and stop it. Ctrl-C can stop it prematurely.
