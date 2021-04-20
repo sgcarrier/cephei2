@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 from utility.BasicExperiment import BasicExperiment
-import h5py
 import numpy as np
 import logging
 import time
@@ -10,10 +9,10 @@ from functions.helper_functions import Board
 from functions.helper_functions import Divider
 from functions.helper_functions import MUX
 
-
 _logger = logging.getLogger(__name__)
 
-delay_line_type = np.dtype({'names': ['delay_code_bit', 'hits', 'mean', 'std_dev', 'start_temp', 'end_temp'], 'formats': ['i4', 'i4', 'f4', 'f4', 'f4', 'f4']})
+delay_line_type = np.dtype({'names': ['delay_code_bit', 'ftune', 'hits', 'mean', 'std_dev', 'start_temp', 'end_temp'],
+                            'formats': ['i4', 'f4', 'i4', 'f4', 'f4', 'f4', 'f4']})
 
 
 class DelayLineExperiment(BasicExperiment):
@@ -51,21 +50,21 @@ class DelayLineExperiment(BasicExperiment):
         The setup is executed once before all the calls to run() with different iterations.
         This is where you assign setting that will not change during your experiment
         '''
-        VISA_ADDRESS = 'TCPIP0::10.51.92.166::inst0::INSTR'
+        VISA_ADDRESS = 'TCPIP0::192.168.0.100::inst0::INSTR'
         dataFolder = "C:/Users/Administrator/Documents/SimonCarrier/DATA"
         setupFile = "C:/Users/Administrator/Documents/SimonCarrier/SETUP/delay_line_setup.set"
         self.agilent = delayLineAgilent(VISA_ADDRESS, dataFolder, setupFile)
-        self.h = h5py.File(self.filename, "a", libver='latest')
-        self.h.create_dataset(self.basePath, (0,), maxshape=(None,), dtype=delay_line_type)
+        # self.h = h5py.File(self.filename, "a", libver='latest')
+        # self.h.create_dataset(self.basePath, (0,), maxshape=(None,), dtype=delay_line_type)
 
         self.board.trigger_oscillator.set_frequency(20)  # div by 2 later
-        self.board.trigger_divider.set_divider(500, Divider.MUX_NOT_CORR)
+        self.board.trigger_divider.set_divider(50, Divider.MUX_NOT_CORR)
         self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
         self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
         self.board.trigger_delay_head_0.set_delay_code(0)
 
         self.datafile_prefix = "delay_line_charac-" + time.strftime("%Y%m%d-%H%M%S")
-
+        self.dataTotal = np.array([], dtype=delay_line_type)
 
     def run(self, delay_code_bit, ftune):
         '''
@@ -75,26 +74,30 @@ class DelayLineExperiment(BasicExperiment):
         :param first_variable:  The first custom variable you need
         :param second_variable: The second
         '''
+        time.sleep(1)
 
-        delay_code = 1 << delay_code_bit
-        self.board.trigger_delay_head_0.set_delay_code(delay_code)
         self.board.trigger_delay_head_0.set_fine_tune(ftune)
+
+        delay_code = 1 << int(delay_code_bit)
+        _logger.info("Delay code = " + str(delay_code))
+        self.board.trigger_delay_head_0.set_delay_code(delay_code)
 
         time.sleep(3)
 
         start_temp = self.board.temp_probe.get_temp()
 
-        datafile_name = self.datafile_prefix+"_delay_" + str(delay_code) + "_ftune_" + str(ftune)
+        datafile_name = self.datafile_prefix + "_delay_" + str(delay_code) + "_ftune_" + str(ftune)
         n_hits, mean, std_dev = self.agilent.start_acq(self.countLimit, datafile_name)
 
         end_temp = self.board.temp_probe.get_temp()
 
-        data = np.array([(delay_code_bit, n_hits, mean, std_dev, start_temp, end_temp)], dtype=delay_line_type)
-
-        self.h[self.basePath].resize((self.h[self.basePath].shape[0] + 1), axis=0)
-        self.h[self.basePath][-1:] = data
-
-        self.h.flush()
+        data = np.array([(delay_code_bit, ftune, n_hits, mean, std_dev, start_temp, end_temp)], dtype=delay_line_type)
+        _logger.info("Current Acquisition returned : " + str(data))
+        # self.h[self.basePath].resize((self.h[self.basePath].shape[0] + 1), axis=0)
+        # self.h[self.basePath][-1:] = data
+        # self.dataTotal.append(data)
+        self.dataTotal = np.append(self.dataTotal, data)
+        # self.h.flush()
 
         time.sleep(1)
 
@@ -104,8 +107,11 @@ class DelayLineExperiment(BasicExperiment):
         operation.
         :return:
         '''
-        self.h.close()
+        # self.h.close()
+        print(self.dataTotal)
+        np.savetxt(self.datafile_prefix + ".csv", self.dataTotal, delimiter=",")
 
+        self.agilent.close()
 
 
 if __name__ == '__main__':
@@ -131,7 +137,7 @@ if __name__ == '__main__':
     _logger.info("delay_code_bit set to :" + str(delay_code_bit))
     _logger.info("ftune set to :" + str(ftune))
 
-    #Set destination data filename
+    # Set destination data filename
     if args.f:
         filename = args.f
     else:
@@ -157,6 +163,6 @@ if __name__ == '__main__':
     runner = ExperimentRunner(experiment=experiment,
                               variables={'delay_code_bit': delay_code_bit, 'ftune': ftune})
 
-    #run and stop it. Ctrl-C can stop it prematurely.
+    # run and stop it. Ctrl-C can stop it prematurely.
     runner.start()
     runner.stop()
