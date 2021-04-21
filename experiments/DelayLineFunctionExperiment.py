@@ -15,7 +15,7 @@ delay_line_type = np.dtype({'names': ['delay_obj', 'delay_code_bit', 'ftune', 'h
                             'formats': ['i4', 'i4', 'f4', 'i4', 'f4', 'f4', 'f4', 'f4']})
 
 
-class DelayLineExperiment(BasicExperiment):
+class DelayLineFunctionExperiment(BasicExperiment):
     '''
     This is an experiment for characterizing the delay line. The execution goes as follows:
 
@@ -130,22 +130,21 @@ if __name__ == '__main__':
     import argparse
     import ast
 
-    loggingSetup("DelayLineExperiment", level=logging.DEBUG)
+    loggingSetup("DelayLineFunctionExperiment", level=logging.DEBUG)
 
     # Setup the argument parser
     parser = argparse.ArgumentParser()
-    parser.add_argument("delay_code_bit", help="Bit to set to 1 in the 10 bit delay code (0-9)")
-    parser.add_argument("ftune", help="Ftune value of the SY89296U delay line. Controlled by the DAC (0-65535)")
+    parser.add_argument("delay_ps", help="Aimed delay in ps")
     parser.add_argument("-f", help="Filename of HDF5 file")
     parser.add_argument("-d", help="Folder destination of HDF5 file")
     parser.add_argument("-c", type=int, help="Data count limit")
     args = parser.parse_args()
 
-    delay_code_bit = ast.literal_eval(args.delay_code_bit)
-    ftune = ast.literal_eval(args.ftune)
+    delay_ps = ast.literal_eval(args.delay_ps)
 
-    _logger.info("delay_code_bit set to :" + str(delay_code_bit))
-    _logger.info("ftune set to :" + str(ftune))
+
+    _logger.info("delay_ps set to :" + str(delay_ps))
+
 
     # Set destination data filename
     if args.f:
@@ -166,12 +165,12 @@ if __name__ == '__main__':
         countLimit = 10000
 
     # Instanciate the example experiment
-    experiment = DelayLineExperiment(filename=filename,
+    experiment = DelayLineFunctionExperiment(filename=filename,
                                      countLimit=countLimit)
 
     # Assign the experiment to the runner and tell the variables you have and if you want to iterate
     runner = ExperimentRunner(experiment=experiment,
-                              variables={'delay_code_bit': delay_code_bit, 'ftune': ftune})
+                              variables={'delay_ps': delay_ps})
 
     # run and stop it. Ctrl-C can stop it prematurely.
     runner.start()
