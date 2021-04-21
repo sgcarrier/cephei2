@@ -66,6 +66,18 @@ class DelayLineExperiment(BasicExperiment):
         self.datafile_prefix = "delay_line_charac-" + time.strftime("%Y%m%d-%H%M%S")
         self.dataTotal = np.array([], dtype=delay_line_type)
 
+        currTemp = 0
+        prevTemp = 50
+        while(abs(prevTemp - currTemp) >= 1):
+            _logger.info("Currently checking the temperature stability. This might take a while")
+            prevTemp = self.board.temp_probe.get_temp()
+            _logger.info("Current temperature = " + str(prevTemp))
+
+            time.sleep(120)
+
+            currTemp =  self.board.temp_probe.get_temp()
+            _logger.info("Current temperature = " + str(currTemp))
+
     def run(self, delay_code_bit, ftune):
         '''
         This is the main running function. This where you setup your experiments with specific variables for your
@@ -93,11 +105,11 @@ class DelayLineExperiment(BasicExperiment):
 
         data = np.array([(delay_code_bit, ftune, n_hits, mean, std_dev, start_temp, end_temp)], dtype=delay_line_type)
         _logger.info("Current Acquisition returned : " + str(data))
-        # self.h[self.basePath].resize((self.h[self.basePath].shape[0] + 1), axis=0)
-        # self.h[self.basePath][-1:] = data
-        # self.dataTotal.append(data)
+
         self.dataTotal = np.append(self.dataTotal, data)
-        # self.h.flush()
+
+        with open(self.datafile_prefix + ".csv", "ab") as f:
+            np.savetxt(f, data, delimiter=',')
 
         time.sleep(1)
 
