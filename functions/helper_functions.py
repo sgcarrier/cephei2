@@ -266,6 +266,7 @@ class DelayLine:
 
     @staticmethod
     def delay_to_bit_code(delay):
+        #delays_by_bit = [4610, 2300, 1150, 575, 290, 145, 70, 35, 15, 10]
         delays_by_bit = [4610, 2300, 1150, 575, 290, 145, 70, 35, 15, 10]
         delay_code = 0
 
@@ -277,6 +278,36 @@ class DelayLine:
 
         return delay_code
 
+    @staticmethod
+    def delay_to_bit_code_and_ftune(delay):
+        # delays_by_bit = [4610, 2300, 1150, 575, 290, 145, 70, 35, 15, 10]
+        delays_by_bit = [18.39, 22.09, 48.31, 87.83, 162.73, 308.62, 612.52, 1229.95, 2453.47, 4877.48]
+        delay_code = 0
+        actual_delay = 0
+
+        ftune_alpha = -29.289 / 0.8  # ps/v
+        ftune_offset = 20
+
+        delay_with_offset = delay + abs(ftune_offset)
+
+        # Convert target delay to code to set on the delay line
+        for i in range(9, -1, -1):
+            if delay_with_offset > delays_by_bit[i]:
+                delay_code |= 1 << i
+                actual_delay += delays_by_bit[i]
+                delay_with_offset -= delays_by_bit[i]
+
+        ftune = (delay - actual_delay) / ftune_alpha
+
+        if ftune < 0:
+            ftune = 0
+
+        true_delay = (ftune_alpha * ftune) + actual_delay
+
+        # print("For input: {0:15f}, OBJ_DELAY: {1:15f}, DELAY_CODE: {2:10b}, FTUNE: {3:5f}".format( delay, true_delay, delay_code, ftune))
+
+        return true_delay, delay_code, ftune
+
     # Max delay =
     def set_delay(self, delay):
         code = self.delay_to_bit_code(delay)
@@ -286,8 +317,11 @@ class DelayLine:
         disable = 0
         length = 0  # When high latches D[9:0] and D[10] bits. When low, the D[9:0] and D[10] are transparent.
         d10 = 0     #
-        low_config = 0 | (delay_code << 1) & 0xFE | d10
-        high_config = 0 | ((delay_code >> 7) & 0x7) | (disable << 3) | (length << 4)
+        #low_config = 0 | (delay_code << 1) & 0xFE | d10
+        #high_config = 0 | ((delay_code >> 7) & 0x7) | (disable << 3) | (length << 4)
+
+        low_config = int('{:08b}'.format(delay_code >> 3)[::-1], 2)
+        high_config = int('{:03b}'.format(delay_code & 0x7)[::-1], 2) | (disable << 4) | (length << 5)
 
         self.b.TCA9539.CONFIGURATIONPORT0(self.device_id, 0x0)
         self.b.TCA9539.CONFIGURATIONPORT1(self.device_id, 0x0)
