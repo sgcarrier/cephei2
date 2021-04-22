@@ -406,14 +406,48 @@ class HV:
     def __init__(self, chartier, hv_id):
         self.b = chartier
         self.hv_id = hv_id
+        ''' Set internal reference for the DAC'''
+        self.b.AD5668.INTERNAL_REF_SETUP(1, 1, 1)
+
+        ''' We want the default value to be 3.3, so the SPADs are completely unbiased'''
+        self.curr_voltage = 3.3
+        value = int((-(self.curr_voltage-3.3) * (2**16 - 1)) / 18.3)
+        self.b.AD5668.WRITE_TO_AND_UPDATE_DAC(1, self.hv_id, value)
+
+    def volt2dac(self, volt):
+        volt = round(volt, 3)
+        return int((-(volt-3.3) * (2**16 - 1)) / 18.3)
 
     # Voltage between 3.3 and -15
-    def set_voltage(self, voltage):
-        value = int((-(voltage-3.3) * (2**16 - 1)) / 18.3)
+    def set_voltage(self, desired_voltage, step_volt=0.1):
+        value = self.volt2dac(desired_voltage)
         if value < 0 or value >= 2**16:
-            raise ValueError("HV value " + str(voltage) + " outside of range 3.3V to -15V")
-        self.b.AD5668.INTERNAL_REF_SETUP(1, 1, 1)
-        self.b.AD5668.WRITE_TO_AND_UPDATE_DAC(1, self.hv_id, value)
+            raise ValueError("HV value " + str(desired_voltage) + " outside of range 3.3V to -15V")
+
+        '''Ramp toward the desired value 1V/sec'''
+        time_step = step_volt # sec
+
+
+        '''The maximum number of steps we should ever have to take, 
+           to avoid infinite loop if we set the step_volt too big'''
+        max_steps = (18.3/step_volt) + 2
+        steps = 0
+
+        while ((round(abs(self.curr_voltage - desired_voltage),3) >= step_volt) and (steps < max_steps)):
+
+            time.sleep(time_step)
+
+            if self.curr_voltage < desired_voltage:
+                self.curr_voltage += step_volt
+                value = self.volt2dac(self.curr_voltage)
+                self.b.AD5668.WRITE_TO_AND_UPDATE_DAC(1, self.hv_id, value)
+            else:
+                self.curr_voltage -= step_volt
+                value = self.volt2dac(self.curr_voltage)
+                self.b.AD5668.WRITE_TO_AND_UPDATE_DAC(1, self.hv_id, value)
+
+            steps += 1
+
 
 
 class CurrentSource:
