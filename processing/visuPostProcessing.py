@@ -57,7 +57,7 @@ def findTrueMaxCoarseWThreshold(coarse_data, threshold):
     Recommended threshold = 0.1
     """
     hist_coarse = np.bincount(coarse_data)
-    for c in range(1, max(coarse_data)):
+    for c in range(3, max(coarse_data)):
         if hist_coarse[c] < (np.mean(hist_coarse)*threshold):
             return c-1
     return max(coarse_data)
@@ -69,7 +69,7 @@ def findTrueMaxCoarseDecimal(coarse_data, threshold):
     Recommended threshold = 0.1
     """
     hist_coarse = np.bincount(coarse_data)
-    for c in range(1, max(coarse_data)+1):
+    for c in range(3, max(coarse_data)+1):
         if hist_coarse[c] < (np.mean(hist_coarse)*threshold):
             decimal = hist_coarse[c-1]/np.mean(hist_coarse[1:c-2])
             return c-2+decimal
@@ -106,11 +106,9 @@ def findMatchingTDCEvents(tdc1Num, tdc2Num, data):
     :param data: Raw data, dont filter out the column names
     :return: the coarse,fine columns of all matched events for TDC#1 and TDC#2
     '''
-
     '''Extract the data concerning the 2 TDCs we are comparing'''
     TDC1Data = data[(data["Addr"] == tdc1Num)]
     TDC2Data = data[(data["Addr"] == tdc2Num)]
-
     # Set columns Coarse and Fine
     data_type = np.dtype({'names': ['Coarse', 'Fine'], 'formats': ['u4', 'u4']})
 

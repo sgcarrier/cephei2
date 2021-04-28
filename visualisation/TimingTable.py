@@ -6,6 +6,7 @@ import h5py
 import logging
 import math
 from matplotlib import pyplot as plt
+from tqdm import tqdm
 
 
 class TimingTableVisualizer:
@@ -124,7 +125,7 @@ class TimingTableVisualizer:
         #
         # x = np.arange(timingTable.shape[0])
         # y = np.arange(timingTable.shape[1])
-        # z = timingTable[:]*(10**2)
+        # z = timingTable[0:2000] * (10**2)
         # plt = gl.GLSurfacePlotItem(z=z, shader='normalColor')
         # w.addItem(plt)
 
@@ -188,6 +189,42 @@ class TimingTableVisualizer:
         plt.show()
 
 
+    def jitterVsCode(self):
+        ttt = self.total_timingTable[0:2000, :]
+
+        jitterRMS =  np.empty((len(ttt[0,:])))
+        delayAVG =  np.empty((len(ttt[0,:])))
+
+        for code in tqdm(range(len(ttt[0, :]))):
+            raw_data_recon = np.empty((0,))
+
+            slice = ttt[:,code]
+
+            for i in range(len(slice)):
+                raw_data_recon = np.append(raw_data_recon, [i] * int(slice[i]))
+
+            jitterRMS[code] = np.std(raw_data_recon)
+            delayAVG[code] = np.mean(raw_data_recon)
+
+        plt.figure(3)
+        ax = plt.subplot(2, 1, 1)
+        ax.plot(np.arange(len(jitterRMS)), jitterRMS)
+
+        ax.set_title(" Code vs Jitter")
+
+        ax.set_xlabel('Code')
+        ax.set_ylabel('Jitter RMS')
+
+        ax2 = plt.subplot(2, 1, 2)
+        ax2.plot(np.arange(len(delayAVG)), delayAVG)
+
+        ax2.set_xlabel('Code')
+        ax2.set_ylabel('AVG delay')
+
+        plt.show()
+
+
+
 if __name__ == '__main__':
     import sys
 
@@ -203,9 +240,11 @@ if __name__ == '__main__':
     TT = TimingTableVisualizer()
 
     TT.open(filename=filename)
-    TT.showTimingTable(baseDatesetPath, 60, 8, 0, None)
+    TT.showTimingTable(baseDatesetPath, 100, 9, 0, None)
 
-    TT.showTotalHist()
+    #TT.showTotalHist()
+
+    TT.jitterVsCode()
 
     TT.close()
 

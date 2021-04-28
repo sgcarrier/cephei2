@@ -3,7 +3,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import h5py
 import pickle
-from processing.visuPostProcessing import findMatchingTDCEventsFast
+from processing.visuPostProcessing import findMatchingTDCEvents
 from ICYSHSR1_transfer_function_ideal import TransferFunctions
 from transferFunctionChip import TransferFunction
 import matplotlib.mlab as mlab
@@ -32,23 +32,29 @@ def gaussian(x, mean, amplitude, standard_deviation):
 #filename = "C:\\Users\\labm1507\\Documents\\DATA\\NON_CORR_TEST_ALL-20210414-212030.hdf5"
 #path = "CHARTIER/ASIC0/TDC/M0/ALL_TDC_ACTIVE/PLL/FAST_255/SLOW_250/NON_CORR/EXT/ADDR_ALL/RAW"
 
+#----TEST all ASIC 0 resolution variation from 5ps to 50ps (Replace FAST_XXXX; 252.5 to 257.5, by 2.5 jump) -----
+#filename = "C:\\Users\\labm1507\\Documents\\DATA\\TDC_M0_NON_CORR_All-20210423-174203.hdf5"
+#path = "/CHARTIER/ASIC0/TDC/M0/ALL_TDC_ACTIVE/PLL/FAST_XXXX/SLOW_250/NON_CORR/EXT/ADDR_ALL/RAW"
+
 """
     Constant setup for different test case
     
-    SAVED_DATA: 0 = generate timestamps from new datasets and generate pickle file of calculated timestamps
-                1 = use previously generated pickle file for timestamps (data.p must be present in root folder)
-    ADDR_PIX_1: Address of first TDC for comparison (value range 0 to 48)
-    ADDR_PIX_2: Address of second TDC for comparison (value range 0 to 48)
-    PROCESSING: 0 = Use ideal transfer function to calculate timestamps
-                1 = Use in chip algorithm to calculate timestamps
-                2 = Use both ideal transfer function and in chip processing for comparison
-    FILTER:     Value of the threshold for filtering 
+    SAVED_DATA:     0 = generate timestamps from new datasets and generate pickle file of calculated timestamps
+                    1 = use previously generated pickle file for timestamps (data.p must be present in root folder)
+    ADDR_PIX_1:     Address of first TDC for comparison (value range 0 to 48)
+    ADDR_PIX_2:     Address of second TDC for comparison (value range 0 to 48)
+    PROCESSING:     0 = Use ideal transfer function to calculate timestamps
+                    1 = Use in chip algorithm to calculate timestamps
+                    2 = Use both ideal transfer function and in chip processing for comparison
+    FILTER:         Value of the threshold for filtering 
+    CLOCK_PERIOD:   Value of the system clock period (default = 4000)
 """
 SAVED_DATA = 0
 ADDR_PIX_1 = 0
 ADDR_PIX_2 = 1
 PROCESSING = 0
 FILTER = 0.00
+CLOCK_PERIOD = 4000
 
 """
 Main star here
@@ -63,16 +69,16 @@ if 0 > SAVED_DATA > 1:
 if 0 > ADDR_PIX_1 > 48 or 0 > ADDR_PIX_2 > 48:
     print("Chosen address out of range (must be between 0 and 48")
     exit()
-if 0 > PROCESSING > 2:
-    print("Processing type", PROCESSING, "is invalid (must be 0 or 1)")
-    exit()
+if PROCESSING < 0 or PROCESSING > 2:
+    print("Processing type", PROCESSING, "is invalid (must be 0 or 2)")
+    exit(-1)
 
 
 if SAVED_DATA == 0:
     filename = "C:\\Users\\labm1507\\Documents\\DATA\\NON_CORR_TEST_ALL-20210414-212030.hdf5"
     path = "CHARTIER/ASIC0/TDC/M0/ALL_TDC_ACTIVE/PLL/FAST_255/SLOW_250/NON_CORR/EXT/ADDR_ALL/RAW"
 
-    if PROCESSING == 0:
+    if PROCESSING == 0 or PROCESSING == 2:
         idealTF1 = TransferFunctions(filename=filename,
                                      basePath=path,
                                      pixel_id=normalisedAddr1,
@@ -85,43 +91,41 @@ if SAVED_DATA == 0:
         plt.plot(idealTF1.get_ideal())
         plt.plot(idealTF2.get_ideal())
 
-        plt.figure()
-        plt.plot(idealTF1.get_ideal())
-        plt.plot(idealTF2.get_ideal())
+    if PROCESSING == 1 or PROCESSING == 2:
+        chipTF = TransferFunction()
 
     with h5py.File(filename, "r") as h:
 
         # Get the data pointer
 
         ds = h[path]
-        d1, d2 = findMatchingTDCEventsFast(normalisedAddr1, normalisedAddr2, ds)
+        d1, d2 = findMatchingTDCEvents(normalisedAddr1, normalisedAddr2, ds)
 
         print("value post treatement tdc1 =", len(d1))
         print("value post treatement tdc2 =", len(d2))
 
-        if PROCESSING == 0 or 2:
+        if PROCESSING == 0 or PROCESSING == 2:
             jitterIdeal = []
-        if PROCESSING == 1 or 2:
+        if PROCESSING == 1 or PROCESSING == 2:
             jitterChip = []
 
-        for coarse_1, fine_1, coarse_2, fine_2, globalCounter_1, globalCounter_2 in zip(d1['Coarse'], d1['Fine'], d2['Coarse'], d2['Fine'], d1['Global'], d2['Global']):
-            if PROCESSING == 0 or 2:
+        for coarse_1, fine_1, global_1, coarse_2, fine_2, global_2 in zip(d1['Coarse'], d1['Fine'], d1['Global'], d2['Coarse'], d2['Fine'], d2['Global']):
+            if PROCESSING == 0 or PROCESSING == 2:
                 try:
                     if coarse_1 != 0 and coarse_2 != 0:
                         timestampIdeal1 = (idealTF1.code_to_timestamp(coarse_1 - 1, fine_1))
                         timestampIdeal2 = (idealTF2.code_to_timestamp(coarse_2 - 1, fine_2))
-                        diffCounter = globalCounter_1*4000-globalCounter_2*4000
-                        print(diffCounter)
-                        jitterIdeal.append(round(timestampIdeal1 - timestampIdeal2) - diffCounter)
+                        diffCounterIdeal = (global_1 - global_2) * CLOCK_PERIOD
+                        jitterIdeal.append(round(timestampIdeal1 - timestampIdeal2 - diffCounterIdeal))
 
-                        print("-------------------")
-                        print("coarse_1 =", coarse_1)
-                        print("fine_1 =", fine_1)
-                        print("TS_1 =", timestampIdeal1)
-                        print("coarse_2 =", coarse_2)
-                        print("fine_2 =", fine_2)
-                        print("TS_2 =", timestampIdeal2)
-                        print("-------------------")
+                        #print("-------------------")
+                        #print("coarse_1 =", coarse_1)
+                        #print("fine_1 =", fine_1)
+                        #print("TS_1 =", timestampIdeal1)
+                        #print("coarse_2 =", coarse_2)
+                        #print("fine_2 =", fine_2)
+                        #print("TS_2 =", timestampIdeal2)
+                        #print("-------------------")
                 except:
                     print("-------------------")
                     print("coarse_1 =", coarse_1)
@@ -130,21 +134,21 @@ if SAVED_DATA == 0:
                     print("fine_2 =", fine_2)
                     print("-------------------")
                     pass
-                pickle.dump(jitterIdeal, open("TSIdeal.p", "wb"))
-            if PROCESSING == 1 or 2:
+            if PROCESSING == 1 or PROCESSING == 2:
                 try:
-                    timestampChip1 = TransferFunction.evaluate(fine_1, coarse_1, normalisedAddr1)
-                    timestampChip2 = TransferFunction.evaluate(fine_2, coarse_2, normalisedAddr2)
-                    jitterChip.append(round(timestampChip1 - timestampChip2))
+                    timestampChip1 = chipTF.evaluate(fine_1, coarse_1, normalisedAddr1)
+                    timestampChip2 = chipTF.evaluate(fine_2, coarse_2, normalisedAddr2)
+                    diffCounterChip = (global_1 - global_2) * CLOCK_PERIOD
+                    jitterChip.append(round(timestampChip1 - timestampChip2 - diffCounterChip))
 
-                    print("-------------------")
-                    print("coarse_1 =", coarse_1)
-                    print("fine_1 =", fine_1)
-                    print("TS_1 =", timestampChip1)
-                    print("coarse_2 =", coarse_2)
-                    print("fine_2 =", fine_2)
-                    print("TS_2 =", timestampChip2)
-                    print("-------------------")
+                    #print("-------------------")
+                    #print("coarse_1 =", coarse_1)
+                    #print("fine_1 =", fine_1)
+                    #print("TS_1 =", timestampChip1)
+                    #print("coarse_2 =", coarse_2)
+                    #print("fine_2 =", fine_2)
+                    #print("TS_2 =", timestampChip2)
+                    #print("-------------------")
                 except:
                     print("------ERROR-------")
                     print("coarse_1 =", coarse_1)
@@ -153,89 +157,182 @@ if SAVED_DATA == 0:
                     print("fine_2 =", fine_2)
                     print("-------------------")
                     pass
+if PROCESSING == 0 or PROCESSING == 2:
+    pickle.dump(jitterIdeal, open("TSIdeal.p", "wb"))
+if PROCESSING == 1 or PROCESSING == 2:
+    pickle.dump(jitterChip, open("TSChip.p", "wb"))
+
 elif SAVED_DATA == 1:
-    jitterIdeal = pickle.load(open("TSIdeal.p", "rb"))
+    if PROCESSING == 0 or PROCESSING == 2:
+        jitterIdeal = pickle.load(open("TSIdeal.p", "rb"))
+    if PROCESSING == 1 or PROCESSING == 2:
+        jitterChip = pickle.load(open("TSChip.p", "rb"))
 
-meanTemp = np.mean(jitterIdeal)
-stdTemp = np.std(jitterIdeal)
+#traitement statistique
+if PROCESSING == 0 or PROCESSING == 2:
+    meanTemp = np.mean(jitterIdeal)
+    stdTemp = np.std(jitterIdeal)
 
-discardedData = [x for x in jitterIdeal if (x < meanTemp - 6 * stdTemp)]
-discardedData.extend([x for x in jitterIdeal if (x > meanTemp + 6 * stdTemp)])
+    discardedData = [x for x in jitterIdeal if (x < meanTemp - 6 * stdTemp)]
+    discardedData.extend([x for x in jitterIdeal if (x > meanTemp + 6 * stdTemp)])
 
-percentDiscard = (len(discardedData) / len(jitterIdeal)) * 100
+    percentDiscard = (len(discardedData) / len(jitterIdeal)) * 100
 
-#print("percentDiscard=", "%.4f" % percentDiscard, "%")
+    #print("percentDiscard=", "%.4f" % percentDiscard, "%")
 
-jitterFinal = [x for x in jitterIdeal if (x > meanTemp - 6 * stdTemp)]
-jitterFinal = [x for x in jitterFinal if (x < meanTemp + 6 * stdTemp)]
+    jitterFinal = [x for x in jitterIdeal if (x > meanTemp - 6 * stdTemp)]
+    jitterFinal = [x for x in jitterFinal if (x < meanTemp + 6 * stdTemp)]
 
-meanTemp = np.mean(jitterFinal)
+    #jitterFinal = jitterIdeal
 
-jitterFinal = [round(x - meanTemp) for x in jitterFinal]
+    meanTemp = np.mean(jitterFinal)
 
-jitterMin = np.amin(jitterFinal)
-jitterMax = np.amax(jitterFinal)
-jitterMedian = np.median(jitterFinal)
-jitterMean = np.mean(jitterFinal)
-jitterStd = np.std(jitterFinal)
-jitterFWHM = jitterStd*2.355
+    jitterFinal = [round(x - meanTemp) for x in jitterFinal]
 
-#print("Min =", jitterMin)
-#print("Max =", jitterMax)
-#print("Median =", jitterMedian)
-#print("Mean =", jitterMean)
-#print("STD =", jitterStd)
-#print("FWHM =", jitterFWHM)
+    jitterMin = np.amin(jitterFinal)
+    jitterMax = np.amax(jitterFinal)
+    jitterMedian = np.median(jitterFinal)
+    jitterMean = np.mean(jitterFinal)
+    jitterStd = np.std(jitterFinal)
+    jitterFWHM = jitterStd*2.355
 
-bin_range = [min(jitterFinal)-0.5]
+    #print("Min =", jitterMin)
+    #print("Max =", jitterMax)
+    #print("Median =", jitterMedian)
+    #print("Mean =", jitterMean)
+    #print("STD =", jitterStd)
+    #print("FWHM =", jitterFWHM)
 
-for i in range(max(jitterFinal)-min(jitterFinal)):
-    bin_range.append(i+min(jitterFinal)+0.5)
+    bin_range = [min(jitterFinal)-0.5]
 
-#print("freq table=", bin_range)
-plt.figure()
-#--Plot--
-#Histogram
-ax = plt.subplot(111)
-n, bins, _ = ax.hist(jitterFinal, bins=bin_range)
+    for i in range(max(jitterFinal)-min(jitterFinal)):
+        bin_range.append(i+min(jitterFinal)+0.5)
 
-#Curve Fitting
-bin_centers = bins[:-1] + np.diff(bins) / 2
-popt, pcov = curve_fit(gaussian, bin_centers, n, p0=[1., 0., 1.])
-x_interval_for_fit = np.linspace(bins[0], bins[-1], 10000)
-fitGaussian = gaussian(x_interval_for_fit, *popt)
-plt.plot(x_interval_for_fit, fitGaussian, label='fit')
+    plt.figure()
+    #--Plot--
+    #Histogram
+    ax = plt.subplot(111)
+    n, bins, _ = ax.hist(jitterFinal, bins=bin_range)
 
-print("fitGaussian:", pcov)
+    #Curve Fitting
+    bin_centers = bins[:-1] + np.diff(bins) / 2
+    popt, pcov = curve_fit(gaussian, bin_centers, n, p0=[1., 0., 1.])
+    x_interval_for_fit = np.linspace(bins[0], bins[-1], 10000)
+    fitGaussian = gaussian(x_interval_for_fit, *popt)
+    plt.plot(x_interval_for_fit, fitGaussian, label='fit')
 
-#FWHM
-spline = UnivariateSpline(x_interval_for_fit, fitGaussian-np.max(fitGaussian)/2, s=0)
-r1, r2 = spline.roots() # find the roots
-ax.axvspan(r1, r2, edgecolor='black', facecolor='None', alpha=0.5, label='FWHM')
+    #FWHM
+    spline = UnivariateSpline(x_interval_for_fit, fitGaussian-np.max(fitGaussian)/2, s=0)
+    r1, r2 = spline.roots() # find the roots
+    ax.axvspan(r1, r2, edgecolor='black', facecolor='None', alpha=0.5, label='FWHM')
 
-#Title
-ax.set_title("Timestamp Difference TDC " + str(round(normalisedAddr1 / 4)) + " and TDC " + str(round(normalisedAddr2 / 4)), fontsize=18, fontweight="bold")
+    #Title
+    ax.set_title("Timestamp Difference TDC " + str(round(normalisedAddr1 / 4)) + " and TDC " + str(round(normalisedAddr2 / 4)), fontsize=18, fontweight="bold")
 
-#Axis Title
-ax.set_xlabel("Timestamp", fontsize=15)
-ax.set_ylabel("Frequency", fontsize=15)
+    #Axis Title
+    ax.set_xlabel("Timestamp", fontsize=15)
+    ax.set_ylabel("Frequency", fontsize=15)
 
-#Stats
+    #Stats
 
-jitterFWHM = r2-r1
-jitterStd = jitterFWHM/2.355
+    jitterFWHM = r2-r1
+    jitterStd = jitterFWHM/2.355
 
-textStr = '\n'.join((
-    r'Discarded Data=%.4f' % (percentDiscard,),
-    r'Min=%.0f' % (jitterMin,),
-    r'Max=%.0f' % (jitterMax,),
-    r'Mean=%.0f' % (jitterMean,),
-    r'Median=%.0f' % (jitterMedian,),
-    r'STD=%.2f' % (jitterStd,),
-    r'FWHM=%.2f' % (jitterFWHM,)))
+    textStr = '\n'.join((
+        r'Discarded Data=%.4f' % (percentDiscard,),
+        r'Min=%.0f' % (jitterMin,),
+        r'Max=%.0f' % (jitterMax,),
+        r'Mean=%.0f' % (jitterMean,),
+        r'Median=%.0f' % (jitterMedian,),
+        r'STD=%.2f' % (jitterStd,),
+        r'FWHM=%.2f' % (jitterFWHM,)))
 
-ax.text(0.05, 0.95, textStr, transform=ax.transAxes, fontsize=14,
-        verticalalignment='top')
-#Show plot
-plt.legend()
+    ax.text(0.05, 0.95, textStr, transform=ax.transAxes, fontsize=14,
+            verticalalignment='top')
+    #Show plot
+    plt.legend()
+if PROCESSING == 1 or PROCESSING == 2:
+    meanTemp = np.mean(jitterChip)
+    stdTemp = np.std(jitterChip)
+
+    discardedData = [x for x in jitterChip if (x < meanTemp - 6 * stdTemp)]
+    discardedData.extend([x for x in jitterChip if (x > meanTemp + 6 * stdTemp)])
+
+    percentDiscard = (len(discardedData) / len(jitterChip)) * 100
+
+    # print("percentDiscard=", "%.4f" % percentDiscard, "%")
+
+    jitterChipFinal = [x for x in jitterChip if (x > meanTemp - 6 * stdTemp)]
+    jitterChipFinal = [x for x in jitterChipFinal if (x < meanTemp + 6 * stdTemp)]
+
+    meanTemp = np.mean(jitterChipFinal)
+
+    jitterChipFinal = [round(x - meanTemp) for x in jitterChipFinal]
+
+    jitterMin = np.amin(jitterChipFinal)
+    jitterMax = np.amax(jitterChipFinal)
+    jitterMedian = np.median(jitterChipFinal)
+    jitterMean = np.mean(jitterChipFinal)
+    jitterStd = np.std(jitterChipFinal)
+    jitterFWHM = jitterStd * 2.355
+
+    # print("Min =", jitterMin)
+    # print("Max =", jitterMax)
+    # print("Median =", jitterMedian)
+    # print("Mean =", jitterMean)
+    # print("STD =", jitterStd)
+    # print("FWHM =", jitterFWHM)
+
+    bin_range = [min(jitterChipFinal) - 0.5]
+
+    for i in range(max(jitterChipFinal) - min(jitterChipFinal)):
+        bin_range.append(i + min(jitterChipFinal) + 0.5)
+
+    plt.figure()
+    # --Plot--
+    # Histogram
+    ax = plt.subplot(111)
+    n, bins, _ = ax.hist(jitterChipFinal, bins=bin_range)
+
+    # Curve Fitting
+    bin_centers = bins[:-1] + np.diff(bins) / 2
+    popt, pcov = curve_fit(gaussian, bin_centers, n, p0=[1., 0., 1.])
+    x_interval_for_fit = np.linspace(bins[0], bins[-1], 10000)
+    fitGaussian = gaussian(x_interval_for_fit, *popt)
+    plt.plot(x_interval_for_fit, fitGaussian, label='fit')
+
+    print("fitGaussian:", pcov)
+
+    # FWHM
+    spline = UnivariateSpline(x_interval_for_fit, fitGaussian - np.max(fitGaussian) / 2, s=0)
+    r1, r2 = spline.roots()  # find the roots
+    ax.axvspan(r1, r2, edgecolor='black', facecolor='None', alpha=0.5, label='FWHM')
+
+    # Title
+    ax.set_title(
+        "Timestamp Difference TDC " + str(round(normalisedAddr1 / 4)) + " and TDC " + str(round(normalisedAddr2 / 4)),
+        fontsize=18, fontweight="bold")
+
+    # Axis Title
+    ax.set_xlabel("Timestamp", fontsize=15)
+    ax.set_ylabel("Frequency", fontsize=15)
+
+    # Stats
+
+    jitterFWHM = r2 - r1
+    jitterStd = jitterFWHM / 2.355
+
+    textStr = '\n'.join((
+        r'Discarded Data=%.4f' % (percentDiscard,),
+        r'Min=%.0f' % (jitterMin,),
+        r'Max=%.0f' % (jitterMax,),
+        r'Mean=%.0f' % (jitterMean,),
+        r'Median=%.0f' % (jitterMedian,),
+        r'STD=%.2f' % (jitterStd,),
+        r'FWHM=%.2f' % (jitterFWHM,)))
+
+    ax.text(0.05, 0.95, textStr, transform=ax.transAxes, fontsize=14,
+            verticalalignment='top')
+    # Show plot
+    plt.legend()
 plt.show()
