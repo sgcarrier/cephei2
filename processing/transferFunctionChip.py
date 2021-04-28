@@ -5,7 +5,7 @@ class TransferFunction:
     def __init__(self):
         with open('corr_coef.pickle', 'rb') as f:
             self.coefficients = pickle.load(f)
-            print(self.coefficients)
+            #print(self.coefficients)
 
     def evaluate(self, fine, coarse, tdc):
         coef = self.coefficients[tdc]
