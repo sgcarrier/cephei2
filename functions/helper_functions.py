@@ -2,6 +2,7 @@ import math
 import time
 from platforms.CHARTIER.CHARTIER import CHARTIER
 from functions.helper_functions_asic import ASIC
+import numpy as np
 
 # LMK03318
 class PLL:
@@ -278,14 +279,41 @@ class DelayLine:
 
         return delay_code
 
+
+    def find_ftune_value(self, delay):
+        ''' Follows the formula y = a*e^(-bx)+c
+            where y is the delay, x the ftune value'''
+
+        a = 82.945
+        b = 0.551
+        c = -83.26
+
+        x = math.log((delay - c)/a)/(-b)
+
+        return x
+
+    def find_ftune_delay(self, value):
+        ''' Follows the formula y = a*e^(-bx)+c
+            where y is the delay, x the ftune value'''
+
+        a = 82.945
+        b = 0.551
+        c = -83.26
+
+        y = a * np.exp(-b * value) + c
+
+        return y
+
+
+
     @staticmethod
-    def delay_to_bit_code_and_ftune(delay):
+    def delay_to_bit_code_and_ftune(self, delay):
         # delays_by_bit = [4610, 2300, 1150, 575, 290, 145, 70, 35, 15, 10]
         delays_by_bit = [18.39, 22.09, 48.31, 87.83, 162.73, 308.62, 612.52, 1229.95, 2453.47, 4877.48]
         delay_code = 0
         actual_delay = 0
 
-        ftune_alpha = -29.289 / 0.8  # ps/v
+        #ftune_alpha = -29.289 / 0.8  # ps/v
         ftune_offset = 20
 
         delay_with_offset = delay + abs(ftune_offset)
@@ -297,12 +325,13 @@ class DelayLine:
                 actual_delay += delays_by_bit[i]
                 delay_with_offset -= delays_by_bit[i]
 
-        ftune = (delay - actual_delay) / ftune_alpha
+        #ftune = (delay - actual_delay) / ftune_alpha
+        ftune = self.find_ftune_value(delay - actual_delay)
 
         if ftune < 0:
             ftune = 0
 
-        true_delay = (ftune_alpha * ftune) + actual_delay
+        true_delay = self.find_ftune_delay(ftune) + actual_delay
 
         # print("For input: {0:15f}, OBJ_DELAY: {1:15f}, DELAY_CODE: {2:10b}, FTUNE: {3:5f}".format( delay, true_delay, delay_code, ftune))
 
@@ -406,8 +435,8 @@ class HV:
     def __init__(self, chartier, hv_id):
         self.b = chartier
         self.hv_id = hv_id
-        ''' Set internal reference for the DAC'''
-        self.b.AD5668.INTERNAL_REF_SETUP(1, 1, 1)
+        ''' Set off internal reference for the DAC'''
+        self.b.AD5668.INTERNAL_REF_SETUP(1, 1, 0)
 
         ''' We want the default value to be 3.3, so the SPADs are completely unbiased'''
         self.curr_voltage = 3.3

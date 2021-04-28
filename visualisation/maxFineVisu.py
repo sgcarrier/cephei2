@@ -1,11 +1,12 @@
 import h5py
 import logging
 import numpy as np
+from scipy import stats
 
 from matplotlib import pyplot as plt
 from matplotlib.ticker import MaxNLocator
 
-from processing.visuPostProcessing import post_processing, findMatchingTDCEvents
+from processing.visuPostProcessing import post_processing, findTrueMaxFineWThreshold
 
 _logger = logging.getLogger(__name__)
 
@@ -18,24 +19,14 @@ class TDCHistogram():
         with h5py.File(filename, "r") as h:
             ds = h[basePath]
 
-            data1, data2 = findMatchingTDCEvents(tdc1Num=0, tdc2Num=4, data=ds)
-
-            print(data1[0])
-            print(data2[0])
-            print(data1[100])
-            print(data2[100])
-            print(data1[10000])
-            print(data2[10000])
-            exit()
+            maxFine = []
+            coarseZeroMinimum = []
+            coarseZeroAvg = []
+            coarseZeroMode = []
+            maxFinewThresh = []
+            x = []
 
             for tdcNum in tdcNums:
-                #Setup Plot Figure
-                plt.figure(tdcNum)
-                plt.title(basePath + "TDC : " + str(tdcNum))
-                ax = plt.subplot(1, 1, 1)
-                ax.set_title("TDC histogram: " + str(basePath) + "TDC : " + str(tdcNum))
-                ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-
                 # Apply post processing on Coarse
                 corrected_coarse = post_processing(ds, "Coarse", formatNum, tdcNum=tdcNum)
                 corrected_coarse = corrected_coarse.astype('int64')
@@ -43,13 +34,35 @@ class TDCHistogram():
                 corrected_fine = post_processing(ds, "Fine", formatNum, tdcNum=tdcNum)
                 corrected_fine = corrected_fine.astype('int64')
 
-                # Calculate the codes with a buffer between them to distinctly see the different coarses
-                buffer = 5
-                tdc_codes = (corrected_coarse * (max(corrected_fine) + buffer)) + corrected_fine
 
-                # Generate the histogram
-                hist_codes = np.bincount(tdc_codes)
-                ax.bar(np.arange(len(hist_codes)), hist_codes, align='center')
+                coarseZeroFine = corrected_fine[corrected_coarse == 0]
+
+                if (coarseZeroFine.size != 0):
+
+                    maxFine.append(max(corrected_fine))
+                    coarseZeroMinimum.append(min(coarseZeroFine))
+                    coarseZeroAvg.append(np.mean(coarseZeroFine))
+                    coarseZeroMode.append(stats.mode(coarseZeroFine)[0])
+                    maxFinewThresh.append(findTrueMaxFineWThreshold(corrected_coarse, corrected_fine, 0.4))
+
+                    x.append(tdcNum)
+
+            #Setup Plot Figure
+            plt.figure(1)
+            plt.title(basePath + "TDC : ")
+            ax = plt.subplot(1, 1, 1)
+            ax.set_title("Finding an accurate max Fine")
+            ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+
+            ax.plot(x, maxFine, marker='^', label='Max fine, no processing')
+            ax.plot(x, coarseZeroMinimum, marker='v', label='Minimum in coarse zero')
+            ax.plot(x, coarseZeroAvg, marker='.', label='Coarse zero average')
+            ax.plot(x, coarseZeroMode, marker='s', label='Coarse zero mode')
+            ax.plot(x, maxFinewThresh, marker='+', label='Max fine, with threshold')
+
+            ax.legend()
+
+            plt.show()
 
         _logger.info("Done generating histogram and closed file")
 
@@ -70,7 +83,7 @@ if __name__ == '__main__':
     BH.tdcHist(filename="/home2/cars2019/Documents/DATA/NON_CORR_TEST_ALL-20210407-194310.hdf5",
                basePath="CHARTIER/ASIC0/TDC/M0/ALL_TDC_ACTIVE/PLL/FAST_255/SLOW_250/NON_CORR/EXT/PROCESSED",
                formatNum=0,
-               tdcNums=list(range(2)))
+               tdcNums=list(range(49)))
 
     #NeverForgetti
     plt.show()
