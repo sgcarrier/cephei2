@@ -334,6 +334,12 @@ class ASIC:
     def enable_Vext(self):
         self.b.ICYSHSR1.PLL_ENABLE(self.head_id, 0, 0)
 
+    def enable_trig_test(self):
+        self.b.ICYSHSR1.PLL_DISABLE_EXTERNAL_TRIGGER(self.head_id, 0)
+
+    def disable_trig_test(self):
+        self.b.ICYSHSR1.PLL_DISABLE_EXTERNAL_TRIGGER(self.head_id, 1)
+
     #Setup pour test de la PLL lente; Input: Ref_Freq_Slow; Output: Div_Freq_Slow_PLL_Test
     def test_PLL_slow(self):
         self.b.ICYSHSR1.PLL_ENABLE(self.head_id, 0, 0) # Disable Array PLL
