@@ -106,19 +106,33 @@ def findMatchingTDCEvents(tdc1Num, tdc2Num, data):
     :param data: Raw data, dont filter out the column names
     :return: the coarse,fine columns of all matched events for TDC#1 and TDC#2
     '''
+<<<<<<< HEAD
+=======
+
+>>>>>>> 7639e1399fe99f6ed62b89f2d286b910bd5b85de
     '''Extract the data concerning the 2 TDCs we are comparing'''
     TDC1Data = data[(data["Addr"] == tdc1Num)]
     TDC2Data = data[(data["Addr"] == tdc2Num)]
     # Set columns Coarse and Fine
+<<<<<<< HEAD
     data_type = np.dtype({'names': ['Coarse', 'Fine', 'Global'], 'formats': ['u4', 'u4', 'i4']})
     '''Initialize an array as big as we think it will be'''
     data1 = np.zeros(max([len(TDC1Data), len(TDC2Data)]), dtype=data_type)
     data2 = np.zeros(max([len(TDC1Data), len(TDC2Data)]), dtype=data_type)
+=======
+    data_type = np.dtype({'names': ['Coarse', 'Fine'], 'formats': ['u4', 'u4']})
+
+    '''Initialize an array as big as we think it will be'''
+    data1 = np.zeros(max([len(TDC1Data), len(TDC2Data)]), dtype=data_type)
+    data2 = np.zeros(max([len(TDC1Data), len(TDC2Data)]), dtype=data_type)
+
+>>>>>>> 7639e1399fe99f6ed62b89f2d286b910bd5b85de
 
     idx = 0
     for i in tqdm(range(len(TDC1Data))):
         '''Find global counter matches from data1 in data2. The indexes don't match, but should be fairly close [-5,5]'''
         for j in range(-5, 6, 1):
+<<<<<<< HEAD
             '''To not go out of bounds [0, len]'''
             if ((i+j) < 0) or ((i+j) >= len(TDC2Data['Global'])):
                 continue
@@ -132,6 +146,26 @@ def findMatchingTDCEvents(tdc1Num, tdc2Num, data):
     '''Remove the trailing zeros'''
     data1 = np.resize(data1, idx)
     data2 = np.resize(data2, idx)
+=======
+
+            '''To not go out of bounds [0, len]'''
+            if ((i+j) < 0) or ((i+j) >= len(TDC2Data['Global'])):
+                continue
+
+            '''The [-1,1] gap is for valid rare cases that the skew caused the global counters to be different by 1'''
+            if (abs(TDC1Data['Global'][i] - TDC2Data['Global'][i+j]) <= 1) :
+
+                data1[idx] = TDC1Data[['Coarse', 'Fine']][i]
+                data2[idx] = TDC2Data[['Coarse', 'Fine']][i+j]
+                idx += 1
+                '''We found the match, no need to look at other neighbors, break'''
+                break
+
+    '''Remove the trailing zeros'''
+    data1 = np.resize(data1, idx)
+    data2 = np.resize(data2, idx)
+
+>>>>>>> 7639e1399fe99f6ed62b89f2d286b910bd5b85de
     return data1, data2
 
 def findMatchingTDCEventsFast(tdc1Num, tdc2Num, data):
@@ -149,8 +183,8 @@ def findMatchingTDCEventsFast(tdc1Num, tdc2Num, data):
     # Set columns Coarse and Fine
     data_type = np.dtype({'names': ['Coarse', 'Fine', 'Global'], 'formats': ['u4', 'u4', 'u4']})
 
-    data1 = np.empty(0, dtype=data_type)
-    data2 = np.empty(0, dtype=data_type)
+    data1 = np.zeros(max([len(TDC1Data), len(TDC2Data)]), dtype=data_type)
+    data2 = np.zeros(max([len(TDC1Data), len(TDC2Data)]), dtype=data_type)
 
     print("len pre traitement TDC1 = ", len(TDC1Data))
 
@@ -161,18 +195,24 @@ def findMatchingTDCEventsFast(tdc1Num, tdc2Num, data):
 
     shift = len(TDC1Data) - len(TDC2Data)
     step = 0
-
+    idx = 0
     for i in tqdm(range(len(TDC1Data))):
         if (i + step) >= len(TDC2Data['Global']):
             continue
-        if 1 >= TDC1Data['Global'][i] - TDC2Data['Global'][i+step] >= -1:
-            data1 = np.append(data1, np.array(TDC1Data[['Coarse', 'Fine', 'Global']][i], dtype=data_type))
-            data2 = np.append(data2, np.array(TDC2Data[['Coarse', 'Fine', 'Global']][i], dtype=data_type))
+
+        globalDiff = TDC1Data['Global'][i] - TDC2Data['Global'][i + step]
+        if (1 >= globalDiff) or (globalDiff >= -1):
+            data1[idx] = TDC1Data[['Coarse', 'Fine', 'Global']][i]
+            data2[idx] = TDC2Data[['Coarse', 'Fine', 'Global']][i]
         else:
             step = step+shift
-            data1 = np.append(data1, np.array(TDC1Data[['Coarse', 'Fine', 'Global']][i], dtype=data_type))
-            data2 = np.append(data2, np.array(TDC2Data[['Coarse', 'Fine', 'Global']][i+step], dtype=data_type))
+            data1[idx] = TDC1Data[['Coarse', 'Fine', 'Global']][i]
+            data2[idx] = TDC2Data[['Coarse', 'Fine', 'Global']][i+step]
+        idx += 1
 
+
+    data1 = np.resize(data1, idx)
+    data2 = np.resize(data2, idx)
     print(len(data1))
     return data1, data2
 

@@ -150,22 +150,65 @@ class WINDOW_NON_CORR_Experiment(BasicExperiment):
 if __name__ == '__main__':
     from utility.ExperimentRunner import ExperimentRunner
     from utility.loggingSetup import loggingSetup
-    import logging
+    import argparse
+    import ast
 
-    loggingSetup("QKD_WINDOW_NON_CORR_Experiment", level=logging.DEBUG)
+    loggingSetup("WINDOW_NON_CORR_Experiment", level=logging.DEBUG)
+
+    # Setup the argument parser
+    parser = argparse.ArgumentParser()
+    parser.add_argument("fast_freq", help="Frequency of the fast pll")
+    parser.add_argument("slow_freq", help="Frequency of the slow pll")
+    parser.add_argument("array", help="Array to use on the chip (0-1)")
+    parser.add_argument("delay", help="Delay in PS of the trigger ")
+    parser.add_argument("window_length", help="Length of window in code")
+    parser.add_argument("-f", help="Filename of HDF5 file")
+    parser.add_argument("-d", help="Folder destination of HDF5 file")
+    parser.add_argument("-c", type=int, help="Data count limit")
+    args = parser.parse_args()
+
+    fast_freq = ast.literal_eval(args.fast_freq)
+    slow_freq = ast.literal_eval(args.slow_freq)
+    array = ast.literal_eval(args.array)
+    delay = ast.literal_eval(args.delay)
+    window_length = ast.literal_eval(args.window_length)
+
+    _logger.info("fast_freq set to :" + str(fast_freq))
+    _logger.info("slow_freq set to :" + str(slow_freq))
+    _logger.info("array set to :" + str(array))
+    _logger.info("delay set to :" + str(delay))
+    _logger.info("window_length set to :" + str(window_length))
+
+    # Set destination data filename
+    if args.f:
+        filename = args.f
+    else:
+        filename = "WINDOW_NON_CORR-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
+
+    if args.d:
+        if (args.d[-1] == '/'):
+            filename = args.d + filename
+        else:
+            filename = args.d + "/" + filename
+
+    if args.c:
+        countLimit = args.c
+    else:
+        _logger.warning("No countlimit set, setting to 10000 by default")
+        countLimit = 10000
 
     # Instanciate the experiment
-    filename = "WINDOW_NON_CORR_Experiment-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
     experiment = WINDOW_NON_CORR_Experiment(filename=filename,
-                                                countLimit=1000000,
-                                                timeLimit=-1)
+                                            countLimit=countLimit,
+                                            timeLimit=-1)
 
     # Assign the experiment to the runner and tell the variables you have and if you want to iterate
     runner = ExperimentRunner(experiment=experiment,
-                              variables={'fast_freq': (254, 257, 1),
-                                         'slow_freq': 250,
-                                         'delay': 0,
-                                         'window_length': (5, 251, 5)})
+                              variables={'fast_freq': fast_freq,
+                                         'slow_freq': slow_freq,
+                                         'delay': delay,
+                                         'window_length': window_length,
+                                         'array': array})
 
     # run and stop it. Ctrl-C can stop it prematurely.
     try:

@@ -151,7 +151,7 @@ class ASIC:
                 self.b.ICYSHSR1.COARSE_BIAS_LOOKUP_TABLE_2_0(self.head_id, bias_lookup[(i*4)+2], register_offset_bias)
                 self.b.ICYSHSR1.COARSE_BIAS_LOOKUP_TABLE_3_0(self.head_id, bias_lookup[(i*4)+3], register_offset_bias)
 
-            for i in range(8):
+            for i in range(2):
                 self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_0_0(self.head_id, slope_lookup[(i*8)+0], register_offset_slope)
                 self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_1_0(self.head_id, slope_lookup[(i*8)+1], register_offset_slope)
                 self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_2_0(self.head_id, slope_lookup[(i*8)+2], register_offset_slope)
@@ -167,7 +167,7 @@ class ASIC:
                 self.b.ICYSHSR1.COARSE_BIAS_LOOKUP_TABLE_2_1(self.head_id, bias_lookup[(i*4)+2], register_offset_bias)
                 self.b.ICYSHSR1.COARSE_BIAS_LOOKUP_TABLE_3_1(self.head_id, bias_lookup[(i*4)+3], register_offset_bias)
 
-            for i in range(8):
+            for i in range(2):
                 self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_0_1(self.head_id, slope_lookup[(i*8)+0], register_offset_slope)
                 self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_1_1(self.head_id, slope_lookup[(i*8)+1], register_offset_slope)
                 self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_2_1(self.head_id, slope_lookup[(i*8)+2], register_offset_slope)
@@ -401,8 +401,8 @@ class ASIC:
     def configure_zpp_mode(self, array, readout_time, width, spacing):
         self.set_zpp_interval_width(width)
         self.set_zpp_interval_spacing(spacing)
-        self.mux_select(array, self.c.SEL_ZPP)
         self.set_time_driven_period(readout_time)
+        self.mux_select(array, self.c.SEL_ZPP)
 
     def confgure_QKD_mode(self, array, timeBins, threshold):
         self.mux_select(array, self.c.SEL_QKD_TIME_BIN)  # Set the output mux

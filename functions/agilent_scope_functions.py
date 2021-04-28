@@ -14,8 +14,8 @@ class delayLineAgilent():
             sys.exit()
 
         # For Serial and TCP/IP socket connections enable the read Termination Character, or read's will timeout
-        if self.session.resource_name.startswith('ASRL') or self.session.resource_name.endswith('SOCKET'):
-            self.session.read_termination = '\n'
+        #if self.session.resource_name.startswith('ASRL') or self.session.resource_name.endswith('SOCKET'):
+        self.session.read_termination = '\n'
 
         # Send Clear, *IDN? and read the response
         self.session.write("*CLS")

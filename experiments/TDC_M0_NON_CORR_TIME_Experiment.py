@@ -5,7 +5,7 @@ import logging
 import time
 import random
 from tqdm import tqdm
-
+import pickle
 
 
 
@@ -53,7 +53,7 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
 
         # Custom parameters for the example, had what you want here
 
-        self.basePath = "/MO/TDC/NON_CORR_ALL"
+        self.basePath = "/MO/TDC/NON_CORR_ALL_TIME"
         self.board = Board()
 
     def setup(self):
@@ -71,6 +71,7 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
         self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
         self.board.trigger_delay_head_0.set_delay_code(0)
         self.board.asic_head_0.reset()
+        self.board.asic_head_0.mux_select(0, 1)
 
         time.sleep(1)
         self.board.b.GEN_GPIO.gpio_set("MUX_COMM_SELECT", False)
@@ -84,6 +85,20 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
 
 
     def run(self, fast_freq, slow_freq, array):
+        self.board.asic_head_0.mux_select(0, 1)
+        with open('corr_coef.pickle', 'rb') as f:
+            coefficients = pickle.load(f)
+            for tdc_id in coefficients:
+                coarse_corr = int(coefficients[tdc_id][0] * 8)
+                fine_corr = int(coefficients[tdc_id][1] * 16)
+                bias_lookup = coefficients[tdc_id][2]
+                slope_lookup = coefficients[tdc_id][3]
+                self.board.asic_head_0.set_coarse_correction(array, tdc_id, coarse_corr)
+                self.board.asic_head_0.set_fine_correction(array, tdc_id, fine_corr)
+                #self.board.asic_head_0.set_lookup_tables(array, tdc_id, bias_lookup, slope_lookup)
+
+
+
         self.board.b.ICYSHSR1.SERIAL_READOUT_TYPE(0, 0, 0)
 
         # Set PLL frequencies
@@ -116,6 +131,7 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
         acqID = random.randint(0, 65535)
 
         #self.board.b.DMA.set_meta_data(self.filename, path, acqID, 0)
+        self.board.b.DMA.set_meta_data(self.filename, path, acqID, 2)
         time.sleep(1)
         # This line is blocking
         #self.board.b.DMA.start_data_acquisition(acqID, self.countLimit, self.timeLimit, maxEmptyTimeout=100)

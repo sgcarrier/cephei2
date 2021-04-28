@@ -11,11 +11,11 @@ from functions.helper_functions import MUX
 
 _logger = logging.getLogger(__name__)
 
-delay_line_type = np.dtype({'names': ['delay_code_bit', 'ftune', 'hits', 'mean', 'std_dev', 'start_temp', 'end_temp'],
-                            'formats': ['i4', 'f4', 'i4', 'f4', 'f4', 'f4', 'f4']})
+delay_line_type = np.dtype({'names': ['delay_obj', 'delay_code_bit', 'ftune', 'hits', 'mean', 'std_dev', 'start_temp', 'end_temp'],
+                            'formats': ['i4', 'i4', 'f4', 'i4', 'f4', 'f4', 'f4', 'f4']})
 
 
-class DelayLineExperiment(BasicExperiment):
+class DelayLineFunctionExperiment(BasicExperiment):
     '''
     This is an experiment for characterizing the delay line. The execution goes as follows:
 
@@ -54,8 +54,6 @@ class DelayLineExperiment(BasicExperiment):
         dataFolder = "C:/Users/Administrator/Documents/SimonCarrier/DATA"
         setupFile = "C:/Users/Administrator/Documents/SimonCarrier/SETUP/delay_line_setup.set"
         self.agilent = delayLineAgilent(VISA_ADDRESS, dataFolder, setupFile)
-        # self.h = h5py.File(self.filename, "a", libver='latest')
-        # self.h.create_dataset(self.basePath, (0,), maxshape=(None,), dtype=delay_line_type)
 
         self.board.trigger_oscillator.set_frequency(20)  # div by 2 later
         self.board.trigger_divider.set_divider(50, Divider.MUX_NOT_CORR)
@@ -78,7 +76,7 @@ class DelayLineExperiment(BasicExperiment):
             currTemp =  self.board.temp_probe.get_temp()
             _logger.info("Current temperature = " + str(currTemp))
 
-    def run(self, delay_code_bit, ftune):
+    def run(self, delay_ps):
         '''
         This is the main running function. This where you setup your experiments with specific variables for your
         acquisition. This function MUST be blocking because you are acquiring data and writing that data to an open
@@ -88,22 +86,22 @@ class DelayLineExperiment(BasicExperiment):
         '''
         time.sleep(1)
 
-        self.board.trigger_delay_head_0.set_fine_tune(ftune)
 
-        delay_code = 1 << int(delay_code_bit)
-        _logger.info("Delay code = " + str(delay_code))
+        actual_delay, delay_code, ftune_volt = self.board.trigger_delay_head_0.delay_to_bit_code_and_ftune(delay_ps)
+
+        self.board.trigger_delay_head_0.set_fine_tune(ftune_volt)
         self.board.trigger_delay_head_0.set_delay_code(delay_code)
 
         time.sleep(3)
 
         start_temp = self.board.temp_probe.get_temp()
 
-        datafile_name = self.datafile_prefix + "_delay_" + str(delay_code) + "_ftune_" + str(ftune)
+        datafile_name = self.datafile_prefix + "_delay_ps_" + str(delay_ps)
         n_hits, mean, std_dev = self.agilent.start_acq(self.countLimit, datafile_name)
 
         end_temp = self.board.temp_probe.get_temp()
 
-        data = np.array([(delay_code_bit, ftune, n_hits, mean, std_dev, start_temp, end_temp)], dtype=delay_line_type)
+        data = np.array([(actual_delay, delay_code, ftune_volt, n_hits, mean, std_dev, start_temp, end_temp)], dtype=delay_line_type)
         _logger.info("Current Acquisition returned : " + str(data))
 
         self.dataTotal = np.append(self.dataTotal, data)
@@ -132,22 +130,21 @@ if __name__ == '__main__':
     import argparse
     import ast
 
-    loggingSetup("DelayLineExperiment", level=logging.DEBUG)
+    loggingSetup("DelayLineFunctionExperiment", level=logging.DEBUG)
 
     # Setup the argument parser
     parser = argparse.ArgumentParser()
-    parser.add_argument("delay_code_bit", help="Bit to set to 1 in the 10 bit delay code (0-9)")
-    parser.add_argument("ftune", help="Ftune value of the SY89296U delay line. Controlled by the DAC (0-65535)")
+    parser.add_argument("delay_ps", help="Aimed delay in ps")
     parser.add_argument("-f", help="Filename of HDF5 file")
     parser.add_argument("-d", help="Folder destination of HDF5 file")
     parser.add_argument("-c", type=int, help="Data count limit")
     args = parser.parse_args()
 
-    delay_code_bit = ast.literal_eval(args.delay_code_bit)
-    ftune = ast.literal_eval(args.ftune)
+    delay_ps = ast.literal_eval(args.delay_ps)
 
-    _logger.info("delay_code_bit set to :" + str(delay_code_bit))
-    _logger.info("ftune set to :" + str(ftune))
+
+    _logger.info("delay_ps set to :" + str(delay_ps))
+
 
     # Set destination data filename
     if args.f:
@@ -168,12 +165,12 @@ if __name__ == '__main__':
         countLimit = 10000
 
     # Instanciate the example experiment
-    experiment = DelayLineExperiment(filename=filename,
+    experiment = DelayLineFunctionExperiment(filename=filename,
                                      countLimit=countLimit)
 
     # Assign the experiment to the runner and tell the variables you have and if you want to iterate
     runner = ExperimentRunner(experiment=experiment,
-                              variables={'delay_code_bit': delay_code_bit, 'ftune': ftune})
+                              variables={'delay_ps': delay_ps})
 
     # run and stop it. Ctrl-C can stop it prematurely.
     runner.start()

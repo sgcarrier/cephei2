@@ -249,7 +249,7 @@ class DelayLine:
             self.dac_id = 5  # Wind delay H0
         elif device_id == 1:
             self.dac_id = 3  # Wind delay H1
-        elif device_id == 2:
+        elif device_id == 3:
             self.dac_id = 7  # Trig delay H0
         else:
             self.dac_id = 1  # Trig delay H1
@@ -261,10 +261,12 @@ class DelayLine:
 
         # Setup ftune via AD5668
         # Ftune lineaire between 0 and 0.5V
-        self.b.AD5668.WRITE_TO_AND_UPDATE_DAC(1, self.dac_id, 0)
+        self.b.AD5668.WRITE_TO_AND_UPDATE_DAC(0, self.dac_id, 0)
+        self.b.AD5668.INTERNAL_REF_SETUP(0, self.dac_id, 1)
 
     @staticmethod
     def delay_to_bit_code(delay):
+        #delays_by_bit = [4610, 2300, 1150, 575, 290, 145, 70, 35, 15, 10]
         delays_by_bit = [4610, 2300, 1150, 575, 290, 145, 70, 35, 15, 10]
         delay_code = 0
 
@@ -276,6 +278,36 @@ class DelayLine:
 
         return delay_code
 
+    @staticmethod
+    def delay_to_bit_code_and_ftune(delay):
+        # delays_by_bit = [4610, 2300, 1150, 575, 290, 145, 70, 35, 15, 10]
+        delays_by_bit = [18.39, 22.09, 48.31, 87.83, 162.73, 308.62, 612.52, 1229.95, 2453.47, 4877.48]
+        delay_code = 0
+        actual_delay = 0
+
+        ftune_alpha = -29.289 / 0.8  # ps/v
+        ftune_offset = 20
+
+        delay_with_offset = delay + abs(ftune_offset)
+
+        # Convert target delay to code to set on the delay line
+        for i in range(9, -1, -1):
+            if delay_with_offset > delays_by_bit[i]:
+                delay_code |= 1 << i
+                actual_delay += delays_by_bit[i]
+                delay_with_offset -= delays_by_bit[i]
+
+        ftune = (delay - actual_delay) / ftune_alpha
+
+        if ftune < 0:
+            ftune = 0
+
+        true_delay = (ftune_alpha * ftune) + actual_delay
+
+        # print("For input: {0:15f}, OBJ_DELAY: {1:15f}, DELAY_CODE: {2:10b}, FTUNE: {3:5f}".format( delay, true_delay, delay_code, ftune))
+
+        return true_delay, delay_code, ftune
+
     # Max delay =
     def set_delay(self, delay):
         code = self.delay_to_bit_code(delay)
@@ -285,8 +317,11 @@ class DelayLine:
         disable = 0
         length = 0  # When high latches D[9:0] and D[10] bits. When low, the D[9:0] and D[10] are transparent.
         d10 = 0     #
-        low_config = 0 | (delay_code << 1) & 0xFE | d10
-        high_config = 0 | ((delay_code >> 7) & 0x7) | (disable << 3) | (length << 4)
+        #low_config = 0 | (delay_code << 1) & 0xFE | d10
+        #high_config = 0 | ((delay_code >> 7) & 0x7) | (disable << 3) | (length << 4)
+
+        low_config = int('{:08b}'.format(delay_code >> 3)[::-1], 2)
+        high_config = int('{:03b}'.format(delay_code & 0x7)[::-1], 2) | (disable << 4) | (length << 5)
 
         self.b.TCA9539.CONFIGURATIONPORT0(self.device_id, 0x0)
         self.b.TCA9539.CONFIGURATIONPORT1(self.device_id, 0x0)
@@ -302,7 +337,7 @@ class DelayLine:
         value = int(ftune * (2**16 - 1) / 2.5)
         if value < 0 or value >= 2**16:
             raise ValueError("ftune value " + str(value) + " (in volt) is outside of range 0 to 2.5V")
-        self.b.AD5668.WRITE_TO_AND_UPDATE_DAC(1, self.dac_id, value)
+        self.b.AD5668.WRITE_TO_AND_UPDATE_DAC(0, self.dac_id, value)
 
     def increment_fine_delay(self):
         self.ftune_value += 1
@@ -371,13 +406,53 @@ class HV:
     def __init__(self, chartier, hv_id):
         self.b = chartier
         self.hv_id = hv_id
+        ''' Set internal reference for the DAC'''
+        self.b.AD5668.INTERNAL_REF_SETUP(1, 1, 1)
+
+        ''' We want the default value to be 3.3, so the SPADs are completely unbiased'''
+        self.curr_voltage = 3.3
+        value = int((-(self.curr_voltage-3.3) * (2**16 - 1)) / 18.3)
+        self.b.AD5668.WRITE_TO_AND_UPDATE_DAC(1, self.hv_id, value)
+
+    def volt2dac(self, volt):
+        volt = round(volt, 3)
+        return int((-(volt-3.3) * (2**16 - 1)) / 18.3)
 
     # Voltage between 3.3 and -15
-    def set_voltage(self, voltage):
-        value = int((-(voltage-3.3) * (2**16 - 1)) / 18.3)
+    def set_voltage(self, desired_voltage, step_volt=0.1):
+        value = self.volt2dac(desired_voltage)
         if value < 0 or value >= 2**16:
+<<<<<<< HEAD
             raise ValueError("HV value " + str(voltage) + " outside of range 3.3V to -15V")
         self.b.AD5668.WRITE_TO_AND_UPDATE_DAC(1, self.hv_id, value)
+=======
+            raise ValueError("HV value " + str(desired_voltage) + " outside of range 3.3V to -15V")
+
+        '''Ramp toward the desired value 1V/sec'''
+        time_step = step_volt # sec
+
+
+        '''The maximum number of steps we should ever have to take, 
+           to avoid infinite loop if we set the step_volt too big'''
+        max_steps = (18.3/step_volt) + 2
+        steps = 0
+
+        while ((round(abs(self.curr_voltage - desired_voltage),3) >= step_volt) and (steps < max_steps)):
+
+            time.sleep(time_step)
+
+            if self.curr_voltage < desired_voltage:
+                self.curr_voltage += step_volt
+                value = self.volt2dac(self.curr_voltage)
+                self.b.AD5668.WRITE_TO_AND_UPDATE_DAC(1, self.hv_id, value)
+            else:
+                self.curr_voltage -= step_volt
+                value = self.volt2dac(self.curr_voltage)
+                self.b.AD5668.WRITE_TO_AND_UPDATE_DAC(1, self.hv_id, value)
+
+            steps += 1
+
+>>>>>>> 7639e1399fe99f6ed62b89f2d286b910bd5b85de
 
 
 class CurrentSource:

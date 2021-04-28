@@ -22,6 +22,10 @@ setup(  name='cephei2',
             'pandas',
             'PyVISA'
         ],
-        scripts=['experiments/FakeExperiment.py'],
+        scripts=['experiments/FakeExperiment.py',
+                 'experiments/DelayLineExperiment.py',
+                 'experiments/TDC_M0_NON_CORR_ALL_Experiment.py',
+                 'experiments/TDC_M0_NON_CORR_Experiment.py',
+                 'experiments/WINDOW_NON_CORR_Experiment.py'],
         include_package_data=True,
         zip_safe=False)
