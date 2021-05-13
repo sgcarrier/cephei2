@@ -53,7 +53,7 @@ class ZPP_Experiment(BasicExperiment):
 
         # Custom parameters for the example, had what you want here
 
-        self.basePath = "/MO/TDC/ZPP"
+        self.basePath = "/MO/TDC/NON_CORR_ALL"
         self.board = Board()
 
     def setup(self):
@@ -65,40 +65,55 @@ class ZPP_Experiment(BasicExperiment):
         # Frames are type short
         self.board.asic_head_0.frame_type_normal()
 
+        #self.board.trigger_oscillator.set_frequency(20)  # div by 2 later
+        #self.board.trigger_divider.set_divider(500, Divider.MUX_NOT_CORR)
+        #self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
+        #self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
+        #self.board.trigger_delay_head_0.set_delay_code(0)
         self.board.asic_head_0.reset()
 
         time.sleep(1)
         self.board.b.GEN_GPIO.gpio_set("MUX_COMM_SELECT", False)
         self.board.b.GEN_GPIO.gpio_set("EN_COMM_COUNTER", False)
 
-        self.board.asic_head_0.disable_all_tdc()
+        self.board.asic_head_0.set_zpp_interval_width(400)
+        self.board.asic_head_0.set_zpp_interval_spacing(400)
+        self.board.asic_head_0.set_time_driven_period(4000)
+        self.board.asic_head_0.mux_select(array, 8)
+
+        #self.board.asic_head_0.disable_all_tdc()
         self.board.asic_head_0.disable_all_quench()
-        self.board.asic_head_0.disable_all_ext_trigger()
-        self.board.asic_head_0.configure_zpp_mode(0, 4000, 200, 200)
+        #self.board.asic_head_0.disable_all_ext_trigger()
 
         self.pbar = tqdm(total=self.countLimit)
 
 
-    def run(self, array, pixel, readout, width, spacing):
+    def run(self, fast_freq, slow_freq, array):
         self.board.b.ICYSHSR1.SERIAL_READOUT_TYPE(0, 0, 0)
 
         # Set PLL frequencies
-        self.board.asic_head_0.disable_all_quench_but(array, [pixel])
-        self.board.asic_head_0.configure_zpp_mode(array, readout, width, spacing)
+        self.board.slow_oscillator_head_0.set_frequency(slow_freq)
+        self.board.fast_oscillator_head_0.set_frequency(fast_freq)
 
+        self.board.asic_head_0.enable_all_tdc()
+        self.board.asic_head_0.enable_all_ext_trigger()
+
+        self.board.b.ICYSHSR1.PLL_ENABLE(0, 1, 0)
 
         #self.board.b.ICYSHSR1.SERIAL_READOUT_TYPE(0, 1, 0)
         #self.board.asic_head_0.set_trigger_type(1)
         #self.board.b.ICYSHSR1.TRIGGER_EVENT_DRIVEN_COLUMN_THRESHOLD(0, 1, 0)
 
+        self.board.asic_head_0.configure_zpp_mode(array, 4000, 400, 200)
+
         path = genPathName_TDC( boardName="CHARTIER",
                                 ASICNum=0,
                                 matrixNum=array,
-                                TDCsActive="ONE",
-                                controlSource="ZPP",
-                                fastVal="NA",
-                                slowVal="NA",
-                                testType="ZPP",
+                                TDCsActive="ALL",
+                                controlSource="PLL",
+                                fastVal=fast_freq,
+                                slowVal=slow_freq,
+                                testType="NON_CORR",
                                 triggerType="EXT")
 
         groupName = path
@@ -112,7 +127,7 @@ class ZPP_Experiment(BasicExperiment):
         # This line is blocking
         #self.board.b.DMA.start_data_acquisition(acqID, self.countLimit, self.timeLimit, maxEmptyTimeout=100)
         self.board.b.DMA.start_data_acquisition_HDF(self.filename, groupName, datasetPath, self.countLimit, maxEmptyTimeout=-1,
-                                                    type=1, compression=0)
+                                                    type=0, compression=0)
         time.sleep(1)
 
 
@@ -142,21 +157,20 @@ if __name__ == '__main__':
 
     # Setup the argument parser
     parser = argparse.ArgumentParser()
-    #parser.add_argument("fast_freq", help="Frequency of the fast pll")
-    #parser.add_argument("slow_freq", help="Frequency of the slow pll")
-    #parser.add_argument("array", help="Array to use on the chip (0-1)")
+    parser.add_argument("fast_freq", help="Frequency of the fast pll")
+    parser.add_argument("slow_freq", help="Frequency of the slow pll")
+    parser.add_argument("array", help="Array to use on the chip (0-1)")
     parser.add_argument("-f", help="Filename of HDF5 file")
     parser.add_argument("-d", help="Folder destination of HDF5 file")
     parser.add_argument("-c", type=int, help="Data count limit")
     args = parser.parse_args()
-
-    """fast_freq = ast.literal_eval(args.fast_freq)
+    fast_freq = ast.literal_eval(args.fast_freq)
     slow_freq = ast.literal_eval(args.slow_freq)
     array = ast.literal_eval(args.array)
 
     _logger.info("fast_freq set to :" + str(fast_freq))
     _logger.info("slow_freq set to :" + str(slow_freq))
-    _logger.info("array set to :" + str(array))"""
+    _logger.info("array set to :" + str(array))
 
     # Set destination data filename
     if args.f:
@@ -177,12 +191,12 @@ if __name__ == '__main__':
         countLimit = 10000
 
     experiment = ZPP_Experiment(filename=filename,
-                                countLimit=countLimit,
-                                timeLimit=-1)
+                                                countLimit=countLimit,
+                                                timeLimit=-1)
 
     # Assign the experiment to the runner and tell the variables you have and if you want to iterate
     runner = ExperimentRunner(experiment=experiment,
-                              variables={'array': 0, 'pixel': 0, 'readout': 400, 'width': 50, 'spacing': 50})
+                              variables={'fast_freq': fast_freq, 'slow_freq': slow_freq, 'array': array})
 
 
     # run and stop it. Ctrl-C can stop it prematurely.
@@ -193,8 +207,4 @@ if __name__ == '__main__':
         exit()
 
     runner.stop()
-
-
-
-
 
