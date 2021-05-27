@@ -262,7 +262,9 @@ class DelayLine:
 
         # Setup ftune via AD5668
         # Ftune lineaire between 0 and 0.5V
-        self.b.AD5668.WRITE_TO_AND_UPDATE_DAC(0, self.dac_id, 0)
+        #self.b.AD5668.WRITE_TO_AND_UPDATE_DAC(0, self.dac_id, 0)
+
+        #SEt internal reference
         self.b.AD5668.INTERNAL_REF_SETUP(0, self.dac_id, 1)
 
     @staticmethod

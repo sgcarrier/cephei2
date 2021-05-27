@@ -7,6 +7,7 @@ import logging
 import math
 from matplotlib import pyplot as plt
 from tqdm import tqdm
+from scipy.optimize import curve_fit
 
 
 class TimingTableVisualizer:
@@ -154,6 +155,8 @@ class TimingTableVisualizer:
     def showTotalHist(self):
         ttt = self.total_timingTable[0:2000, :]
 
+        maxCode = len(ttt[0,:])
+
         for code in range(len(ttt[0,:])):
             if np.sum(ttt[:,code]) == 0:
                 continue
@@ -179,12 +182,25 @@ class TimingTableVisualizer:
         for i in range(len(total_hist_sum)):
             raw_data_recon = np.append(raw_data_recon, [i]*(total_hist_sum[i]))
 
+
+
+        # Curve Fitting
+        def gaussian(x, mean, amplitude, standard_deviation):
+            return amplitude * np.exp(- (x - mean) ** 2 / (2 * standard_deviation ** 2))
+
+        popt, pcov = curve_fit(gaussian, list(range(0, 2000,2)), total_hist_sum[0:2000:2], p0=[1000, max(total_hist_sum)*1.5, 20])
+        x_interval_for_fit = np.linspace(0, 2000, 10000)
+        fitGaussian = gaussian(x_interval_for_fit, *popt)
+        ax.plot(x_interval_for_fit, fitGaussian, label='fit', color='r')
+
         textstr = '\n'.join((
             r'Samples=%.2f' % (sum(total_hist_sum),),
-            r'STD=%.2f' % (np.std(raw_data_recon),)))
+            r'STD=%.2f' % (np.std(raw_data_recon),),
+            r'STDFit=%.2f' % (popt[2],)))
 
         ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14,
                 verticalalignment='top')
+
 
         plt.show()
 
@@ -242,9 +258,9 @@ if __name__ == '__main__':
     TT.open(filename=filename)
     TT.showTimingTable(baseDatesetPath, 100, 9, 0, None)
 
-    #TT.showTotalHist()
+    TT.showTotalHist()
 
-    TT.jitterVsCode()
+    #TT.jitterVsCode()
 
     TT.close()
 

@@ -13,26 +13,21 @@ from utility.ExperimentRunner import genPathName_TDC
 
 _logger = logging.getLogger(__name__)
 
-""" Experiment for finding out the actual window size
-
-    The experiment follows these steps:
-    - Setup the chip in CT counting mode
-    - ...
-"""
-
 
 class TDC_NON_CORR_SPAD_Experiment(BasicExperiment):
     '''
-    This is an example of an experiment. The execution goes as follows:
+    This experiement consists of activating a single SPAD for a non-correlated test
 
-    setup() (once)
-    run() (multiple iterations with the variables you specify)
-    cleanup (once)
+    We start by setting the HOLDOFF, RECHARGE and COMP parameters:
+    HOLDOFF :: How long the SPAD stays off after a hit
+    RECHARGE :: How long to recharge the SPAD after a hit
+    COMP :: The comparator threshold for a hit
 
-    In this example, we open a hdf5 file and write to it. The variables in run() are only for illustration purposes
-    and serve no role.
+    How this experiment is run:
+    - setup() is called once at the beginning
+    - run() is then called multiple times for each combination of parameters given
+    - cleanup() is called at the end. This step usually resets the ASIC
 
-    Follow along in the logs and see how the experiement is doing.
     '''
 
     def __init__(self, filename, countLimit, timeLimit):
@@ -46,9 +41,6 @@ class TDC_NON_CORR_SPAD_Experiment(BasicExperiment):
         self.countLimit = countLimit
         self.timeLimit = timeLimit
 
-        # Custom parameters for the example, had what you want here
-
-        self.basePath = "/M0/TDC/NON_CORR"
         self.board = Board()
 
     def setup(self):
@@ -57,46 +49,54 @@ class TDC_NON_CORR_SPAD_Experiment(BasicExperiment):
         This is where you assign setting that will not change during your experiment
         '''
 
-        # Frames are type short
-        self.board.asic_head_0.frame_type_normal()
-
-        self.board.trigger_oscillator.set_frequency(20)  # div by 2 later
-        self.board.trigger_divider.set_divider(500, Divider.MUX_NOT_CORR)
-        self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
-        self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
-        self.board.trigger_delay_head_0.set_delay_code(0)
         self.board.asic_head_0.reset()
 
         time.sleep(1)
 
-        #self.board.asic_head_0.disable_all_tdc()
-        #self.board.asic_head_0.disable_all_quench()
+        '''Disable all external trigger. We want the SPADs to be the source of trigger'''
         self.board.asic_head_0.disable_all_ext_trigger()
 
-    def run(self, fast_freq, slow_freq, array, tdc_addr):
 
-        # Set PLL frequencies
+    def run(self, fast_freq, slow_freq, array, tdc_addr):
+        '''
+        Run the experiment with the given arguments as parameters. This step is blocking and stops when the data has
+        bean writen.
+        :param fast_freq: Frequency of the fast oscillator (typ 255)
+        :param slow_freq: Frequency of the slow oscillator (typ 250)
+        :param array: Array to use (0 or 1)
+        :param tdc_addr: Address of the TDC to activate, the corresponding SPAD will be activated
+        :return: None
+        '''
+
+
+        ''' Set PLL frequencies '''
         self.board.slow_oscillator_head_0.set_frequency(slow_freq)
         self.board.fast_oscillator_head_0.set_frequency(fast_freq)
 
-        CE_T_RCH = 0.8 #uA (50 ns)
-        CE_T_HOLDOFF = 7 #uA (40 ns)
-        CE_V_COMP = 2 #V
+        '''Set RECHARCHE current '''
+        CE_T_RCH =  11 #uA (10 ns)
+        '''Set HOLDOFF current'''
+        CE_T_HOLDOFF = 1 #uA (240 ns)
+        '''Set comparator threshold'''
+        CE_V_COMP = 3 #V
 
         self.board.recharge_current.set_current(CE_T_RCH)
         self.board.holdoff_current.set_current(CE_T_HOLDOFF)
         self.board.comparator_threshold.set_voltage((CE_V_COMP/3.3) * 5)
 
-        self.board.asic_head_0.disable_all_tdc_but(array, [int(tdc_addr)])
-        #self.board.asic_head_0.disable_all_ext_trigger_but(array, [int(tdc_addr)])
-        self.board.asic_head_0.disable_all_quench_but(array, [int(tdc_addr)])
+        '''Activate the TDC we are interrested in'''
+        self.board.asic_head_0.disable_all_tdc_but(array, [6])
+        '''Activate the corresponding SPAD to the TDC'''
+        self.board.asic_head_0.disable_all_quench_but(array, [24,25])
 
+        ''' Enable the PLL that acts as the time reference of all TDCs'''
         self.board.b.ICYSHSR1.PLL_ENABLE(0, 1, 0)
 
+        '''Generate the path name to write in the HDF5'''
         path = genPathName_TDC(boardName="CHARTIER",
                                ASICNum=0,
                                matrixNum=array,
-                               TDCsActive=[tdc_addr],
+                               TDCsActive=[6],
                                controlSource="PLL",
                                fastVal=fast_freq,
                                slowVal=slow_freq,
@@ -106,11 +106,9 @@ class TDC_NON_CORR_SPAD_Experiment(BasicExperiment):
         groupName = path
         datasetPath = path + "/RAW"
 
-        #self.board.b.DMA.set_meta_data(self.filename, path, acqID, 0)
         time.sleep(2)
-        # This line is blocking
-        #self.board.b.DMA.start_data_acquisition(acqID, self.countLimit, self.timeLimit, maxEmptyTimeout=100)
-
+        '''Start writing the receiving data to the file
+           This function is blocking'''
         self.board.b.DMA.start_data_acquisition_HDF(self.filename, groupName, datasetPath, self.countLimit,
                                                     maxEmptyTimeout=-1,
                                                     type=1, compression=0)
