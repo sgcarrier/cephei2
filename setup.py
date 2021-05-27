@@ -26,6 +26,7 @@ setup(  name='cephei2',
                  'experiments/DelayLineExperiment.py',
                  'experiments/TDC_M0_NON_CORR_ALL_Experiment.py',
                  'experiments/TDC_M0_NON_CORR_Experiment.py',
-                 'experiments/WINDOW_NON_CORR_Experiment.py'],
+                 'experiments/WINDOW_NON_CORR_Experiment.py',
+                 'experiments/TDC_M0_NON_CORR_SPAD_Experiment.py'],
         include_package_data=True,
         zip_safe=False)
