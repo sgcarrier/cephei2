@@ -14,7 +14,7 @@ from utility.ExperimentRunner import genPathName_TDC
 _logger = logging.getLogger(__name__)
 
 
-class TDC_NON_CORR_SPAD_Experiment(BasicExperiment):
+class SPAD_NON_CORR_SINGLE_Experiment(BasicExperiment):
     '''
     This experiement consists of activating a single SPAD for a non-correlated test
 
@@ -57,7 +57,7 @@ class TDC_NON_CORR_SPAD_Experiment(BasicExperiment):
         self.board.asic_head_0.disable_all_ext_trigger()
 
 
-    def run(self, fast_freq, slow_freq, array, tdc_addr):
+    def run(self, fast_freq, slow_freq, array, tdc_addr, spad_addr, rch, holdoff, time_driven_period):
         '''
         Run the experiment with the given arguments as parameters. This step is blocking and stops when the data has
         bean writen.
@@ -73,10 +73,12 @@ class TDC_NON_CORR_SPAD_Experiment(BasicExperiment):
         self.board.slow_oscillator_head_0.set_frequency(slow_freq)
         self.board.fast_oscillator_head_0.set_frequency(fast_freq)
 
+        self.board.asic_head_0.mux_select(array, 0)
+
         '''Set RECHARCHE current '''
-        CE_T_RCH =  11 #uA (10 ns)
+        CE_T_RCH =  rch #uA
         '''Set HOLDOFF current'''
-        CE_T_HOLDOFF = 1 #uA (240 ns)
+        CE_T_HOLDOFF = holdoff #uA
         '''Set comparator threshold'''
         CE_V_COMP = 3 #V
 
@@ -85,26 +87,28 @@ class TDC_NON_CORR_SPAD_Experiment(BasicExperiment):
         self.board.comparator_threshold.set_voltage((CE_V_COMP/3.3) * 5)
 
         '''Activate the TDC we are interrested in'''
-        self.board.asic_head_0.disable_all_tdc_but(array, [6])
+        self.board.asic_head_0.disable_all_tdc_but(array, [tdc_addr])
         '''Activate the corresponding SPAD to the TDC'''
-        self.board.asic_head_0.disable_all_quench_but(array, [24,25])
+        self.board.asic_head_0.disable_all_quench_but(array, [spad_addr])
 
         ''' Enable the PLL that acts as the time reference of all TDCs'''
         self.board.b.ICYSHSR1.PLL_ENABLE(0, 1, 0)
 
+        self.board.asic_head_0.set_time_driven_period(time_driven_period)
+
         '''Generate the path name to write in the HDF5'''
         path = genPathName_TDC(boardName="CHARTIER",
-                               ASICNum=0,
+                               ASICNum=4,
                                matrixNum=array,
-                               TDCsActive=[6],
+                               TDCsActive=[tdc_addr],
                                controlSource="PLL",
                                fastVal=fast_freq,
                                slowVal=slow_freq,
                                testType="NON_CORR",
                                triggerType="SPAD")
 
-        groupName = path
-        datasetPath = path + "/RAW"
+        groupName = path + "/RCH_" + str(rch) + "/HOLDOFF_" + str(holdoff) + "/TD_period_" + str(time_driven_period)
+        datasetPath = groupName + "/RAW"
 
         time.sleep(2)
         '''Start writing the receiving data to the file
@@ -138,6 +142,10 @@ if __name__ == '__main__':
     parser.add_argument("slow_freq", help="Frequency of the slow pll")
     parser.add_argument("array", help="Array to use on the chip (0-1)")
     parser.add_argument("tdc_addr", help="TDC address to keep active")
+    parser.add_argument("spad_addr", help="SPAD address to keep active")
+    parser.add_argument("rch", help="recharge current to use (uA)")
+    parser.add_argument("holdoff", help="holdoff current to use (uA)")
+    parser.add_argument("time_driven_period", help="Period of time-driven readout")
     parser.add_argument("-f", help="Filename of HDF5 file")
     parser.add_argument("-d", help="Folder destination of HDF5 file")
     parser.add_argument("-c", type=int, help="Data count limit")
@@ -147,17 +155,26 @@ if __name__ == '__main__':
     slow_freq = ast.literal_eval(args.slow_freq)
     array = ast.literal_eval(args.array)
     tdc_addr = ast.literal_eval(args.tdc_addr)
+    spad_addr = ast.literal_eval(args.spad_addr)
+    rch = ast.literal_eval(args.rch)
+    holdoff = ast.literal_eval(args.holdoff)
+    time_driven_period = ast.literal_eval(args.time_driven_period)
+
 
     _logger.info("fast_freq set to :" + str(fast_freq))
     _logger.info("slow_freq set to :" + str(slow_freq))
     _logger.info("array set to :" + str(array))
     _logger.info("tdc_addr set to :" + str(tdc_addr))
+    _logger.info("spad_addr set to :" + str(spad_addr))
+    _logger.info("rch set to :" + str(rch))
+    _logger.info("holdoff set to :" + str(holdoff))
+    _logger.info("time_driven_period set to :" + str(time_driven_period))
 
     # Set destination data filename
     if args.f:
         filename = args.f
     else:
-        filename = "TDC_NON_CORR-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
+        filename = "SPAD_SINGLE_NON_CORR-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
 
     if args.d:
         if (args.d[-1] == '/'):
@@ -172,7 +189,7 @@ if __name__ == '__main__':
         countLimit = 10000
 
     # Instanciate the experiment
-    experiment = TDC_NON_CORR_SPAD_Experiment(filename=filename,
+    experiment = SPAD_NON_CORR_SINGLE_Experiment(filename=filename,
                                          countLimit=countLimit,
                                          timeLimit=-1)
 
