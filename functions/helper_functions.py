@@ -408,8 +408,8 @@ class MUX:
     PCB_INPUT = 1
     NON_INVERTED = 0
     INVERTED = 1
-    MONOSTABLE = 0
-    DELAYED_LASER = 1
+    MONOSTABLE = 1
+    DELAYED_LASER = 0
 
     def __init__(self, chartier, mux_id):
         self.device_id = 2
