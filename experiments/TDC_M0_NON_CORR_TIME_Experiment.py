@@ -83,7 +83,7 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
         self.board.asic_head_0.disable_all_quench()
         #self.board.asic_head_0.disable_all_ext_trigger()
 
-        with open('11may_corr_coef_lin_bias_slope.pickle', 'rb') as f:
+        with open('20may_corr_coef_lin_bias_slope.pickle', 'rb') as f:
             coefficients = pickle.load(f)
             for tdc_id in coefficients:
                 coarse_corr = int(coefficients[tdc_id][0] * 8)
@@ -98,7 +98,8 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
 
 
     def run(self, fast_freq, slow_freq, array):
-        self.board.b.ICYSHSR1.SERIAL_READOUT_TYPE(0, 0, 0)
+        #self.board.b.ICYSHSR1.SERIAL_READOUT_TYPE(0, 0, 0)
+        self.board.asic_head_0.mux_select(0, 1)
 
         # Set PLL frequencies
         self.board.slow_oscillator_head_0.set_frequency(slow_freq)
