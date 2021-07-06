@@ -4,6 +4,8 @@ from utility.BasicExperiment import BasicExperiment
 import logging
 import time
 import random
+import numpy as np
+import pickle
 
 from functions.helper_functions import Board
 from functions.helper_functions import Divider
@@ -70,9 +72,20 @@ class TimeBin_window_NON_CORR_Experiment(BasicExperiment):
 
         time.sleep(1)
 
-        # self.board.asic_head_0.disable_all_quench()
+        self.board.asic_head_0.disable_all_quench()
         self.board.asic_head_0.disable_all_tdc_but(0, [0])
         self.board.asic_head_0.disable_all_ext_trigger_but(0, [0])
+
+        with open('20may_corr_coef_lin_bias_slope.pickle', 'rb') as f:
+            coefficients = pickle.load(f)
+            for tdc_id in coefficients:
+                coarse_corr = int(coefficients[tdc_id][0] * 8)
+                fine_corr = int(coefficients[tdc_id][1] * 16)
+                bias_lookup = np.clip((coefficients[tdc_id][2]+128).astype(int), 0, 255)
+                slope_lookup = np.clip((coefficients[tdc_id][3]*8).astype(int), 0, 15)
+                self.board.asic_head_0.set_coarse_correction(array, tdc_id, coarse_corr)
+                self.board.asic_head_0.set_fine_correction(array, tdc_id, fine_corr)
+                self.board.asic_head_0.set_lookup_tables(array, tdc_id, bias_lookup, slope_lookup)
 
     def run(self, fast_freq, slow_freq, delay, window_length):
         # Set PLL Frequencies and enable
