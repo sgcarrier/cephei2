@@ -25,7 +25,7 @@ class ConstantsASIC:
     # Trigger type
     TRIG_TIME_DRIVEN = 0
     TRIG_EVENT_DRIVEN = 1
-    TRIG_WINDOW_DRIVEN = 2
+    TRIG_WINDOW_DRIVEN = 0x10
 
 
 class ASIC:
