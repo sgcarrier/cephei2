@@ -171,6 +171,28 @@ class MulticastDataGrabber():
         return None
 
 
+    def manual_data_fetch(self, formatNum=0):
+        if not self.data_sock:
+            return None
+
+        sec = 1
+        usec = 0000
+        timeval = struct.pack('ll', sec, usec)
+        self.data_sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVTIMEO, timeval)
+        self.data_sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 4097152)
+
+        try:
+            msg = self.data_sock.recv(100 * 1024)
+        except BlockingIOError:
+            return None
+
+        rawData = self.extractData(msg)
+
+        dataArr = self.RDP.raw2compArray(rawData, formatNum, keepRaw=False)
+
+        return dataArr
+
+
     def start_data(self):
         self._startTime = datetime.datetime.now()
         self._dataCount = 0
