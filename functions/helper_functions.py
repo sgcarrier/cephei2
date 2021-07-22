@@ -6,8 +6,10 @@ import numpy as np
 
 # LMK03318
 class PLL:
-    def __init__(self, chartier):
+    def __init__(self, chartier, name=""):
         self.b = chartier
+        self.component_name = name
+        self.status = {"frequency": 0.0, "sync_pin": False}
 
     # target_fvco: in MHz and should be between 4800 and 5400.
     def set_frequencies(self, freq_0_1, freq_2_3, target_fvco=5000):
@@ -98,6 +100,9 @@ class PLL:
         self.b.LMK03318.gpio_set(0, "SYNC", False)
         self.b.LMK03318.gpio_set(0, "SYNC", True)
 
+        self.status["sync_pin"] = True
+        self.status["frequency"] = freq_0_1
+
     def set_6_25mhz(self):
         self.b.LMK03318.PLL_P(0, 7)  # Post divider value: 8
         self.b.LMK03318.CH_0_MUTE(0, 0)  # Mute disabled for channel 0
@@ -138,20 +143,28 @@ class PLL:
         self.b.LMK03318.gpio_set(0, "SYNC", False)
         self.b.LMK03318.gpio_set(0, "SYNC", True)
 
+        self.status["sync_pin"] = True
+        self.status["frequency"] = 6.25
+
 # LMK01020
 class Divider:
     MUX_CORR = 1
     MUX_NOT_CORR = 0
 
-    def __init__(self, chartier, device_id):
+    def __init__(self, chartier, device_id, name=""):
         self.device_id = device_id
         self.b = chartier
+        self.component_name = name
+        self.status = {"divider": 0, "mux_sel": 0}
+
         if self.device_id == 1:
             self.sync = "WIND_SYNC"
             self.goe = "WIND_GOE"
         else:
             self.sync = "TRIG_SYNC"
             self.goe = "TRIG_GOE"
+
+
 
     # mux_select: 1 = corr, 0 = not corr
     def set_divider(self, divider, mux_select):
@@ -183,6 +196,9 @@ class Divider:
         self.b.LMK01020.gpio_set(0, self.goe, True)
         self.b.LMK01020.gpio_set(0, self.sync, True)
 
+        self.status["divider"] = divider
+        self.status["mux_sel"] = mux_select
+
 
 # LMK61E2
 class Oscillator:
@@ -191,7 +207,7 @@ class Oscillator:
     # FREF: 50-MHz reference input
     # FOUT = FVCO / OUTDIV
 
-    def __init__(self, chartier, device_id):
+    def __init__(self, chartier, device_id, name=""):
         self.device_id = device_id
         self.b = chartier
         if device_id == 0 or device_id == 1:
@@ -202,6 +218,9 @@ class Oscillator:
             self.oe = "WIND_OSC_OE"
         else:
             self.oe = "TDC_OSC_OE"
+
+        self.component_name = name
+        self.status = {"frequency": 0}
 
     # Frequency in MHz
     def set_frequency(self, frequency):
@@ -236,13 +255,20 @@ class Oscillator:
         self.b.LMK61E2.SWR2PLL(self.device_id, 1)           # Software reset. Automatically cleared to 0
         self.b.LMK61E2.gpio_set(0, self.oe, True)
 
+        self.status["frequency"] = frequency
+
 
 
 # SY89296 controlled through TCA9539 and AD5668
 class DelayLine:
-    def __init__(self, chartier, device_id):
+    def __init__(self, chartier, device_id, name=""):
         self.device_id = device_id
         self.b = chartier
+
+        self.component_name = name
+        self.status = {"delay": 0}
+
+
         self.ftune_slope = -30/0.5   # 30 ps / 0.5 V
         self.ftune_value = 0
         self.dac_id = 0
@@ -337,11 +363,13 @@ class DelayLine:
 
         # print("For input: {0:15f}, OBJ_DELAY: {1:15f}, DELAY_CODE: {2:10b}, FTUNE: {3:5f}".format( delay, true_delay, delay_code, ftune))
 
+        self.status["delay"] = delay
+
         return true_delay, delay_code, ftune
 
     # Max delay =
     def set_delay(self, delay):
-        code = self.delay_to_bit_code(delay)
+        _, code, ftune = self.delay_to_bit_code(delay)
         self.set_delay_code(code)
 
     def set_delay_code(self, delay_code):
@@ -391,13 +419,17 @@ class TemperatureProbe:
     PLL_DIVIDER_PROBE = 0
     DELAY_PROBE = 1
 
-    def __init__(self, chartier, device_id):
+    def __init__(self, chartier, device_id, name=""):
         self.device_id = device_id
         self.b = chartier
         self.TMP1075_LSB = 0.0625
+        self.component_name = name
+        self.status = {"temperature": 0}
 
     def get_temp(self):
-        return (self.b.TMP1075.T(self.device_id)) * self.TMP1075_LSB
+        t = (self.b.TMP1075.T(self.device_id)) * self.TMP1075_LSB
+        self.status["temperature"] = t
+        return t
 
 
 # Controlled through TCA9539
@@ -411,7 +443,7 @@ class MUX:
     MONOSTABLE = 1
     DELAYED_LASER = 0
 
-    def __init__(self, chartier, mux_id):
+    def __init__(self, chartier, mux_id, name=""):
         self.device_id = 2
         self.mux_id = 1 << mux_id
         self.b = chartier
@@ -420,6 +452,9 @@ class MUX:
         self.b.TCA9539.OUTPUTPORT1(self.device_id, 0x0)
         self.b.TCA9539.CONFIGURATIONPORT0(self.device_id, 0x0)
         self.b.TCA9539.CONFIGURATIONPORT1(self.device_id, 0x0)
+        self.component_name = name
+        self.status = {"mux_sel": 0}
+
 
     def select_input(self, sel):
         # Read the current config and update only the bit of the target mux
@@ -431,10 +466,11 @@ class MUX:
         # Write back
         self.b.TCA9539.OUTPUTPORT0(self.device_id, new_config)
         self.b.TCA9539.CONFIGURATIONPORT0(self.device_id, 0x0)
+        self.status["mux_sel"] = sel
 
 
 class HV:
-    def __init__(self, chartier, hv_id):
+    def __init__(self, chartier, hv_id, name):
         self.b = chartier
         self.hv_id = hv_id
         ''' Set off internal reference for the DAC'''
@@ -444,6 +480,9 @@ class HV:
         self.curr_voltage = 3.3
         value = int((-(self.curr_voltage-3.3) * (2**16 - 1)) / 18.3)
         self.b.AD5668.WRITE_TO_AND_UPDATE_DAC(1, self.hv_id, value)
+
+        self.component_name = name
+        self.status = {"hv": 0}
 
     def volt2dac(self, volt):
         volt = round(volt, 3)
@@ -482,9 +521,11 @@ class HV:
 
 
 class CurrentSource:
-    def __init__(self, chartier, current_source_id):
+    def __init__(self, chartier, current_source_id, name=""):
         self.b = chartier
         self.current_source_id = current_source_id
+        self.component_name = name
+        self.status = {"current_ua": 0}
 
     # Current in uA. Between 0 and 100 uA
     def set_current(self, current):
@@ -492,12 +533,15 @@ class CurrentSource:
         if value < 0 or value >= 2**16:
             raise ValueError("Current value " + str(current) + " outside of range 0 to 100uA")
         self.b.AD5668.WRITE_TO_AND_UPDATE_DAC(1, self.current_source_id, value)
+        self.status["current_ua"] = current
 
 
 class VoltageSource5V:
-    def __init__(self, chartier, source_id):
+    def __init__(self, chartier, source_id, name=""):
         self.b = chartier
         self.source_id = source_id
+        self.component_name = name
+        self.status = {"volt": 0}
 
     # 0 to 5V
     def set_voltage(self, voltage):
@@ -505,12 +549,15 @@ class VoltageSource5V:
         if value < 0 or value >= 2 ** 16:
             raise ValueError("Voltage value " + str(voltage) + " outside of range 0 to 5V")
         self.b.AD5668.WRITE_TO_AND_UPDATE_DAC(1, self.source_id, value)
+        self.status["volt"] = voltage
 
 
 class VoltageSourceLaserThreshold:
-    def __init__(self, chartier, source_id):
+    def __init__(self, chartier, source_id, name=""):
         self.b = chartier
         self.source_id = source_id
+        self.component_name = name
+        self.status = {"volt": 0}
 
     # -1.25V to 2.5V
     def set_voltage(self, voltage):
@@ -518,12 +565,15 @@ class VoltageSourceLaserThreshold:
         if value < 0 or value >= 2 ** 16:
             raise ValueError("Voltage value " + str(voltage) + " outside of range -1.25V to 2.5V")
         self.b.AD5668.WRITE_TO_AND_UPDATE_DAC(1, self.source_id, value)
+        self.status["volt"] = voltage
 
 
 class VoltageSource2V5:
-    def __init__(self, chartier, source_id):
+    def __init__(self, chartier, source_id, name):
         self.b = chartier
         self.source_id = source_id
+        self.component_name = name
+        self.status = {"volt": 0}
 
     # 0 to 2.5V
     def set_voltage(self, voltage):
@@ -531,6 +581,30 @@ class VoltageSource2V5:
         if value < 0 or value >= 2 ** 16:
             raise ValueError("Voltage value " + str(voltage) + " outside of range 0 to 2V5")
         self.b.AD5668.WRITE_TO_AND_UPDATE_DAC(0, self.source_id, value)
+        self.status["volt"] = voltage
+
+
+class DataAcquisition:
+    def __init__(self, chartier, head_num):
+        if head_num == 1:
+            dev = "/dev/axi_dma_ic_h1"
+        else:
+            dev = "/dev/axi_dma_ic"
+
+        self.b = chartier
+
+    def start_data_acquisition_HDF(self,
+                                   filename,
+                                   groupName,
+                                   datasetPath,
+                                   countLimit,
+                                   maxEmptyTimeout=-1,
+                                   type=0,
+                                   compression=0):
+        self.b.DMA.start_data_acquisition_HDF(self.filename, groupName, datasetPath, self.countLimit,
+                                                maxEmptyTimeout=-1,
+                                                type=10, compression=0)
+
 
 
 class Board:
@@ -538,36 +612,46 @@ class Board:
         self.b = CHARTIER()
         # Instantiate all the circuit on the board for easy access
         # This way, the end user doesn't have to worry about the device's id
-        self.pll = PLL(self.b)
-        self.window_divider = Divider(self.b, 1)
-        self.trigger_divider = Divider(self.b, 0)
-        self.window_oscillator = Oscillator(self.b, 2)
-        self.trigger_oscillator = Oscillator(self.b, 5)
-        self.slow_oscillator_head_0 = Oscillator(self.b, 0)
-        self.fast_oscillator_head_0 = Oscillator(self.b, 1)
-        self.slow_oscillator_head_1 = Oscillator(self.b, 3)
-        self.fast_oscillator_head_1 = Oscillator(self.b, 4)
-        self.window_delay_head_0 = DelayLine(self.b, 0)
-        self.window_delay_head_1 = DelayLine(self.b, 1)
-        self.trigger_delay_head_0 = DelayLine(self.b, 3)
-        self.trigger_delay_head_1 = DelayLine(self.b, 4)
-        self.mux_window_laser = MUX(self.b, 2)
-        self.mux_trigger_laser = MUX(self.b, 3)
-        self.mux_window_external = MUX(self.b, 4)
-        self.mux_trigger_external = MUX(self.b, 5)
-        self.mux_coarse_delay = MUX(self.b, 0)
-        self.mux_laser_polarity = MUX(self.b, 1)
-        self.hv_head_0 = HV(self.b, 4)
-        self.hv_head_1 = HV(self.b, 6)
-        self.recharge_current = CurrentSource(self.b, 0)
-        self.holdoff_current = CurrentSource(self.b, 1)
-        self.comparator_threshold = VoltageSource5V(self.b, 2)
-        self.laser_threshold = VoltageSourceLaserThreshold(self.b, 3)
-        self.DAC_testpoint = VoltageSource5V(self.b, 7)
-        self.v_fast_head_0 = VoltageSource2V5(self.b, 0)
-        self.v_fast_head_1 = VoltageSource2V5(self.b, 6)
-        self.v_slow_head_0 = VoltageSource2V5(self.b, 2)
-        self.v_slow_head_1 = VoltageSource2V5(self.b, 4)
+        self.pll = PLL(self.b, "pll")
+        self.window_divider = Divider(self.b, 1, "window_divider")
+        self.trigger_divider = Divider(self.b, 0, "trigger_divider")
+        self.window_oscillator = Oscillator(self.b, 2, "window_oscillator")
+        self.trigger_oscillator = Oscillator(self.b, 5, "trigger_oscillator")
+        self.slow_oscillator_head_0 = Oscillator(self.b, 0, "slow_oscillator_head_0")
+        self.fast_oscillator_head_0 = Oscillator(self.b, 1, "fast_oscillator_head_0")
+        self.slow_oscillator_head_1 = Oscillator(self.b, 3, "slow_oscillator_head_1")
+        self.fast_oscillator_head_1 = Oscillator(self.b, 4, "fast_oscillator_head_1")
+        self.window_delay_head_0 = DelayLine(self.b, 0, "window_delay_head_0")
+        self.window_delay_head_1 = DelayLine(self.b, 1, "window_delay_head_1")
+        self.trigger_delay_head_0 = DelayLine(self.b, 3, "trigger_delay_head_0")
+        self.trigger_delay_head_1 = DelayLine(self.b, 4, "trigger_delay_head_1")
+        self.mux_window_laser = MUX(self.b, 2, "mux_window_laser")
+        self.mux_trigger_laser = MUX(self.b, 3, "mux_trigger_laser")
+        self.mux_window_external = MUX(self.b, 4, "mux_window_external")
+        self.mux_trigger_external = MUX(self.b, 5, "mux_trigger_external")
+        self.mux_coarse_delay = MUX(self.b, 0, "mux_coarse_delay")
+        self.mux_laser_polarity = MUX(self.b, 1, "mux_laser_polarity")
+        self.hv_head_0 = HV(self.b, 4, "hv_head_0")
+        self.hv_head_1 = HV(self.b, 6, "hv_head_1")
+        self.recharge_current = CurrentSource(self.b, 0, "recharge_current")
+        self.holdoff_current = CurrentSource(self.b, 1, "holdoff_current")
+        self.comparator_threshold = VoltageSource5V(self.b, 2, "comparator_threshold")
+        self.laser_threshold = VoltageSourceLaserThreshold(self.b, 3, "laser_threshold")
+        self.DAC_testpoint = VoltageSource5V(self.b, 7, "DAC_testpoint")
+        self.v_fast_head_0 = VoltageSource2V5(self.b, 0, "v_fast_head_0")
+        self.v_fast_head_1 = VoltageSource2V5(self.b, 6, "v_fast_head_1")
+        self.v_slow_head_0 = VoltageSource2V5(self.b, 2, "v_slow_head_0")
+        self.v_slow_head_1 = VoltageSource2V5(self.b, 4, "v_slow_head_1")
         self.asic_head_0 = ASIC(self.b, 0)
         self.asic_head_1 = ASIC(self.b, 1)
-        self.temp_probe = TemperatureProbe(self.b, 1)
+        self.DMA_head_0 = DataAcquisition(self.b, 0)
+        self.DMA_head_1 = DataAcquisition(self.b, 1)
+        self.temp_probe = TemperatureProbe(self.b, 1, "temp_probe")
+
+        self._status = {}
+
+    def getStatus(self):
+        for k,v in self.__dict__:
+            if hasattr(v, "name"):
+                self._status[v.name] = v.status
+

@@ -177,6 +177,37 @@ class ASIC:
                 self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_6_1(self.head_id, slope_lookup[(i*8)+6], register_offset_slope)
                 self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_7_1(self.head_id, slope_lookup[(i*8)+7], register_offset_slope)
 
+    def set_lookup_tables_fast(self, array, tdc_id, bias_lookup, slope_lookup):
+        # Pad bias with zeros (16)
+        # Pad slope with zeros (16)
+        # TODO
+        register_offset_bias = tdc_id * 4
+        register_offset_slope = tdc_id * 2
+        if array == 0:
+            for i in range(4):
+                reg_val = 0
+                for j in range(4):
+                    reg_val += bias_lookup[(i * 4) + j] << (j * 8)
+                self.b.ICYSHSR1.COARSE_BIAS_LOOKUP_TABLE_ALL_0(self.head_id, reg_val, register_offset_bias + i)
+            for i in range(2):
+                reg_val = 0
+                for j in range(8):
+                    reg_val += slope_lookup[(i * 8) + j] << (j * 4)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_ALL_0(self.head_id, reg_val, register_offset_slope + i)
+
+        else:
+            for i in range(4):
+                reg_val = 0
+                for j in range(4):
+                    reg_val += bias_lookup[(i * 4) + j] << (j * 8)
+                self.b.ICYSHSR1.COARSE_BIAS_LOOKUP_TABLE_ALL_1(self.head_id, reg_val, register_offset_bias + i)
+            for i in range(2):
+                reg_val = 0
+                for j in range(8):
+                    reg_val += slope_lookup[(i * 8) + j] << (j * 4)
+                self.b.ICYSHSR1.COARSE_SLOPE_LOOKUP_TABLE_ALL_1(self.head_id, reg_val, register_offset_slope + i)
+
+
 
     # Dark_count_filter must be an array of 6 integers.
     def set_dcr_filter(self, array, dark_count_filter=None):
