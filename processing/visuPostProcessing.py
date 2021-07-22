@@ -1,5 +1,6 @@
 import numpy as np
 import h5py
+import pandas as pd
 from tqdm import tqdm
 
 def post_processing(h, fieldName, formatNum, tdcNum):
@@ -57,7 +58,7 @@ def findTrueMaxCoarseWThreshold(coarse_data, threshold):
     Recommended threshold = 0.1
     """
     hist_coarse = np.bincount(coarse_data)
-    for c in range(3, max(coarse_data)):
+    for c in range(2, max(coarse_data)):
         if hist_coarse[c] < (np.mean(hist_coarse)*threshold):
             return c-1
     return max(coarse_data)
@@ -190,4 +191,46 @@ def findMatchingTDCEventsFast(tdc1Num, tdc2Num, data):
     return data1, data2
 
 
+
+
+def processDiffTimestamp(data, maxFine, maxCoarse):
+    global_data = data["Global"]
+    timestampDiff = np.zeros((len(global_data) - 1,), dtype="int64")
+    for i in range(len(global_data) - 1):
+        if (global_data[i + 1] - global_data[i]) >= 0:
+            timeDiff = self.calcTimestamp(global_data[i+1], data["Fine"][i+1], data["Coarse"][i+1], maxFine, maxCoarse) - self.calcTimestamp(global_data[i], data["Fine"][i], data["Coarse"][i], maxFine, maxCoarse)
+            timestampDiff[i] = timeDiff
+        else:  # in the case that the global counter overflows
+            timeDiff = self.calcTimestamp(global_data[i+1]+0x1FFFFF, data["Fine"][i+1], data["Coarse"][i+1], maxFine, maxCoarse) - self.calcTimestamp(global_data[i], data["Fine"][i], data["Coarse"][i], maxFine, maxCoarse)
+            timestampDiff[i] = timeDiff
+    return np.bincount(timestampDiff-np.min(timestampDiff))
+
+def processRelTimestamp(data, maxFine):
+    fine_data = data["Fine"]
+    timestampRel = np.zeros((len(fine_data),), dtype="int64")
+    for i in range(len(timestampRel) - 1):
+        timestampRel[i] = self.calcTimestampCode( data["Fine"][i], data["Coarse"][i], maxFine)
+    return np.bincount(timestampRel)
+
+def processHistogram(data, addr, field):
+    filteredData = data[data["Addr"] == addr]
+    filteredData = filteredData[field]
+
+    hist = np.bincount(filteredData)
+    lengthData = len(hist)
+
+    return pd.DataFrame({'x': np.arange(lengthData), 'y': hist})
+
+
+def processSPADImage(data):
+
+    arraySize = 64
+    side = int(np.sqrt(arraySize))
+    image = np.zeros((side,side))
+
+    for i in range(side):
+        for j in range(side):
+            image[i][j] = len(data[data["Addr"] == (i*side + j)])
+
+    return image
 
