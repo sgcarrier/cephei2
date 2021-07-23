@@ -19,7 +19,7 @@ class DevkitGUI():
 
         timer = QtCore.QTimer(self.__viewer)
         timer.timeout.connect(self.__viewer.update)
-        timer.start(40)
+        timer.start(10)
 
         time.sleep(0.5)
 

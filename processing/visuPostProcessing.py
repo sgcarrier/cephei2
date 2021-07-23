@@ -213,6 +213,10 @@ def processRelTimestamp(data, maxFine):
     return np.bincount(timestampRel)
 
 def processHistogram(data, addr, field):
+
+    if field not in data.dtype.fields:
+        return pd.DataFrame({'x': [], 'y': []})
+
     filteredData = data[data["Addr"] == addr]
     filteredData = filteredData[field]
 
@@ -227,10 +231,22 @@ def processSPADImage(data):
     arraySize = 64
     side = int(np.sqrt(arraySize))
     image = np.zeros((side,side))
+    counts = np.zeros((arraySize,))
 
-    for i in range(side):
-        for j in range(side):
-            image[i][j] = len(data[data["Addr"] == (i*side + j)])
+    for i in range(arraySize):
+        counts[i] = len(data[data["Addr"] == i])
+
+    for i in range(side * side):
+        tdc = i // 4
+        sub = i % 4
+
+        x_pos = (2 * tdc) % 8 + (sub % 2)
+        if (sub < 2):
+            y_pos = ((tdc) // 4) * 2
+        else:
+            y_pos = ((tdc) // 4) * 2 + 1
+
+        image[x_pos][y_pos] = counts[i]
 
     return image
 

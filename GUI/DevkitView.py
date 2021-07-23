@@ -7,6 +7,7 @@ import pyqtgraph as pg
 
 from processing.dataFormats import getFrameDtype
 from processing.visuPostProcessing import processHistogram, processSPADImage
+from data_grabber.multicastDataGrabber import MulticastDataGrabber
 import random
 
 class DevkitView(QtWidgets.QMainWindow):
@@ -17,13 +18,15 @@ class DevkitView(QtWidgets.QMainWindow):
         # Load the UI Page
         uic.loadUi('MainWindow.ui', self)
 
-        dtype = getFrameDtype(0, keepRaw=False)
-        self.currentLiveData = np.zeros((0,), dtype=dtype)
+        self.dataFormat = 0
+        dtype = getFrameDtype(self.dataFormat, keepRaw=False)
+        self.currentLiveData_H0 = np.zeros((0,), dtype=dtype)
+        self.currentLiveData_H1 = np.zeros((0,), dtype=dtype)
 
 
-        self.maxSamples = 5000
-        self.x = {}
-        self.hist = {}
+        self.maxSamples = 1000
+        self.tdcOfInterest = 0
+        self.headOfInterest = 0
         self.barGraphs = []
 
         self.monitorList = ['Fine', 'Coarse']
@@ -31,41 +34,64 @@ class DevkitView(QtWidgets.QMainWindow):
 
         self.buildView()
 
+        self.mdg = MulticastDataGrabber()
+
     def connect(self):
         pass
+        #self.mdg.connectToNetwork()
 
     def buildView(self):
 
         for field in self.monitorList:
-            self.hist[field] = []
-            self.x[field] = []
-            self.barGraphs.append(pg.BarGraphItem(x=self.x[field], height=self.hist[field], width=0.3, brush='r'))
+            self.barGraphs.append(pg.BarGraphItem(x=[], height=[], width=0.3, brush='r'))
             p = self.liveDataGraph.addPlot(title=field)
             p.addItem(self.barGraphs[-1])
             self.liveDataGraph.nextRow()
 
         self.clearDataButton.clicked.connect(self.clearLiveData)
 
-        self.graphTypeSelect.addItems(["Histogram", "Timestamp Difference", "Timestamp"])
+        self.graphTypeSelect.addItems(["Histogram", "Timestamp"])
         self.graphTypeSelect.currentIndexChanged.connect(self.selectionChanged)
+
+        self.maxSamplesSelect.setMaximum(10 ** 8)
+        self.maxSamplesSelect.setValue(self.maxSamples)
+        self.maxSamplesSelect.valueChanged.connect(self.newMaxSamples)
+
+        self.tdcNumberSelect.setMaximum(192)
+        self.tdcNumberSelect.setValue(self.tdcOfInterest)
+        self.tdcNumberSelect.valueChanged.connect(self.newtdcOfInterest)
+
+        self.headNumberSelect.addItems(["H0", "H1"])
+        self.headNumberSelect.currentIndexChanged.connect(self.newheadOfInterest)
+
+        self.dataFormatSelect.addItems(["0 - RAW_TIMESTAMP", "1 - PLL", "2 - PROCESSED", "3 - QKD"])
+        self.dataFormatSelect.currentIndexChanged.connect(self.newDataFormat)
 
 
     def update(self):
-        # data = self.mdg.manual_data_fetch()
-        dtype = getFrameDtype(0, keepRaw=False)
+        data, headNum = self.mdg.manual_data_fetch(formatNum=self.dataFormat)
+
+        headNum = 1
+        dtype = getFrameDtype(self.dataFormat, keepRaw=False)
         data = np.zeros((10,), dtype=dtype)
         for i in range(0, 10):
             # ['Addr', 'Energy', 'Global', 'Fine', 'Coarse', 'CorrBit', 'RESERVED']
             d = (random.randint(0, 63), 10, 10000, random.randint(1, 50), random.randint(1, 8), 0, 0)
             data[i] = d
 
-        if (data == None):
+        if (data.size == 0):
             return
 
-        self.currentLiveData = np.append(self.currentLiveData, data)
+        if headNum == 1:
+            self.currentLiveData_H1 = np.append(self.currentLiveData_H1, data)
+            if (len(self.currentLiveData_H1) > self.maxSamples):
+                self.currentLiveData_H1 = self.currentLiveData_H1[-self.maxSamples:]
+        else:
+            self.currentLiveData_H0 = np.append(self.currentLiveData_H0, data)
+            if (len(self.currentLiveData_H0) > self.maxSamples):
+                self.currentLiveData_H0 = self.currentLiveData_H0[-self.maxSamples:]
 
-        if (len(self.currentLiveData) > self.maxSamples):
-            self.currentLiveData = self.currentLiveData[-self.maxSamples:]
+
 
         self.updateLiveDataTab()
         self.updateSPADTab()
@@ -75,40 +101,76 @@ class DevkitView(QtWidgets.QMainWindow):
         self.plotLiveData()
 
     def updateSPADTab(self):
-        #self.head_0_heatmap.show()
-        image = processSPADImage(self.currentLiveData)
-        self.head_0_heatmap.setImage(image)
+        image_H0 = processSPADImage(self.currentLiveData_H0)
+        if np.sum(image_H0) != 0:
+            self.head_0_heatmap.setImage(image_H0, autoLevels=True)
+
+        image_H1 = processSPADImage(self.currentLiveData_H1)
+        if np.sum(image_H1) != 0:
+            self.head_1_heatmap.setImage(image_H1, autoLevels=True)
 
     def updateOverviewTab(self):
         pass
 
     def plotLiveData(self):
+
+        if self.headOfInterest == 1:
+            liveDataToUse = self.currentLiveData_H1
+        else:
+            liveDataToUse = self.currentLiveData_H0
         """Set the data to redraw"""
         selection = self.graphTypeSelect.currentText()
         if self.graphsReady:
             if selection == "Histogram":
                 for fieldNumber in range(len(self.monitorList)):
                     field = self.monitorList[fieldNumber]
-                    df = processHistogram(self.currentLiveData, 0, field)
+                    df = processHistogram(liveDataToUse, self.tdcOfInterest, field)
+                    self.barGraphs[fieldNumber].setOpts(x=df.x, height=df.y)
+            if selection == "Timestamp":
+                for fieldNumber in range(len(self.monitorList)):
+                    field = self.monitorList[fieldNumber]
+                    df = processHistogram(liveDataToUse, self.tdcOfInterest, field)
                     self.barGraphs[fieldNumber].setOpts(x=df.x, height=df.y)
 
             if selection == "Timestamp Difference":
-                hist = self.processDiffTimestamp(self.currentLiveData, 50, 8)
-                x = np.arange(len(hist))
-                self.barGraphs[0].setOpts(x=x, height=hist)
-
-            if selection == "Timestamp":
-                hist = self.processTimestamp(self.currentLiveData, 50)
+                hist = self.processDiffTimestamp(liveDataToUse, 50, 8)
                 x = np.arange(len(hist))
                 self.barGraphs[0].setOpts(x=x, height=hist)
 
 
-        self.numSamplesLive.display(len(self.currentLiveData))
+        self.numSamplesLive.display(len(liveDataToUse))
 
 
     def clearLiveData(self):
-        dtype = getFrameDtype(0, keepRaw=False)
-        self.currentLiveData = np.zeros((0,), dtype=dtype)
+        dtype = getFrameDtype(self.dataFormat, keepRaw=False)
+        self.currentLiveData_H0 = np.zeros((0,), dtype=dtype)
+        self.currentLiveData_H1 = np.zeros((0,), dtype=dtype)
+
+    def newMaxSamples(self, val):
+        self.maxSamples = val
+
+    def newtdcOfInterest(self, val):
+        self.tdcOfInterest = val
+
+    def newheadOfInterest(self):
+        st = self.headNumberSelect.currentText()
+        if st == "H1":
+            self.headOfInterest = 1
+        else:
+            self.headOfInterest = 0
+
+    def newDataFormat(self):
+        st = self.dataFormatSelect.currentText()
+        if st == "0 - RAW_TIMESTAMP":
+            self.dataFormat = 0
+        elif st == "1 - PLL":
+            self.dataFormat = 1
+        elif st == "2 - PROCESSED":
+            self.dataFormat = 2
+        elif st == "3 - QKD":
+            self.dataFormat = 3
+        else:
+            self.dataFormat = 0
 
     def selectionChanged(self, i):
         self.graphsReady = False
@@ -116,6 +178,7 @@ class DevkitView(QtWidgets.QMainWindow):
 
         self.liveDataGraph.clear()
         if selection == "Histogram":
+            self.monitorList = ['Fine', 'Coarse']
             self.barGraphs = []
             self.barGraphs.append(pg.BarGraphItem(x=[0], height=[0], width=0.3, brush='r'))
             p = self.liveDataGraph.addPlot(title="Coarse")
@@ -129,6 +192,12 @@ class DevkitView(QtWidgets.QMainWindow):
             p.setLabel(axis='bottom', text='Fine Code')
             p.addItem(self.barGraphs[-1])
             self.liveDataGraph.nextRow()
+        elif selection == "Timestamp":
+            self.monitorList = ['Timestamp']
+            self.barGraphs = []
+            self.barGraphs.append(pg.BarGraphItem(x=[0], height=[0], width=0.3, brush='r'))
+            p = self.liveDataGraph.addPlot(title="Timestamp")
+            p.addItem(self.barGraphs[-1])
         elif selection == "TimestampDiff":
             self.barGraphs = []
             self.barGraphs.append(pg.BarGraphItem(x=[0], height=[0], width=0.3, brush='r'))
