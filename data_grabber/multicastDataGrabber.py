@@ -101,17 +101,17 @@ class MulticastDataGrabber():
         mreq = socket.inet_aton(mcast_grp) + socket.inet_aton(interface_ip)
         self.data_sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
-        """ Setup socket to listen on multicast for meta-data"""
-        self.meta_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-        self.meta_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.meta_sock.bind(('', meta_mcast_port))
-
-        # multicast specific stuff - subscribing to the IGMP multicast
-        #mreq = socket.inet_aton(mcast_grp) + socket.inet_aton(socket.AF_INET)
-        #group = socket.inet_aton(mcast_grp)
-        #mreq = struct.pack('4sL', group, interface_ip)
-        mreq = socket.inet_aton(mcast_grp) + socket.inet_aton(interface_ip)
-        self.meta_sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+        # """ Setup socket to listen on multicast for meta-data"""
+        # self.meta_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        # self.meta_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # self.meta_sock.bind(('', meta_mcast_port))
+        #
+        # # multicast specific stuff - subscribing to the IGMP multicast
+        # #mreq = socket.inet_aton(mcast_grp) + socket.inet_aton(socket.AF_INET)
+        # #group = socket.inet_aton(mcast_grp)
+        # #mreq = struct.pack('4sL', group, interface_ip)
+        # mreq = socket.inet_aton(mcast_grp) + socket.inet_aton(interface_ip)
+        # self.meta_sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
         _logger.info("Connected to the network")
 
@@ -173,7 +173,7 @@ class MulticastDataGrabber():
 
     def manual_data_fetch(self, formatNum=0):
         if not self.data_sock:
-            return None
+            return np.array([])
 
         sec = 1
         usec = 0000
@@ -184,7 +184,7 @@ class MulticastDataGrabber():
         try:
             msg = self.data_sock.recv(100 * 1024)
         except BlockingIOError:
-            return None
+            return np.array([])
 
         rawData = self.extractData(msg)
 
