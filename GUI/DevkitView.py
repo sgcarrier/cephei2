@@ -9,6 +9,11 @@ from processing.dataFormats import getFrameDtype
 from processing.visuPostProcessing import processHistogram, processSPADImage
 from data_grabber.multicastDataGrabber import MulticastDataGrabber
 import random
+from utility.QTextEditLogger import QTextEditLogger
+import logging
+
+
+_logger = logging.getLogger(__name__)
 
 class DevkitView(QtWidgets.QMainWindow):
 
@@ -36,9 +41,23 @@ class DevkitView(QtWidgets.QMainWindow):
 
         self.mdg = MulticastDataGrabber()
 
+        self.logTextBox = None
+        self.setupLogger()
+
+    def setupLogger(self):
+        self.logTextBox = QTextEditLogger(self.logTextBrowser)
+        # You can format what is printed to text box
+        self.logTextBox.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+        logging.getLogger().addHandler(self.logTextBox)
+        # You can control the logging level
+        logging.getLogger().setLevel(logging.DEBUG)
+
     def connect(self):
-        pass
-        #self.mdg.connectToNetwork()
+        _logger.info("Connecting to network for viewer")
+        try:
+            self.mdg.connectToNetwork()
+        except Exception as e:
+            _logger.warning("Failed to connect to network with error: " + str(e))
 
     def buildView(self):
 
@@ -71,15 +90,17 @@ class DevkitView(QtWidgets.QMainWindow):
     def update(self):
         data, headNum = self.mdg.manual_data_fetch(formatNum=self.dataFormat)
 
-        headNum = 1
-        dtype = getFrameDtype(self.dataFormat, keepRaw=False)
-        data = np.zeros((10,), dtype=dtype)
-        for i in range(0, 10):
-            # ['Addr', 'Energy', 'Global', 'Fine', 'Coarse', 'CorrBit', 'RESERVED']
-            d = (random.randint(0, 63), 10, 10000, random.randint(1, 50), random.randint(1, 8), 0, 0)
-            data[i] = d
-
-        if (data.size == 0):
+        # headNum = 1
+        # dtype = getFrameDtype(self.dataFormat, keepRaw=False)
+        # data = np.zeros((10,), dtype=dtype)
+        # for i in range(0, 10):
+        #     # ['Addr', 'Energy', 'Global', 'Fine', 'Coarse', 'CorrBit', 'RESERVED']
+        #     d = (random.randint(0, 63), 10, 10000, random.randint(1, 50), random.randint(1, 8), 0, 0)
+        #     data[i] = d
+        if data:
+            if (data.size == 0):
+                return
+        else:
             return
 
         if headNum == 1:
