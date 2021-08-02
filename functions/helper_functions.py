@@ -608,8 +608,8 @@ class DataAcquisition:
 
 
 class Board:
-    def __init__(self):
-        self.b = CHARTIER()
+    def __init__(self, remoteIP=None):
+        self.b = CHARTIER(remoteIP=remoteIP)
         # Instantiate all the circuit on the board for easy access
         # This way, the end user doesn't have to worry about the device's id
         self.pll = PLL(self.b, "pll")

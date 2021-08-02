@@ -5,6 +5,7 @@ from PyQt5 import QtWidgets, uic
 from pyqtgraph import PlotWidget, ColorMap
 import pyqtgraph as pg
 
+from functions.helper_functions import *
 from processing.dataFormats import getFrameDtype
 from processing.visuPostProcessing import processHistogram, processSPADImage
 from data_grabber.multicastDataGrabber import MulticastDataGrabber
@@ -40,6 +41,7 @@ class DevkitView(QtWidgets.QMainWindow):
         self.buildView()
 
         self.mdg = MulticastDataGrabber()
+        self.board = None
 
         self.logTextBox = None
         self.setupLogger()
@@ -58,6 +60,8 @@ class DevkitView(QtWidgets.QMainWindow):
             self.mdg.connectToNetwork()
         except Exception as e:
             _logger.warning("Failed to connect to network with error: " + str(e))
+
+        self.board = Board(remoteIP='192.168.0.200')
 
     def buildView(self):
 
@@ -85,6 +89,22 @@ class DevkitView(QtWidgets.QMainWindow):
 
         self.dataFormatSelect.addItems(["0 - RAW_TIMESTAMP", "1 - PLL", "2 - PROCESSED", "3 - QKD"])
         self.dataFormatSelect.currentIndexChanged.connect(self.newDataFormat)
+
+        """ Overview Tab"""
+
+        self.tdc_trig_source_comboBox.currentIndexChanged.connect(self.tdc_trig_source_changed)
+        self.wind_trig_source_comboBox.currentIndexChanged.connect(self.wind_trig_source_changed)
+
+
+        self.pll_fast_h0_SpinBox.valueChanged.connect(self.board.fast_oscillator_head_0.set_frequency)
+        self.pll_slow_h0_SpinBox.valueChanged.connect(self.board.slow_oscillator_head_0.set_frequency)
+        self.pll_fast_h1_SpinBox.valueChanged.connect(self.board.fast_oscillator_head_1.set_frequency)
+        self.pll_slow_h1_SpinBox.valueChanged.connect(self.board.slow_oscillator_head_1.set_frequency)
+
+        self.dac_fast_h0_SpinBox.valueChanged.connect(self.board.v_fast_head_0.set_voltage)
+        self.dac_slow_h0_SpinBox.valueChanged.connect(self.board.v_slow_head_0.set_voltage)
+        self.dac_fast_h1_SpinBox.valueChanged.connect(self.board.v_fast_head_1.set_voltage)
+        self.dac_slow_h1_SpinBox.valueChanged.connect(self.board.v_slow_head_1.set_voltage)
 
 
     def update(self):
@@ -233,3 +253,28 @@ class DevkitView(QtWidgets.QMainWindow):
             self.liveDataGraph.nextRow()
 
         self.graphsReady = True
+
+
+    def tdc_trig_source_changed(self):
+        selection = self.tdc_trig_source_comboBox.currentText()
+
+        if selection == "CORR":
+            self.board.pll.set_6_25mhz()
+            div = self.tdc_trig_divider_SpinBox.value()
+            self.board.trigger_divider.set_divider(div, Divider.MUX_CORR)
+            self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
+            self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
+        elif selection == "NON_CORR":
+            freq = self.tdc_trig_freq_SpinBox.value()
+            self.board.trigger_oscillator.set_frequency(freq)
+            div = self.tdc_trig_divider_SpinBox.value()
+            self.board.trigger_divider.set_divider(div, Divider.MUX_NON_CORR)
+            self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
+            self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
+        elif selection == "EXT":
+            self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
+            self.board.mux_trigger_external.select_input(MUX.EXTERNAL_INPUT)
+        elif selection == "LASER":
+            self.board.mux_coarse_delay.select_input(MUX.MONOSTABLE)
+            self.board.mux_trigger_laser.select_input(MUX.LASER_INPUT)
+            self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
