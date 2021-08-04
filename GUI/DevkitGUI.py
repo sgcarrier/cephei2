@@ -15,7 +15,7 @@ class DevkitGUI():
 
     def start(self):
         _logger.info("Starting the GUI")
-        self.__controller.connect()
+        #self.__controller.connect()
         self.__viewer.connect()
 
         time.sleep(0.5)

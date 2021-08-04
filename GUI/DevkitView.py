@@ -7,7 +7,7 @@ import pyqtgraph as pg
 
 from functions.helper_functions import *
 from processing.dataFormats import getFrameDtype
-from processing.visuPostProcessing import processHistogram, processSPADImage
+from processing.visuPostProcessing import processHistogram, processSPADImage, processCountRate
 from data_grabber.multicastDataGrabber import MulticastDataGrabber
 import random
 from utility.QTextEditLogger import QTextEditLogger
@@ -38,10 +38,12 @@ class DevkitView(QtWidgets.QMainWindow):
         self.monitorList = ['Fine', 'Coarse']
         self.graphsReady = True
 
+        self.board = Board(remoteIP='192.168.0.200')
+
         self.buildView()
 
         self.mdg = MulticastDataGrabber()
-        self.board = None
+        #self.board = None
 
         self.logTextBox = None
         self.setupLogger()
@@ -52,7 +54,7 @@ class DevkitView(QtWidgets.QMainWindow):
         self.logTextBox.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
         logging.getLogger().addHandler(self.logTextBox)
         # You can control the logging level
-        logging.getLogger().setLevel(logging.DEBUG)
+        logging.getLogger().setLevel(logging.INFO)
 
     def connect(self):
         _logger.info("Connecting to network for viewer")
@@ -61,7 +63,7 @@ class DevkitView(QtWidgets.QMainWindow):
         except Exception as e:
             _logger.warning("Failed to connect to network with error: " + str(e))
 
-        self.board = Board(remoteIP='192.168.0.200')
+
 
     def buildView(self):
 
@@ -92,51 +94,150 @@ class DevkitView(QtWidgets.QMainWindow):
 
         """ Overview Tab"""
 
+        self.tdc_trig_source_comboBox.addItems(["CORR", "NON_CORR", "EXT", "LASER"])
         self.tdc_trig_source_comboBox.currentIndexChanged.connect(self.tdc_trig_source_changed)
+        self.wind_trig_source_comboBox.addItems(["CORR", "NON_CORR", "EXT", "LASER"])
         self.wind_trig_source_comboBox.currentIndexChanged.connect(self.wind_trig_source_changed)
 
+        self.wind_trig_freq_SpinBox.setKeyboardTracking(False)
+        self.wind_trig_freq_SpinBox.valueChanged.connect(self.wind_trig_freq_changed)
+        self.wind_trig_divider_SpinBox.setKeyboardTracking(False)
+        self.wind_trig_divider_SpinBox.valueChanged.connect(self.wind_trig_divider_changed)
 
+        self.tdc_trig_freq_SpinBox.setKeyboardTracking(False)
+        self.tdc_trig_freq_SpinBox.valueChanged.connect(self.tdc_trig_freq_changed)
+        self.tdc_trig_divider_SpinBox.setKeyboardTracking(False)
+        self.tdc_trig_divider_SpinBox.valueChanged.connect(self.tdc_trig_divider_changed)
+
+        self.pll_fast_h0_SpinBox.setKeyboardTracking(False)
         self.pll_fast_h0_SpinBox.valueChanged.connect(self.board.fast_oscillator_head_0.set_frequency)
+        self.pll_slow_h0_SpinBox.setKeyboardTracking(False)
         self.pll_slow_h0_SpinBox.valueChanged.connect(self.board.slow_oscillator_head_0.set_frequency)
+        self.pll_fast_h1_SpinBox.setKeyboardTracking(False)
         self.pll_fast_h1_SpinBox.valueChanged.connect(self.board.fast_oscillator_head_1.set_frequency)
+        self.pll_slow_h1_SpinBox.setKeyboardTracking(False)
         self.pll_slow_h1_SpinBox.valueChanged.connect(self.board.slow_oscillator_head_1.set_frequency)
 
+        self.dac_fast_h0_SpinBox.setKeyboardTracking(False)
         self.dac_fast_h0_SpinBox.valueChanged.connect(self.board.v_fast_head_0.set_voltage)
+        self.dac_slow_h0_SpinBox.setKeyboardTracking(False)
         self.dac_slow_h0_SpinBox.valueChanged.connect(self.board.v_slow_head_0.set_voltage)
+        self.dac_fast_h1_SpinBox.setKeyboardTracking(False)
         self.dac_fast_h1_SpinBox.valueChanged.connect(self.board.v_fast_head_1.set_voltage)
+        self.dac_slow_h1_SpinBox.setKeyboardTracking(False)
         self.dac_slow_h1_SpinBox.valueChanged.connect(self.board.v_slow_head_1.set_voltage)
+
+        self.tdc_trig_delay_h0_SpinBox.setKeyboardTracking(False)
+        self.tdc_trig_delay_h0_SpinBox.valueChanged.connect(self.board.trigger_delay_head_0.set_delay)
+        self.tdc_trig_delay_h1_SpinBox.setKeyboardTracking(False)
+        self.tdc_trig_delay_h1_SpinBox.valueChanged.connect(self.board.trigger_delay_head_1.set_delay)
+        self.wind_trig_delay_h0_SpinBox.setKeyboardTracking(False)
+        self.wind_trig_delay_h0_SpinBox.valueChanged.connect(self.board.window_delay_head_0.set_delay)
+        self.wind_trig_delay_h1_SpinBox.setKeyboardTracking(False)
+        self.wind_trig_delay_h1_SpinBox.valueChanged.connect(self.board.window_delay_head_1.set_delay)
+
+
+        #self.pll_enable_h0_checkBox.stateChanged(self.pll_enable_h0_changed)
+        #self.pll_enable_h1_checkBox.stateChanged(self.pll_enable_h1_changed)
+
+        #self.window_is_stop_h0_checkBox.stateChanged(self.window_is_stop_h0_changed)
+        #self.window_is_stop_h0_checkBox.stateChanged(self.window_is_stop_h1_changed)
+
+
+        """ ASIC TAB"""
+
+        self.reset_h0_pushButton.clicked(self.board.asic_head_0.reset)
+        self.reset_h1_pushButton.clicked(self.board.asic_head_1.reset)
+
+        self.threshold_time_trigger_h0_spinBox.setKeyboardTracking(False)
+        self.threshold_time_trigger_h0_spinBox.valueChanged.connect(self.threshold_time_changed_h0)
+
+        self.threshold_time_trigger_h1_spinBox.setKeyboardTracking(False)
+        self.threshold_time_trigger_h1_spinBox.valueChanged.connect(self.threshold_time_changed_h1)
+
+        self.disable_all_quench_h0_pushButton(self.board.asic_head_0.disable_all_quench)
+        self.disable_all_quench_h1_pushButton(self.board.asic_head_1.disable_all_quench)
+        self.enable_all_quench_h0_pushButton(self.board.asic_head_0.enable_all_quench)
+        self.enable_all_quench_h1_pushButton(self.board.asic_head_1.enable_all_quench)
+
+        self.disable_all_tdc_h0_pushButton(self.board.asic_head_0.disable_all_tdc)
+        self.disable_all_tdc_h1_pushButton(self.board.asic_head_1.disable_all_tdc)
+        self.enable_all_tdc_h0_pushButton(self.board.asic_head_0.enable_all_tdc)
+        self.enable_all_tdc_h1_pushButton(self.board.asic_head_1.enable_all_tdc)
+
+        self.disable_all_ext_trigger_h0_pushButton(self.board.asic_head_0.disable_all_ext_trigger)
+        self.disable_all_ext_trigger_h1_pushButton(self.board.asic_head_1.disable_all_ext_trigger)
+        self.enable_all_ext_trigger_h0_pushButton(self.board.asic_head_0.enable_all_ext_trigger)
+        self.enable_all_ext_trigger_h1_pushButton(self.board.asic_head_1.enable_all_ext_trigger)
+
+        self.array_select_h0_comboBox.addItems(["0 - ARRAY 0 (14x14)", "1 - ARRAY 1 (8x8) "])
+        self.array_select_h0_comboBox.currentIndexChanged.connect(self.mux_select_h0)
+
+        self.array_select_h1_comboBox.addItems(["0 - ARRAY 0 (14x14)", "1 - ARRAY 1 (8x8) "])
+        self.array_select_h1_comboBox.currentIndexChanged.connect(self.mux_select_h1)
+
+        self.post_processing_select_h0_comboBox.addItems(["0 - RAW", "1 - TIME_CONVERSION", "2 - SORTED", "3 - DARK_COUNT_FILTERED", "4 - BLUE", "5 - GATED_COUNT", "6 - GATED_BITMAP", "7 - GATED_EVENT_DETECT", "8 - ZPP", "9 - NOT USED", "10 - QKD_ABS_TIMESTAMP", "11 - QKD_TIME_BIN", "12 - QKD_DCA_FLAG"])
+        self.post_processing_select_h0_comboBox.currentIndexChanged.connect(self.mux_select_h0)
+
+        self.post_processing_select_h1_comboBox.addItems(["0 - RAW", "1 - TIME_CONVERSION", "2 - SORTED", "3 - DARK_COUNT_FILTERED", "4 - BLUE", "5 - GATED_COUNT", "6 - GATED_BITMAP", "7 - GATED_EVENT_DETECT", "8 - ZPP", "9 - NOT USED", "10 - QKD_ABS_TIMESTAMP", "11 - QKD_TIME_BIN", "12 - QKD_DCA_FLAG"])
+        self.post_processing_select_h1_comboBox.currentIndexChanged.connect(self.mux_select_h1)
+
+        self.trigger_type_h0_comboBox.addItems(["0 - TIME_DRIVEN", "1 - EVENT_DRIVEN", "2 - WINDOW_DRIVEN"])
+        self.trigger_type_h0_comboBox.currentIndexChanged.connect(self.trigger_type_h0)
+
+        self.trigger_type_h1_comboBox.addItems(["0 - TIME_DRIVEN", "1 - EVENT_DRIVEN", "2 - WINDOW_DRIVEN"])
+        self.trigger_type_h1_comboBox.currentIndexChanged.connect(self.trigger_type_h1)
+
+
+        self.board.asic_head_0.reset()
+
+        time.sleep(1)
+
+
+        self.board.b.ICYSHSR1.SERIAL_READOUT_TYPE(0, 0, 0)
+
+        self.board.asic_head_0.mux_select(1, 0)
+
+        self.board.asic_head_0.disable_all_quench()
+        self.board.asic_head_0.enable_all_tdc()
+        self.board.asic_head_0.enable_all_ext_trigger()
+        self.board.b.ICYSHSR1.PLL_ENABLE(0, 1, 0)
+
+        self.board.asic_head_0.set_trigger_type(1)
+        self.board.b.ICYSHSR1.TRIGGER_EVENT_DRIVEN_COLUMN_THRESHOLD(0, 1, 0)
+
+
+
+
+        self.updateOverviewTab()
 
 
     def update(self):
         data, headNum = self.mdg.manual_data_fetch(formatNum=self.dataFormat)
 
-        # headNum = 1
+        # headNum = 0
         # dtype = getFrameDtype(self.dataFormat, keepRaw=False)
         # data = np.zeros((10,), dtype=dtype)
         # for i in range(0, 10):
         #     # ['Addr', 'Energy', 'Global', 'Fine', 'Coarse', 'CorrBit', 'RESERVED']
         #     d = (random.randint(0, 63), 10, 10000, random.randint(1, 50), random.randint(1, 8), 0, 0)
         #     data[i] = d
-        if data:
-            if (data.size == 0):
-                return
-        else:
-            return
 
-        if headNum == 1:
-            self.currentLiveData_H1 = np.append(self.currentLiveData_H1, data)
-            if (len(self.currentLiveData_H1) > self.maxSamples):
-                self.currentLiveData_H1 = self.currentLiveData_H1[-self.maxSamples:]
-        else:
-            self.currentLiveData_H0 = np.append(self.currentLiveData_H0, data)
-            if (len(self.currentLiveData_H0) > self.maxSamples):
-                self.currentLiveData_H0 = self.currentLiveData_H0[-self.maxSamples:]
+        if data is not None:
+            if (data.size != 0):
+                if headNum == 1:
+                    self.currentLiveData_H1 = np.append(self.currentLiveData_H1, data)
+                    if (len(self.currentLiveData_H1) > self.maxSamples):
+                        self.currentLiveData_H1 = self.currentLiveData_H1[-self.maxSamples:]
+                else:
+                    self.currentLiveData_H0 = np.append(self.currentLiveData_H0, data)
+                    if (len(self.currentLiveData_H0) > self.maxSamples):
+                        self.currentLiveData_H0 = self.currentLiveData_H0[-self.maxSamples:]
+
+                self.updateLiveDataTab()
+                self.updateSPADTab()
 
 
-
-        self.updateLiveDataTab()
-        self.updateSPADTab()
-        self.updateOverviewTab()
 
     def updateLiveDataTab(self):
         self.plotLiveData()
@@ -151,7 +252,48 @@ class DevkitView(QtWidgets.QMainWindow):
             self.head_1_heatmap.setImage(image_H1, autoLevels=True)
 
     def updateOverviewTab(self):
-        pass
+        status = self.board.getStatus()
+
+        self.pll_fast_h0_SpinBox.setValue(status["fast_oscillator_head_0"]["frequency"])
+        self.pll_slow_h0_SpinBox.setValue(status["slow_oscillator_head_0"]["frequency"])
+        self.pll_fast_h1_SpinBox.setValue(status["fast_oscillator_head_1"]["frequency"])
+        self.pll_slow_h1_SpinBox.setValue(status["slow_oscillator_head_1"]["frequency"])
+
+        self.dac_fast_h0_SpinBox.setValue(status["v_fast_head_0"]["volt"])
+        self.dac_slow_h0_SpinBox.setValue(status["v_slow_head_0"]["volt"])
+        self.dac_fast_h1_SpinBox.setValue(status["v_fast_head_1"]["volt"])
+        self.dac_slow_h1_SpinBox.setValue(status["v_slow_head_1"]["volt"])
+
+        self.tdc_trig_divider_SpinBox.setValue(status["trigger_divider"]["divider"])
+        self.wind_trig_divider_SpinBox.setValue(status["window_divider"]["divider"])
+
+        if status["trigger_divider"]["mux_sel"] == 0:
+            self.tdc_trig_source_comboBox.setCurrentText("NON_CORR")
+        elif status["trigger_divider"]["mux_sel"] == 1:
+            self.tdc_trig_source_comboBox.setCurrentText("CORR")
+
+        if status["window_divider"]["mux_sel"] == 0:
+            self.wind_trig_source_comboBox.setCurrentText("NON_CORR")
+        elif status["window_divider"]["mux_sel"] == 1:
+            self.wind_trig_source_comboBox.setCurrentText("CORR")
+
+        tdc_trig_source = self.tdc_trig_source_comboBox.currentText()
+        if tdc_trig_source == "CORR":
+            self.tdc_trig_freq_SpinBox.setValue(status["pll"]["frequency"])
+        elif tdc_trig_source == "NON_CORR":
+            self.tdc_trig_freq_SpinBox.setValue(status["trigger_oscillator"]["frequency"])
+
+        wind_trig_source = self.wind_trig_source_comboBox.currentText()
+        if wind_trig_source == "CORR":
+            self.wind_trig_freq_SpinBox.setValue(status["pll"]["frequency"])
+        elif wind_trig_source == "NON_CORR":
+            self.wind_trig_freq_SpinBox.setValue(status["window_oscillator"]["frequency"])
+
+
+
+
+        #_logger.info("Updated Overview Tab")
+
 
     def plotLiveData(self):
 
@@ -180,6 +322,8 @@ class DevkitView(QtWidgets.QMainWindow):
 
 
         self.numSamplesLive.display(len(liveDataToUse))
+
+        self.countRateNumber.display(processCountRate(liveDataToUse, self.tdcOfInterest))
 
 
     def clearLiveData(self):
@@ -212,6 +356,8 @@ class DevkitView(QtWidgets.QMainWindow):
             self.dataFormat = 3
         else:
             self.dataFormat = 0
+
+        _logger.info("Changed data format to : " + str(st))
 
     def selectionChanged(self, i):
         self.graphsReady = False
@@ -254,27 +400,205 @@ class DevkitView(QtWidgets.QMainWindow):
 
         self.graphsReady = True
 
+        _logger.info("Changed graph type to : " + str(selection))
+
+
 
     def tdc_trig_source_changed(self):
         selection = self.tdc_trig_source_comboBox.currentText()
 
+        try:
+
+            if selection == "CORR":
+                div = self.tdc_trig_divider_SpinBox.value()
+                self.board.trigger_divider.set_divider(div, Divider.MUX_CORR)
+                self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
+                self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
+            elif selection == "NON_CORR":
+                div = self.tdc_trig_divider_SpinBox.value()
+                self.board.trigger_divider.set_divider(div, Divider.MUX_NOT_CORR)
+                self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
+                self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
+            elif selection == "EXT":
+                self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
+                self.board.mux_trigger_external.select_input(MUX.EXTERNAL_INPUT)
+            elif selection == "LASER":
+                self.board.mux_coarse_delay.select_input(MUX.MONOSTABLE)
+                self.board.mux_trigger_laser.select_input(MUX.LASER_INPUT)
+                self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
+
+        except Exception as e:
+            _logger.warning("Could not set frequency or divider due to the following error:")
+            _logger.warning(e)
+
+        _logger.info("Changed TDC trig source to to : " + str(selection))
+
+        self.updateOverviewTab()
+
+
+    def wind_trig_source_changed(self):
+        selection = self.wind_trig_source_comboBox.currentText()
+
+        try:
+
+            if selection == "CORR":
+                div = self.wind_trig_divider_SpinBox.value()
+                self.board.window_divider.set_divider(div, Divider.MUX_CORR)
+                self.board.mux_window_laser.select_input(MUX.DIVIDER_INPUT)
+                self.board.mux_window_external.select_input(MUX.PCB_INPUT)
+            elif selection == "NON_CORR":
+                div = self.wind_trig_divider_SpinBox.value()
+                self.board.window_divider.set_divider(div, Divider.MUX_NOT_CORR)
+                self.board.mux_window_laser.select_input(MUX.DIVIDER_INPUT)
+                self.board.mux_window_external.select_input(MUX.PCB_INPUT)
+            elif selection == "EXT":
+                self.board.mux_window_laser.select_input(MUX.DIVIDER_INPUT)
+                self.board.mux_window_external.select_input(MUX.EXTERNAL_INPUT)
+            elif selection == "LASER":
+                self.board.mux_coarse_delay.select_input(MUX.MONOSTABLE)
+                self.board.mux_window_laser.select_input(MUX.LASER_INPUT)
+                self.board.mux_window_external.select_input(MUX.PCB_INPUT)
+
+        except Exception as e:
+            _logger.warning("Could not set frequency or divider due to the following error:")
+            _logger.warning(e)
+
+        _logger.info("Changed Window trig source to to : " + str(selection))
+        self.updateOverviewTab()
+
+
+    def wind_trig_freq_changed(self, val):
+        selection = self.wind_trig_source_comboBox.currentText()
         if selection == "CORR":
-            self.board.pll.set_6_25mhz()
-            div = self.tdc_trig_divider_SpinBox.value()
-            self.board.trigger_divider.set_divider(div, Divider.MUX_CORR)
-            self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
-            self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
+            try:
+                self.board.pll.set_frequencies(val, val)
+            except Exception as e:
+                _logger.warning("Could not set frequency due to the following error:")
+                _logger.warning(e)
         elif selection == "NON_CORR":
-            freq = self.tdc_trig_freq_SpinBox.value()
-            self.board.trigger_oscillator.set_frequency(freq)
-            div = self.tdc_trig_divider_SpinBox.value()
-            self.board.trigger_divider.set_divider(div, Divider.MUX_NON_CORR)
-            self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
-            self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
-        elif selection == "EXT":
-            self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
-            self.board.mux_trigger_external.select_input(MUX.EXTERNAL_INPUT)
-        elif selection == "LASER":
-            self.board.mux_coarse_delay.select_input(MUX.MONOSTABLE)
-            self.board.mux_trigger_laser.select_input(MUX.LASER_INPUT)
-            self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
+            try:
+                self.board.window_oscillator.set_frequency(val)
+            except Exception as e:
+                _logger.warning("Could not set frequency due to the following error:")
+                _logger.warning(e)
+
+        self.updateOverviewTab()
+
+    def wind_trig_divider_changed(self, val):
+        selection = self.wind_trig_source_comboBox.currentText()
+        if selection == "CORR":
+            try:
+                self.board.window_divider.set_divider(val, Divider.MUX_CORR)
+            except Exception as e:
+                _logger.warning("Could not set frequency due to the following error:")
+                _logger.warning(e)
+        elif selection == "NON_CORR":
+            try:
+                self.board.window_divider.set_divider(val, Divider.MUX_NOT_CORR)
+            except Exception as e:
+                _logger.warning("Could not set frequency due to the following error:")
+                _logger.warning(e)
+
+        self.updateOverviewTab()
+
+    def tdc_trig_freq_changed(self, val):
+        selection = self.tdc_trig_source_comboBox.currentText()
+        if selection == "CORR":
+            try:
+                self.board.pll.set_frequencies(val, val)
+            except Exception as e:
+                _logger.warning("Could not set frequency due to the following error:")
+                _logger.warning(e)
+
+        elif selection == "NON_CORR":
+            try:
+                self.board.trigger_oscillator.set_frequency(val)
+            except Exception as e:
+                _logger.warning("Could not set frequency due to the following error:")
+                _logger.warning(e)
+
+        self.updateOverviewTab()
+
+    def tdc_trig_divider_changed(self, val):
+        selection = self.wind_trig_source_comboBox.currentText()
+        if selection == "CORR":
+            try:
+                self.board.trigger_divider.set_divider(val, Divider.MUX_CORR)
+            except Exception as e:
+                _logger.warning("Could not set frequency due to the following error:")
+                _logger.warning(e)
+        elif selection == "NON_CORR":
+            try:
+                self.board.trigger_divider.set_divider(val, Divider.MUX_NOT_CORR)
+            except Exception as e:
+                _logger.warning("Could not set frequency due to the following error:")
+                _logger.warning(e)
+
+        self.updateOverviewTab()
+
+
+    def pll_enable_h0_changed(self, state):
+        pass
+
+    def pll_enable_h0_changed(self, state):
+        pass
+
+    def window_is_stop_h0_changed(self, state):
+        pass
+
+    def window_is_stop_h0_changed(self, state):
+        pass
+
+
+    def mux_select_h0(self):
+        pp = self.post_processing_select_h0_comboBox.currentIndex()
+        array = self.array_select_h0_comboBox.currentIndex()
+
+        self.board.asic_head_0.mux_select(array, pp)
+
+    def mux_select_h1(self):
+        pp = self.post_processing_select_h1_comboBox.currentIndex()
+        array = self.array_select_h1_comboBox.currentIndex()
+
+        self.board.asic_head_1.mux_select(array, pp)
+
+    def trigger_type_h0(self):
+        trigger_type = self.trigger_type_h0_comboBox.currentIndex()
+
+        if trigger_type == 0:
+            self.board.asic_head_0.set_trigger_type(0)
+        elif trigger_type == 1:
+            self.board.asic_head_0.set_trigger_type(1)
+        elif trigger_type == 2:
+            self.board.asic_head_0.set_trigger_type(0x10)
+
+    def trigger_type_h1(self):
+        trigger_type = self.trigger_type_h1_comboBox.currentIndex()
+
+        if trigger_type == 0:
+            self.board.asic_head_1.set_trigger_type(0)
+        elif trigger_type == 1:
+            self.board.asic_head_1.set_trigger_type(1)
+        elif trigger_type == 2:
+            self.board.asic_head_1.set_trigger_type(0x10)
+
+
+    def threshold_time_changed_h0(self, val):
+        trigger_type = self.trigger_type_h1_comboBox.currentIndex()
+
+        if trigger_type == 0:
+            self.board.asic_head_0.set_time_driven_period(val)
+        elif trigger_type == 1:
+            self.board.b.ICYSHSR1.TRIGGER_EVENT_DRIVEN_COLUMN_THRESHOLD(0, val, 0)
+        elif trigger_type == 2:
+            self.board.b.ICYSHSR1.TRIGGER_WINDOW_DRIVEN_THRESHOLD(0, val, 0)
+
+    def threshold_time_changed_h1(self, val):
+        trigger_type = self.trigger_type_h1_comboBox.currentIndex()
+
+        if trigger_type == 0:
+            self.board.asic_head_1.set_trigger_type(0)
+        elif trigger_type == 1:
+            self.board.b.ICYSHSR1.TRIGGER_EVENT_DRIVEN_COLUMN_THRESHOLD(1, val, 0)
+        elif trigger_type == 2:
+            self.board.b.ICYSHSR1.TRIGGER_WINDOW_DRIVEN_THRESHOLD(1, val, 0)

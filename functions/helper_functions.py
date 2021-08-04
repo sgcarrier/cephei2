@@ -3,6 +3,9 @@ import time
 from platforms.CHARTIER.CHARTIER import CHARTIER
 from functions.helper_functions_asic import ASIC
 import numpy as np
+import logging
+
+_logger = logging.getLogger(__name__)
 
 # LMK03318
 class PLL:
@@ -10,6 +13,7 @@ class PLL:
         self.b = chartier
         self.component_name = name
         self.status = {"frequency": 0.0, "sync_pin": False}
+        self.updateStatus()
 
     # target_fvco: in MHz and should be between 4800 and 5400.
     def set_frequencies(self, freq_0_1, freq_2_3, target_fvco=5000):
@@ -97,11 +101,33 @@ class PLL:
         self.b.LMK03318.PLL_PDN(0, 0)
 
         # Send a sync to enable the outputs
-        self.b.LMK03318.gpio_set(0, "SYNC", False)
-        self.b.LMK03318.gpio_set(0, "SYNC", True)
+        self.b.LMK03318.GPIO(0, "SYNC", False)
+        self.b.LMK03318.GPIO(0, "SYNC", True)
 
         self.status["sync_pin"] = True
         self.status["frequency"] = freq_0_1
+
+    def get_frequency(self):
+        """
+        Gets the frequency of the Correlated clock in MHz
+        :return: frequency in MHz
+        """
+        # F_VCO = (80 MHz / 1)  × 1 × [(125 + 0)/2] = 5 GHz
+        # By default NUM = 0, DEN = 1
+
+        #    F_VCO = (F_REF / R) × D × [(INT + NUM / DEN) / M]
+        #    F_OUT = F_VCO / (P × OUTDIV)
+        n_div = self.b.LMK03318.PLL_NDIV(0)  # N divider (integer divider): 125, fract. div can be set with NUM and DEN
+        R = self.b.LMK03318.PLLRDIV(0)  # R divider (input divider before smart mux): 0 = Bypassed = 250 MHz
+        M = self.b.LMK03318.PLLMDIV(0)  # M divider (input divider after smart mux): 1 = div by 2 = 125 MHz
+        div_0_1 = self.b.LMK03318.OUT_0_1_DIV(0)
+        D = self.b.LMK03318.PRI_D(0)  # Input frequency doubler: 0 = Frequency doubler disabled
+        P = self.b.LMK03318.PLL_P(0)  # PLL post divider: 7 = 8 (2 à 8)
+
+        F_VCO = 250.0 / (R + 1) * (D+1) * ((n_div+0) / (M+1))
+        F_OUT = F_VCO / ((P+1) * (div_0_1+1))
+
+        return F_OUT
 
     def set_6_25mhz(self):
         self.b.LMK03318.PLL_P(0, 7)  # Post divider value: 8
@@ -140,11 +166,14 @@ class PLL:
         self.b.LMK03318.PLL_PDN(0, 0)
 
         # Send a sync to enable the outputs
-        self.b.LMK03318.gpio_set(0, "SYNC", False)
-        self.b.LMK03318.gpio_set(0, "SYNC", True)
+        self.b.LMK03318.GPIO(0, "SYNC", False)
+        self.b.LMK03318.GPIO(0, "SYNC", True)
 
         self.status["sync_pin"] = True
-        self.status["frequency"] = 6.25
+        self.status["frequency"] = self.get_frequency()
+
+    def updateStatus(self):
+        self.status["frequency"] = self.get_frequency()
 
 # LMK01020
 class Divider:
@@ -156,6 +185,7 @@ class Divider:
         self.b = chartier
         self.component_name = name
         self.status = {"divider": 0, "mux_sel": 0}
+        #self.updateStatus()
 
         if self.device_id == 1:
             self.sync = "WIND_SYNC"
@@ -169,7 +199,7 @@ class Divider:
     # mux_select: 1 = corr, 0 = not corr
     def set_divider(self, divider, mux_select):
         if divider % 2 != 0:
-            print("WARNING: divider not divisible by 2. The output won't be the exact one given")
+            _logger.warning("divider not divisible by 2. The output won't be the exact one given")
 
         # The Clock division is actually 2x what you put in CLKoutX_DIV
         divider = int(divider/2)
@@ -190,14 +220,24 @@ class Divider:
         self.b.LMK01020.POWERDOWN(self.device_id, 0)
 
         # Toggle Global Output Enable and Sync
-        self.b.LMK01020.gpio_set(0, self.goe, False)
-        self.b.LMK01020.gpio_set(0, self.sync, False)
+        self.b.LMK01020.GPIO(0, self.goe, False)
+        self.b.LMK01020.GPIO(0, self.sync, False)
         time.sleep(1)
-        self.b.LMK01020.gpio_set(0, self.goe, True)
-        self.b.LMK01020.gpio_set(0, self.sync, True)
+        self.b.LMK01020.GPIO(0, self.goe, True)
+        self.b.LMK01020.GPIO(0, self.sync, True)
 
-        self.status["divider"] = divider
+        self.status["divider"] = divider*2
         self.status["mux_sel"] = mux_select
+
+    def get_divider(self):
+        return self.b.LMK01020.CLKOUT0_DIV(self.device_id)
+
+    def mux_select(self):
+        return self.b.LMK01020.CLKIN_SELECT(self.device_id)
+
+    def updateStatus(self):
+        self.status["divider"] = self.get_divider()
+        self.status["mux_sel"] = self.mux_select()
 
 
 # LMK61E2
@@ -221,6 +261,7 @@ class Oscillator:
 
         self.component_name = name
         self.status = {"frequency": 0}
+        self.updateStatus()
 
     # Frequency in MHz
     def set_frequency(self, frequency):
@@ -253,9 +294,30 @@ class Oscillator:
         self.b.LMK61E2.PLL_ORDER(self.device_id, 3)         # 3rd order
         self.b.LMK61E2.PLL_DTHRMODE(self.device_id, 3)      # Dither Disabled
         self.b.LMK61E2.SWR2PLL(self.device_id, 1)           # Software reset. Automatically cleared to 0
-        self.b.LMK61E2.gpio_set(0, self.oe, True)
+        self.b.LMK61E2.GPIO(0, self.oe, True)
 
         self.status["frequency"] = frequency
+
+    def get_frequency(self):
+        # FVCO = FREF × D × [(INT + NUM/DEN)]
+        # FVCO: PLL/VCO Frequency (4.6 GHz to 5.6 GHz)
+        # FREF: 50-MHz reference input
+        # FOUT = FVCO / OUTDIV
+
+
+        out_div = self.b.LMK61E2.OUT_DIV(self.device_id)  # Output divider 19
+        n_div = self.b.LMK61E2.NDIV(self.device_id)  # 47   12 bits
+        num = self.b.LMK61E2.PLL_NUM(self.device_id)  # 2097151
+        den = self.b.LMK61E2.PLL_DEN(self.device_id)  # Set to the maximum for max dynamic range
+        D = self.b.LMK61E2.PLL_D(self.device_id)   # Doubler: 1 = Doubler
+
+        FVCO = 50 * (D+1) * (n_div + (num/(den+1)))
+        FOUT = FVCO / (out_div)
+
+        return FOUT
+
+    def updateStatus(self):
+        self.status["frequency"] = self.get_frequency()
 
 
 
@@ -367,10 +429,12 @@ class DelayLine:
 
         return true_delay, delay_code, ftune
 
+
     # Max delay =
     def set_delay(self, delay):
-        _, code, ftune = self.delay_to_bit_code(delay)
+        _, code, ftune = self.delay_to_bit_code_and_ftune(delay)
         self.set_delay_code(code)
+        self.set_fine_tune(ftune)
 
     def set_delay_code(self, delay_code):
         disable = 0
@@ -651,7 +715,8 @@ class Board:
         self._status = {}
 
     def getStatus(self):
-        for k,v in self.__dict__:
-            if hasattr(v, "name"):
-                self._status[v.name] = v.status
+        for k,v in self.__dict__.items():
+            if hasattr(v, "component_name"):
+                self._status[v.component_name] = v.status
 
+        return self._status

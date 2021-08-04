@@ -37,16 +37,16 @@ class ASIC:
 
     # This function doesn't reset multiple chips at the same time.
     def reset(self):
-        self.b.ICYSHSR1.gpio_set(self.head_id, "REINIT", True)
+        self.b.ICYSHSR1.GPIO(self.head_id, "REINIT", True)
         time.sleep(1)
-        self.b.ICYSHSR1.gpio_set(self.head_id, "REINIT", False)
+        self.b.ICYSHSR1.GPIO(self.head_id, "REINIT", False)
         time.sleep(1)
 
     # This function doesn't sync multiple chips together.
     def sync(self):
-        self.b.ICYSHSR1.gpio_set(self.head_id, "SYNC", True)
+        self.b.ICYSHSR1.GPIO(self.head_id, "SYNC", True)
         time.sleep(1)
-        self.b.ICYSHSR1.gpio_set(self.head_id, "SYNC", False)
+        self.b.ICYSHSR1.GPIO(self.head_id, "SYNC", False)
 
     def read_asic_id(self):
         self.b.ICYSHSR1.OUTPUT_MUX_SELECT(self.head_id, self.c.SEL_REGISTER_READ, 0)
@@ -457,10 +457,10 @@ class ASIC:
 
 
     def frame_type_short(self):
-        self.b.GEN_GPIO.gpio_set("SHORT_FRAME", True)
+        self.b.GEN_GPIO.GPIO("SHORT_FRAME", True)
 
     def frame_type_normal(self):
-        self.b.GEN_GPIO.gpio_set("SHORT_FRAME", False)
+        self.b.GEN_GPIO.GPIO("SHORT_FRAME", False)
 
     def single_frame_mode(self):
         self.b.ICYSHSR1.SERIAL_READOUT_TYPE(self.head_id, 1)
