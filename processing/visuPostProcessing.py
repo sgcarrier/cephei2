@@ -225,6 +225,89 @@ def processHistogram(data, addr, field):
 
     return pd.DataFrame({'x': np.arange(lengthData), 'y': hist})
 
+def processCountRate(data, addr):
+
+    if data.size == 0:
+        return 0
+
+    single_tdc = False
+    if (addr is not None) and (addr != -1):
+        data = data[data["Addr"] == addr]
+        single_tdc = True
+
+    if ("Energy" in data.dtype.fields) and ("Global" in data.dtype.fields) and single_tdc:
+        count_plot = np.zeros((len(data) - 1,))
+
+        for i in range(len(data) - 1):
+            if (data['Global'][i + 1] - data['Global'][i]) > 0:
+                # Convert from 4ns steps to KHz
+                if (data['Energy'][i + 1] == 0):
+                    count_plot[i] = 4 / ((data['Global'][i + 1] - data['Global'][i]) * 4) * 1000000
+                else:
+                    count_plot[i] = (data['Energy'][i + 1] / 4) / (
+                                (data['Global'][i + 1] - data['Global'][i]) * 4) * 1000000
+            else:  # in the case that the global counter overflows
+                time_diff = (0x1FFFFF - data['Global'][i]) + data['Global'][i + 1]
+                # Convert from 4ns steps to KHz
+                if (data['Energy'][i + 1] == 0):
+                    count_plot[i] = 4 / (time_diff * 4) * 1000000
+                else:
+                    count_plot[i] = (data['Energy'][i + 1] / 4) / (time_diff * 4) * 1000000
+
+        return np.mean(count_plot)
+
+    elif ("Window" in data.dtype.fields) and single_tdc:
+        windowSteps = data["Window"][-1] - data["Window"][0]
+
+        if windowSteps < 0:
+            windowSteps = (data["Window"][-1]+0x1FFFFF) - data["Window"][0]
+
+        return (len(data) / windowSteps)
+
+    elif ("Energy" in data.dtype.fields) and ("Global" in data.dtype.fields) and not single_tdc:
+        energy_data = np.zeros((len(data) - 1,))
+        global_data = np.zeros((len(data) - 1,))
+        count_plot = np.zeros((len(data) - 1,))
+
+        i = 0
+        energy_data[i] = data["Energy"][0]
+        global_data[i] = data["Global"][0]
+        for j in range(1, len(data)):
+            if global_data[i] == global_data[j]:
+                energy_data[i] += energy_data[j]
+            else:
+                i += 1
+                global_data[i] = global_data[j]
+                energy_data[i] = energy_data[j]
+
+        energy_data = energy_data[:i]
+        global_data = global_data[:i]
+        count_plot = np.zeros((len(global_data) - 1,))
+
+        for i in range(len(data) - 1):
+            if (global_data[i + 1] - global_data[i]) > 0:
+                # Convert from 4ns steps to KHz
+                if (energy_data[i + 1] == 0):
+                    count_plot[i] = 4 / ((global_data[i + 1] - global_data[i]) * 4) * 1000000
+                else:
+                    count_plot[i] = (energy_data[i + 1] ) / (
+                            (global_data[i + 1] - global_data[i]) * 4) * 1000000
+            else:  # in the case that the global counter overflows
+                time_diff = (0x1FFFFF - global_data[i]) + global_data[i + 1]
+                # Convert from 4ns steps to KHz
+                if (energy_data[i + 1] == 0):
+                    count_plot[i] = 4 / (time_diff * 4) * 1000000
+                else:
+                    count_plot[i] = (energy_data[i + 1] ) / (time_diff * 4) * 1000000
+
+        return np.mean(count_plot)
+
+
+    return 0
+
+
+
+
 
 def processSPADImage(data):
 

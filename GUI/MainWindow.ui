@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1079</width>
+    <width>1084</width>
     <height>789</height>
    </rect>
   </property>
@@ -18,12 +18,679 @@
     <item row="0" column="0">
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>2</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="Overview_tab">
        <attribute name="title">
         <string>Overview</string>
        </attribute>
+       <layout class="QGridLayout" name="gridLayout_8">
+        <item row="0" column="0">
+         <layout class="QGridLayout" name="gridLayout_7">
+          <item row="0" column="0">
+           <layout class="QVBoxLayout" name="verticalLayout_13">
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_12">
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_3">
+                <item>
+                 <layout class="QVBoxLayout" name="verticalLayout_9">
+                  <item>
+                   <widget class="QLabel" name="label_3">
+                    <property name="text">
+                     <string>Window Trigger</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <layout class="QFormLayout" name="formLayout">
+                    <item row="0" column="0">
+                     <widget class="QLabel" name="label">
+                      <property name="text">
+                       <string>Source</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="1">
+                     <widget class="QComboBox" name="wind_trig_source_comboBox"/>
+                    </item>
+                    <item row="1" column="0">
+                     <widget class="QLabel" name="label_2">
+                      <property name="text">
+                       <string>Frequency (MHz)</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="1">
+                     <widget class="QDoubleSpinBox" name="wind_trig_freq_SpinBox">
+                      <property name="maximum">
+                       <double>500.000000000000000</double>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="2" column="0">
+                     <widget class="QLabel" name="label_21">
+                      <property name="text">
+                       <string>Divider</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="2" column="1">
+                     <widget class="QDoubleSpinBox" name="wind_trig_divider_SpinBox"/>
+                    </item>
+                   </layout>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QVBoxLayout" name="verticalLayout_10">
+                  <item>
+                   <widget class="QLabel" name="label_4">
+                    <property name="text">
+                     <string>TDC Trigger</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <layout class="QFormLayout" name="formLayout_2">
+                    <item row="0" column="0">
+                     <widget class="QLabel" name="label_5">
+                      <property name="text">
+                       <string>Source</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="1">
+                     <widget class="QComboBox" name="tdc_trig_source_comboBox"/>
+                    </item>
+                    <item row="1" column="0">
+                     <widget class="QLabel" name="label_6">
+                      <property name="text">
+                       <string>Frequency (MHz)</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="1">
+                     <widget class="QDoubleSpinBox" name="tdc_trig_freq_SpinBox">
+                      <property name="maximum">
+                       <double>500.000000000000000</double>
+                      </property>
+                      <property name="value">
+                       <double>0.000000000000000</double>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="2" column="0">
+                     <widget class="QLabel" name="label_22">
+                      <property name="text">
+                       <string>Divider</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="2" column="1">
+                     <widget class="QDoubleSpinBox" name="tdc_trig_divider_SpinBox">
+                      <property name="maximum">
+                       <double>512.000000000000000</double>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QGridLayout" name="gridLayout_6">
+                <item row="0" column="1" alignment="Qt::AlignHCenter">
+                 <widget class="QLabel" name="label_17">
+                  <property name="text">
+                   <string>HEAD 0</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="2" alignment="Qt::AlignHCenter">
+                 <widget class="QLabel" name="label_18">
+                  <property name="text">
+                   <string>HEAD 1</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0" alignment="Qt::AlignHCenter">
+                 <widget class="QLabel" name="label_19">
+                  <property name="text">
+                   <string>TDC Trig Delay (ps)</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QDoubleSpinBox" name="tdc_trig_delay_h0_SpinBox">
+                  <property name="maximum">
+                   <double>10000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="2">
+                 <widget class="QDoubleSpinBox" name="tdc_trig_delay_h1_SpinBox">
+                  <property name="maximum">
+                   <double>10000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0" alignment="Qt::AlignHCenter">
+                 <widget class="QLabel" name="label_20">
+                  <property name="text">
+                   <string>Window Trig Delay (ps)</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QDoubleSpinBox" name="wind_trig_delay_h0_SpinBox">
+                  <property name="maximum">
+                   <double>10000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="2">
+                 <widget class="QDoubleSpinBox" name="wind_trig_delay_h1_SpinBox">
+                  <property name="maximum">
+                   <double>10000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QGridLayout" name="gridLayout_5">
+              <item row="0" column="1" alignment="Qt::AlignHCenter">
+               <widget class="QLabel" name="label_7">
+                <property name="text">
+                 <string>HEAD 0</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
+               <widget class="QLabel" name="label_8">
+                <property name="text">
+                 <string>HEAD 1</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="label_13">
+                <property name="text">
+                 <string>PLL_ENABLE</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="label_9">
+                <property name="text">
+                 <string>PLL_FAST (MHz)</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QDoubleSpinBox" name="pll_fast_h0_SpinBox">
+                <property name="maximum">
+                 <double>350.000000000000000</double>
+                </property>
+                <property name="value">
+                 <double>0.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="2">
+               <widget class="QDoubleSpinBox" name="pll_fast_h1_SpinBox">
+                <property name="maximum">
+                 <double>350.000000000000000</double>
+                </property>
+                <property name="value">
+                 <double>0.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="label_10">
+                <property name="text">
+                 <string>PLL_SLOW  (MHz)</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QDoubleSpinBox" name="pll_slow_h0_SpinBox">
+                <property name="maximum">
+                 <double>350.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="2">
+               <widget class="QDoubleSpinBox" name="pll_slow_h1_SpinBox">
+                <property name="maximum">
+                 <double>350.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="0">
+               <widget class="QLabel" name="label_11">
+                <property name="text">
+                 <string>DAC_FAST (V)</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <widget class="QDoubleSpinBox" name="dac_fast_h0_SpinBox">
+                <property name="decimals">
+                 <number>4</number>
+                </property>
+                <property name="maximum">
+                 <double>2.500000000000000</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.100000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="2">
+               <widget class="QDoubleSpinBox" name="dac_fast_h1_SpinBox">
+                <property name="decimals">
+                 <number>4</number>
+                </property>
+                <property name="maximum">
+                 <double>2.500000000000000</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.100000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="0">
+               <widget class="QLabel" name="label_12">
+                <property name="text">
+                 <string>DAC_SLOW (V)</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="1">
+               <widget class="QDoubleSpinBox" name="dac_slow_h0_SpinBox">
+                <property name="decimals">
+                 <number>4</number>
+                </property>
+                <property name="maximum">
+                 <double>2.500000000000000</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.100000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="2">
+               <widget class="QDoubleSpinBox" name="dac_slow_h1_SpinBox">
+                <property name="decimals">
+                 <number>4</number>
+                </property>
+                <property name="maximum">
+                 <double>2.500000000000000</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.100000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="0">
+               <widget class="QLabel" name="label_14">
+                <property name="text">
+                 <string>Window is stop</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="0">
+               <widget class="QLabel" name="label_15">
+                <property name="text">
+                 <string>Window Length (ps)</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="1">
+               <widget class="QDoubleSpinBox" name="window_length_h0_SpinBox"/>
+              </item>
+              <item row="7" column="2">
+               <widget class="QDoubleSpinBox" name="window_length_h1_SpinBox"/>
+              </item>
+              <item row="6" column="1" alignment="Qt::AlignHCenter">
+               <widget class="QCheckBox" name="window_is_stop_h0_checkBox">
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="2" alignment="Qt::AlignHCenter">
+               <widget class="QCheckBox" name="window_is_stop_h1_checkBox">
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1" alignment="Qt::AlignHCenter">
+               <widget class="QCheckBox" name="pll_enable_h0_checkBox">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="2" alignment="Qt::AlignHCenter">
+               <widget class="QCheckBox" name="pll_enable_h1_checkBox">
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </item>
+          <item row="0" column="1">
+           <layout class="QGridLayout" name="gridLayout_10">
+            <item row="1" column="0">
+             <layout class="QGridLayout" name="gridLayout_9">
+              <item row="1" column="0">
+               <widget class="QTextBrowser" name="logTextBrowser">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="sizeAdjustPolicy">
+                 <enum>QAbstractScrollArea::AdjustToContents</enum>
+                </property>
+                <property name="lineWrapMode">
+                 <enum>QTextEdit::NoWrap</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_16">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Logs</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item row="0" column="0">
+             <widget class="QTreeWidget" name="treeWidget">
+              <column>
+               <property name="text">
+                <string notr="true">1</string>
+               </property>
+              </column>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="ASIC_tab">
+       <attribute name="title">
+        <string>ASIC</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_15">
+        <item row="0" column="0">
+         <layout class="QGridLayout" name="gridLayout_14">
+          <item row="0" column="0" colspan="2">
+           <layout class="QGridLayout" name="gridLayout_13">
+            <item row="0" column="0">
+             <layout class="QGridLayout" name="gridLayout_11">
+              <item row="8" column="1">
+               <widget class="QPushButton" name="enable_all_tdc_h0_pushButton">
+                <property name="text">
+                 <string>Enable_all_tdc</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="label_27">
+                <property name="text">
+                 <string>Trigger Type</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QComboBox" name="post_processing_select_h0_comboBox"/>
+              </item>
+              <item row="7" column="1">
+               <widget class="QPushButton" name="enable_all_quench_h0_pushButton">
+                <property name="text">
+                 <string>Enable_all_quench</string>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="1">
+               <widget class="QSpinBox" name="threshold_time_trigger_h0_spinBox"/>
+              </item>
+              <item row="1" column="1">
+               <widget class="QComboBox" name="array_select_h0_comboBox"/>
+              </item>
+              <item row="9" column="0">
+               <widget class="QPushButton" name="disable_all_ext_trigger_h0_pushButton">
+                <property name="text">
+                 <string>disable_all_ext_trigger</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QComboBox" name="trigger_type_h0_comboBox"/>
+              </item>
+              <item row="6" column="0">
+               <widget class="QLabel" name="label_29">
+                <property name="text">
+                 <string>Threshold/Time</string>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="0">
+               <widget class="QPushButton" name="disable_all_quench_h0_pushButton">
+                <property name="text">
+                 <string>Disable_all_quench</string>
+                </property>
+               </widget>
+              </item>
+              <item row="9" column="1">
+               <widget class="QPushButton" name="enable_all_ext_trigger_h0_pushButton">
+                <property name="text">
+                 <string>Enable_all_ext_trigger</string>
+                </property>
+               </widget>
+              </item>
+              <item row="8" column="0">
+               <widget class="QPushButton" name="disable_all_tdc_h0_pushButton">
+                <property name="text">
+                 <string>Disable_all_tdc</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="label_23">
+                <property name="text">
+                 <string>Array Select</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="label_26">
+                <property name="text">
+                 <string>Post Processing</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_31">
+                <property name="text">
+                 <string>Reset Head 0</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QPushButton" name="reset_h0_pushButton">
+                <property name="text">
+                 <string>Reset</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item row="0" column="1">
+             <layout class="QGridLayout" name="gridLayout_12">
+              <item row="6" column="1">
+               <widget class="QPushButton" name="enable_all_tdc_h1_pushButton">
+                <property name="text">
+                 <string>Enable_all_tdc</string>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="1">
+               <widget class="QPushButton" name="enable_all_quench_h1_pushButton">
+                <property name="text">
+                 <string>Enable_all_quench</string>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="1">
+               <widget class="QPushButton" name="enable_all_ext_trigger_h1_pushButton">
+                <property name="text">
+                 <string>Enable_all_ext_trigger</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QComboBox" name="trigger_type_h1_comboBox"/>
+              </item>
+              <item row="4" column="0">
+               <widget class="QLabel" name="label_30">
+                <property name="text">
+                 <string>Threshold/Time</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QComboBox" name="post_processing_select_h1_comboBox"/>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="label_25">
+                <property name="text">
+                 <string>Post Processing</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="label_28">
+                <property name="text">
+                 <string>Trigger Type</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <widget class="QSpinBox" name="threshold_time_trigger_h1_spinBox"/>
+              </item>
+              <item row="1" column="1">
+               <widget class="QComboBox" name="array_select_h1_comboBox"/>
+              </item>
+              <item row="6" column="0">
+               <widget class="QPushButton" name="disable_all_tdc_h1_pushButton">
+                <property name="text">
+                 <string>Disable_all_tdc</string>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="0">
+               <widget class="QPushButton" name="disable_all_quench_h1_pushButton">
+                <property name="text">
+                 <string>Disable_all_quench</string>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="0">
+               <widget class="QPushButton" name="disable_all_ext_trigger_h1_pushButton">
+                <property name="text">
+                 <string>disable_all_ext_trigger</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="label_24">
+                <property name="text">
+                 <string>Array Select</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_32">
+                <property name="text">
+                 <string>Reset Head 1</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QPushButton" name="reset_h1_pushButton">
+                <property name="text">
+                 <string>Reset</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+       </layout>
       </widget>
       <widget class="QWidget" name="LiveData_tab">
        <attribute name="title">
@@ -72,6 +739,20 @@
               </item>
               <item>
                <widget class="QSpinBox" name="maxSamplesSelect"/>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_11">
+              <item>
+               <widget class="QLabel" name="countRateLabel">
+                <property name="text">
+                 <string>Current Count Rate</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLCDNumber" name="countRateNumber"/>
               </item>
              </layout>
             </item>
@@ -198,12 +879,30 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1079</width>
+     <width>1084</width>
      <height>28</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionConnect"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <addaction name="menuFile"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionConnect">
+   <property name="text">
+    <string>Connect</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>

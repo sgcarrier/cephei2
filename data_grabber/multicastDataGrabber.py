@@ -176,8 +176,8 @@ class MulticastDataGrabber():
             return np.array([]), None
 
 
-        sec = 1
-        usec = 0000
+        sec = 0
+        usec = 100
         timeval = struct.pack('ll', sec, usec)
         self.data_sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVTIMEO, timeval)
         self.data_sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 4097152)

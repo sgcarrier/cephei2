@@ -3,7 +3,10 @@ from PyQt5 import QtWidgets, uic
 from GUI.DevkitControl import DevkitControl
 from GUI.DevkitView import DevkitView
 import time
+import logging
 
+
+_logger = logging.getLogger(__name__)
 
 class DevkitGUI():
     def __init__(self):
@@ -11,8 +14,8 @@ class DevkitGUI():
         self.__viewer = DevkitView()
 
     def start(self):
-
-        self.__controller.connect()
+        _logger.info("Starting the GUI")
+        #self.__controller.connect()
         self.__viewer.connect()
 
         time.sleep(0.5)
