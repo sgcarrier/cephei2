@@ -488,7 +488,7 @@
            <layout class="QGridLayout" name="gridLayout_13">
             <item row="0" column="0">
              <layout class="QGridLayout" name="gridLayout_11">
-              <item row="8" column="1">
+              <item row="11" column="1">
                <widget class="QPushButton" name="enable_all_tdc_h0_pushButton">
                 <property name="text">
                  <string>Enable_all_tdc</string>
@@ -502,10 +502,17 @@
                 </property>
                </widget>
               </item>
+              <item row="0" column="1">
+               <widget class="QPushButton" name="reset_h0_pushButton">
+                <property name="text">
+                 <string>Reset</string>
+                </property>
+               </widget>
+              </item>
               <item row="2" column="1">
                <widget class="QComboBox" name="post_processing_select_h0_comboBox"/>
               </item>
-              <item row="7" column="1">
+              <item row="10" column="1">
                <widget class="QPushButton" name="enable_all_quench_h0_pushButton">
                 <property name="text">
                  <string>Enable_all_quench</string>
@@ -518,7 +525,7 @@
               <item row="1" column="1">
                <widget class="QComboBox" name="array_select_h0_comboBox"/>
               </item>
-              <item row="9" column="0">
+              <item row="12" column="0">
                <widget class="QPushButton" name="disable_all_ext_trigger_h0_pushButton">
                 <property name="text">
                  <string>disable_all_ext_trigger</string>
@@ -528,28 +535,42 @@
               <item row="3" column="1">
                <widget class="QComboBox" name="trigger_type_h0_comboBox"/>
               </item>
-              <item row="6" column="0">
-               <widget class="QLabel" name="label_29">
-                <property name="text">
-                 <string>Threshold/Time</string>
-                </property>
-               </widget>
-              </item>
-              <item row="7" column="0">
+              <item row="10" column="0">
                <widget class="QPushButton" name="disable_all_quench_h0_pushButton">
                 <property name="text">
                  <string>Disable_all_quench</string>
                 </property>
                </widget>
               </item>
-              <item row="9" column="1">
+              <item row="12" column="1">
                <widget class="QPushButton" name="enable_all_ext_trigger_h0_pushButton">
                 <property name="text">
                  <string>Enable_all_ext_trigger</string>
                 </property>
                </widget>
               </item>
-              <item row="8" column="0">
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_31">
+                <property name="text">
+                 <string>Reset Head 0</string>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="0">
+               <widget class="QLabel" name="label_33">
+                <property name="text">
+                 <string>Recharge (uA)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="9" column="0">
+               <widget class="QLabel" name="label_35">
+                <property name="text">
+                 <string>V_COMP (V)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="11" column="0">
                <widget class="QPushButton" name="disable_all_tdc_h0_pushButton">
                 <property name="text">
                  <string>Disable_all_tdc</string>
@@ -570,17 +591,26 @@
                 </property>
                </widget>
               </item>
-              <item row="0" column="0">
-               <widget class="QLabel" name="label_31">
+              <item row="9" column="1">
+               <widget class="QSpinBox" name="v_comp_h0_spinBox"/>
+              </item>
+              <item row="8" column="1">
+               <widget class="QSpinBox" name="holdoff_h0_spinBox"/>
+              </item>
+              <item row="7" column="1">
+               <widget class="QSpinBox" name="recharge_h0_spinBox"/>
+              </item>
+              <item row="8" column="0">
+               <widget class="QLabel" name="label_34">
                 <property name="text">
-                 <string>Reset Head 0</string>
+                 <string>Holdoff (uA)</string>
                 </property>
                </widget>
               </item>
-              <item row="0" column="1">
-               <widget class="QPushButton" name="reset_h0_pushButton">
+              <item row="6" column="0">
+               <widget class="QLabel" name="label_29">
                 <property name="text">
-                 <string>Reset</string>
+                 <string>Threshold/Time</string>
                 </property>
                </widget>
               </item>
@@ -588,21 +618,21 @@
             </item>
             <item row="0" column="1">
              <layout class="QGridLayout" name="gridLayout_12">
-              <item row="6" column="1">
+              <item row="9" column="1">
                <widget class="QPushButton" name="enable_all_tdc_h1_pushButton">
                 <property name="text">
                  <string>Enable_all_tdc</string>
                 </property>
                </widget>
               </item>
-              <item row="5" column="1">
+              <item row="8" column="1">
                <widget class="QPushButton" name="enable_all_quench_h1_pushButton">
                 <property name="text">
                  <string>Enable_all_quench</string>
                 </property>
                </widget>
               </item>
-              <item row="7" column="1">
+              <item row="10" column="1">
                <widget class="QPushButton" name="enable_all_ext_trigger_h1_pushButton">
                 <property name="text">
                  <string>Enable_all_ext_trigger</string>
@@ -611,6 +641,20 @@
               </item>
               <item row="3" column="1">
                <widget class="QComboBox" name="trigger_type_h1_comboBox"/>
+              </item>
+              <item row="0" column="1">
+               <widget class="QPushButton" name="reset_h1_pushButton">
+                <property name="text">
+                 <string>Reset</string>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="0">
+               <widget class="QLabel" name="label_37">
+                <property name="text">
+                 <string>Holdoff(uA)</string>
+                </property>
+               </widget>
               </item>
               <item row="4" column="0">
                <widget class="QLabel" name="label_30">
@@ -621,6 +665,13 @@
               </item>
               <item row="2" column="1">
                <widget class="QComboBox" name="post_processing_select_h1_comboBox"/>
+              </item>
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_32">
+                <property name="text">
+                 <string>Reset Head 1</string>
+                </property>
+               </widget>
               </item>
               <item row="2" column="0">
                <widget class="QLabel" name="label_25">
@@ -642,21 +693,21 @@
               <item row="1" column="1">
                <widget class="QComboBox" name="array_select_h1_comboBox"/>
               </item>
-              <item row="6" column="0">
+              <item row="9" column="0">
                <widget class="QPushButton" name="disable_all_tdc_h1_pushButton">
                 <property name="text">
                  <string>Disable_all_tdc</string>
                 </property>
                </widget>
               </item>
-              <item row="5" column="0">
+              <item row="8" column="0">
                <widget class="QPushButton" name="disable_all_quench_h1_pushButton">
                 <property name="text">
                  <string>Disable_all_quench</string>
                 </property>
                </widget>
               </item>
-              <item row="7" column="0">
+              <item row="10" column="0">
                <widget class="QPushButton" name="disable_all_ext_trigger_h1_pushButton">
                 <property name="text">
                  <string>disable_all_ext_trigger</string>
@@ -670,19 +721,28 @@
                 </property>
                </widget>
               </item>
-              <item row="0" column="0">
-               <widget class="QLabel" name="label_32">
+              <item row="5" column="0">
+               <widget class="QLabel" name="label_36">
                 <property name="text">
-                 <string>Reset Head 1</string>
+                 <string>Recharge (uA)</string>
                 </property>
                </widget>
               </item>
-              <item row="0" column="1">
-               <widget class="QPushButton" name="reset_h1_pushButton">
+              <item row="7" column="0">
+               <widget class="QLabel" name="label_38">
                 <property name="text">
-                 <string>Reset</string>
+                 <string>V_COMP(v)</string>
                 </property>
                </widget>
+              </item>
+              <item row="5" column="1">
+               <widget class="QSpinBox" name="recharge_h1_spinBox"/>
+              </item>
+              <item row="6" column="1">
+               <widget class="QSpinBox" name="holdoff_h1_spinBox"/>
+              </item>
+              <item row="7" column="1">
+               <widget class="QSpinBox" name="v_comp_h1_spinBox"/>
               </item>
              </layout>
             </item>

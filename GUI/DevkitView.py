@@ -188,26 +188,16 @@ class DevkitView(QtWidgets.QMainWindow):
         self.trigger_type_h1_comboBox.addItems(["0 - TIME_DRIVEN", "1 - EVENT_DRIVEN", "2 - WINDOW_DRIVEN"])
         self.trigger_type_h1_comboBox.currentIndexChanged.connect(self.trigger_type_h1)
 
+        self.recharge_h0_spinBox.setKeyboardTracking(False)
+        self.recharge_h0_spinBox.valueChanged.connect(self.board.recharge_current.set_current)
 
-        self.board.asic_head_0.reset()
+        self.holdoff_h0_spinBox.setKeyboardTracking(False)
+        self.holdoff_h0_spinBox.valueChanged.connect(self.board.holdoff_current.set_current)
+
+        self.v_comp_h0_spinBox.setKeyboardTracking(False)
+        self.v_comp_h0_spinBox.valueChanged.connect(self.board.comparator_threshold.set_voltage)
 
         time.sleep(1)
-
-
-        self.board.b.ICYSHSR1.SERIAL_READOUT_TYPE(0, 0, 0)
-
-        self.board.asic_head_0.mux_select(1, 0)
-
-        self.board.asic_head_0.disable_all_quench()
-        self.board.asic_head_0.enable_all_tdc()
-        self.board.asic_head_0.enable_all_ext_trigger()
-        self.board.b.ICYSHSR1.PLL_ENABLE(0, 1, 0)
-
-        self.board.asic_head_0.set_trigger_type(1)
-        self.board.b.ICYSHSR1.TRIGGER_EVENT_DRIVEN_COLUMN_THRESHOLD(0, 1, 0)
-
-
-
 
         self.updateOverviewTab()
 
