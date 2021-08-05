@@ -137,11 +137,11 @@ class DevkitView(QtWidgets.QMainWindow):
         self.wind_trig_delay_h1_SpinBox.valueChanged.connect(self.board.window_delay_head_1.set_delay)
 
 
-        #self.pll_enable_h0_checkBox.stateChanged(self.pll_enable_h0_changed)
-        #self.pll_enable_h1_checkBox.stateChanged(self.pll_enable_h1_changed)
+        self.pll_enable_h0_checkBox.stateChanged(self.pll_enable_h0_changed)
+        self.pll_enable_h1_checkBox.stateChanged(self.pll_enable_h1_changed)
 
-        #self.window_is_stop_h0_checkBox.stateChanged(self.window_is_stop_h0_changed)
-        #self.window_is_stop_h0_checkBox.stateChanged(self.window_is_stop_h1_changed)
+        self.window_is_stop_h0_checkBox.stateChanged(self.window_is_stop_h0_changed)
+        self.window_is_stop_h0_checkBox.stateChanged(self.window_is_stop_h1_changed)
 
 
         """ ASIC TAB"""
@@ -538,16 +538,28 @@ class DevkitView(QtWidgets.QMainWindow):
 
 
     def pll_enable_h0_changed(self, state):
-        pass
+        if state ==0:
+            self.board.b.ICYSHSR1.PLL_ENABLE(0, 0, 0)
+        else:
+            self.board.b.ICYSHSR1.PLL_ENABLE(0, 1, 0)
 
-    def pll_enable_h0_changed(self, state):
-        pass
+    def pll_enable_h1_changed(self, state):
+        if state == 0:
+            self.board.b.ICYSHSR1.PLL_ENABLE(1, 0, 0)
+        else:
+            self.board.b.ICYSHSR1.PLL_ENABLE(1, 1, 0)
 
     def window_is_stop_h0_changed(self, state):
-        pass
+        if state == 0:
+            self.board.asic_head_0.clock_is_stop()
+        else:
+            self.board.asic_head_0.window_is_stop()
 
-    def window_is_stop_h0_changed(self, state):
-        pass
+    def window_is_stop_h1_changed(self, state):
+        if state == 0:
+            self.board.asic_head_1.clock_is_stop()
+        else:
+            self.board.asic_head_1.window_is_stop()
 
 
     def mux_select_h0(self):
