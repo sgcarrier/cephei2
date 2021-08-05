@@ -173,7 +173,8 @@ class MulticastDataGrabber():
 
     def manual_data_fetch(self, formatNum=0):
         if not self.data_sock:
-            return np.array([])
+            return np.array([]), None
+
 
         sec = 1
         usec = 0000
@@ -184,13 +185,18 @@ class MulticastDataGrabber():
         try:
             msg = self.data_sock.recv(100 * 1024)
         except BlockingIOError:
-            return np.array([])
+            return np.array([]), None
 
         rawData = self.extractData(msg)
 
+        if (rawData["SRC"][-1] == "1"):
+            headNum = 1
+        else:
+            headNum = 0
+
         dataArr = self.RDP.raw2compArray(rawData, formatNum, keepRaw=False)
 
-        return dataArr
+        return dataArr, headNum
 
 
     def start_data(self):
