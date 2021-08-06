@@ -236,7 +236,7 @@ def processCountRate(data, addr):
         single_tdc = True
 
     if ("Energy" in data.dtype.fields) and ("Global" in data.dtype.fields) and single_tdc:
-        count_plot = np.zeros((len(data) - 1,))
+        count_plot = np.zeros((len(data) - 1,), dtype="uint64")
 
         for i in range(len(data) - 1):
             if (data['Global'][i + 1] - data['Global'][i]) > 0:
@@ -310,9 +310,9 @@ def processCountRate(data, addr):
 
 
 def processSPADImage(data):
-
+    if (data.size == 0):
+        return np.zeros((8,8))
     maxAddr = np.max(data["Addr"])
-
     arraySize = int(np.ceil(np.sqrt(maxAddr))**2)
     side = int(np.sqrt(arraySize))
     image = np.zeros((side,side))
@@ -325,11 +325,11 @@ def processSPADImage(data):
         tdc = i // 4
         sub = i % 4
 
-        x_pos = (2 * tdc) % 8 + (sub % 2)
+        x_pos = (2 * tdc) % side + (sub % 2)
         if (sub < 2):
-            y_pos = ((tdc) // 4) * 2
+            y_pos = ((tdc) // (side//2)) * 2
         else:
-            y_pos = ((tdc) // 4) * 2 + 1
+            y_pos = ((tdc) // (side//2)) * 2 + 1
 
         image[x_pos][y_pos] = counts[i]
 

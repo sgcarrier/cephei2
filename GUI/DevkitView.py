@@ -79,6 +79,7 @@ class DevkitView(QtWidgets.QMainWindow):
         self.graphTypeSelect.currentIndexChanged.connect(self.selectionChanged)
 
         self.maxSamplesSelect.setMaximum(10 ** 8)
+        self.maxSamplesSelect.setKeyboardTracking(False)
         self.maxSamplesSelect.setValue(self.maxSamples)
         self.maxSamplesSelect.valueChanged.connect(self.newMaxSamples)
 
