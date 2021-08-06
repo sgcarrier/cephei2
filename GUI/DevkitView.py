@@ -137,17 +137,17 @@ class DevkitView(QtWidgets.QMainWindow):
         self.wind_trig_delay_h1_SpinBox.valueChanged.connect(self.board.window_delay_head_1.set_delay)
 
 
-        self.pll_enable_h0_checkBox.stateChanged(self.pll_enable_h0_changed)
-        self.pll_enable_h1_checkBox.stateChanged(self.pll_enable_h1_changed)
+        self.pll_enable_h0_checkBox.stateChanged.connect(self.pll_enable_h0_changed)
+        self.pll_enable_h1_checkBox.stateChanged.connect(self.pll_enable_h1_changed)
 
-        self.window_is_stop_h0_checkBox.stateChanged(self.window_is_stop_h0_changed)
-        self.window_is_stop_h0_checkBox.stateChanged(self.window_is_stop_h1_changed)
+        self.window_is_stop_h0_checkBox.stateChanged.connect(self.window_is_stop_h0_changed)
+        self.window_is_stop_h0_checkBox.stateChanged.connect(self.window_is_stop_h1_changed)
 
 
         """ ASIC TAB"""
 
-        self.reset_h0_pushButton.clicked(self.board.asic_head_0.reset)
-        self.reset_h1_pushButton.clicked(self.board.asic_head_1.reset)
+        self.reset_h0_pushButton.clicked.connect(self.board.asic_head_0.reset)
+        self.reset_h1_pushButton.clicked.connect(self.board.asic_head_1.reset)
 
         self.threshold_time_trigger_h0_spinBox.setKeyboardTracking(False)
         self.threshold_time_trigger_h0_spinBox.valueChanged.connect(self.threshold_time_changed_h0)
@@ -155,20 +155,20 @@ class DevkitView(QtWidgets.QMainWindow):
         self.threshold_time_trigger_h1_spinBox.setKeyboardTracking(False)
         self.threshold_time_trigger_h1_spinBox.valueChanged.connect(self.threshold_time_changed_h1)
 
-        self.disable_all_quench_h0_pushButton(self.board.asic_head_0.disable_all_quench)
-        self.disable_all_quench_h1_pushButton(self.board.asic_head_1.disable_all_quench)
-        self.enable_all_quench_h0_pushButton(self.board.asic_head_0.enable_all_quench)
-        self.enable_all_quench_h1_pushButton(self.board.asic_head_1.enable_all_quench)
+        self.disable_all_quench_h0_pushButton.clicked.connect(self.board.asic_head_0.disable_all_quench)
+        self.disable_all_quench_h1_pushButton.clicked.connect(self.board.asic_head_1.disable_all_quench)
+        self.enable_all_quench_h0_pushButton.clicked.connect(self.board.asic_head_0.enable_all_quench)
+        self.enable_all_quench_h1_pushButton.clicked.connect(self.board.asic_head_1.enable_all_quench)
 
-        self.disable_all_tdc_h0_pushButton(self.board.asic_head_0.disable_all_tdc)
-        self.disable_all_tdc_h1_pushButton(self.board.asic_head_1.disable_all_tdc)
-        self.enable_all_tdc_h0_pushButton(self.board.asic_head_0.enable_all_tdc)
-        self.enable_all_tdc_h1_pushButton(self.board.asic_head_1.enable_all_tdc)
+        self.disable_all_tdc_h0_pushButton.clicked.connect(self.board.asic_head_0.disable_all_tdc)
+        self.disable_all_tdc_h1_pushButton.clicked.connect(self.board.asic_head_1.disable_all_tdc)
+        self.enable_all_tdc_h0_pushButton.clicked.connect(self.board.asic_head_0.enable_all_tdc)
+        self.enable_all_tdc_h1_pushButton.clicked.connect(self.board.asic_head_1.enable_all_tdc)
 
-        self.disable_all_ext_trigger_h0_pushButton(self.board.asic_head_0.disable_all_ext_trigger)
-        self.disable_all_ext_trigger_h1_pushButton(self.board.asic_head_1.disable_all_ext_trigger)
-        self.enable_all_ext_trigger_h0_pushButton(self.board.asic_head_0.enable_all_ext_trigger)
-        self.enable_all_ext_trigger_h1_pushButton(self.board.asic_head_1.enable_all_ext_trigger)
+        self.disable_all_ext_trigger_h0_pushButton.clicked.connect(self.board.asic_head_0.disable_all_ext_trigger)
+        self.disable_all_ext_trigger_h1_pushButton.clicked.connect(self.board.asic_head_1.disable_all_ext_trigger)
+        self.enable_all_ext_trigger_h0_pushButton.clicked.connect(self.board.asic_head_0.enable_all_ext_trigger)
+        self.enable_all_ext_trigger_h1_pushButton.clicked.connect(self.board.asic_head_1.enable_all_ext_trigger)
 
         self.array_select_h0_comboBox.addItems(["0 - ARRAY 0 (14x14)", "1 - ARRAY 1 (8x8) "])
         self.array_select_h0_comboBox.currentIndexChanged.connect(self.mux_select_h0)
