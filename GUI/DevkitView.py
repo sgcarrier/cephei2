@@ -569,24 +569,30 @@ class DevkitView(QtWidgets.QMainWindow):
 
         if trigger_type == 0:
             self.board.asic_head_0.set_trigger_type(0)
+            self.threshold_time_trigger_h0_spinBox.setValue(self.b.ICYSHSR1.TRIGGER_TIME_DRIVEN_PERIOD(0, 0))
         elif trigger_type == 1:
             self.board.asic_head_0.set_trigger_type(1)
+            self.threshold_time_trigger_h0_spinBox.setValue(self.b.ICYSHSR1.TRIGGER_EVENT_DRIVEN_COLUMN_THRESHOLD(0, 0))
         elif trigger_type == 2:
             self.board.asic_head_0.set_trigger_type(0x10)
+            self.threshold_time_trigger_h0_spinBox.setValue(self.b.ICYSHSR1.TRIGGER_WINDOW_DRIVEN_THRESHOLD(0, 0))
 
     def trigger_type_h1(self):
         trigger_type = self.trigger_type_h1_comboBox.currentIndex()
 
         if trigger_type == 0:
             self.board.asic_head_1.set_trigger_type(0)
+            self.threshold_time_trigger_h1_spinBox.setValue(self.b.ICYSHSR1.TRIGGER_TIME_DRIVEN_PERIOD(1, 0))
         elif trigger_type == 1:
             self.board.asic_head_1.set_trigger_type(1)
+            self.threshold_time_trigger_h1_spinBox.setValue(self.b.ICYSHSR1.TRIGGER_EVENT_DRIVEN_COLUMN_THRESHOLD(1, 0))
         elif trigger_type == 2:
             self.board.asic_head_1.set_trigger_type(0x10)
+            self.threshold_time_trigger_h1_spinBox.setValue(self.b.ICYSHSR1.TRIGGER_WINDOW_DRIVEN_THRESHOLD(1, 0))
 
 
     def threshold_time_changed_h0(self, val):
-        trigger_type = self.trigger_type_h1_comboBox.currentIndex()
+        trigger_type = self.trigger_type_h0_comboBox.currentIndex()
 
         if trigger_type == 0:
             self.board.asic_head_0.set_time_driven_period(val)
