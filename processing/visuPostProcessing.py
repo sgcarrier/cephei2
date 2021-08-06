@@ -311,7 +311,9 @@ def processCountRate(data, addr):
 
 def processSPADImage(data):
 
-    arraySize = 64
+    maxAddr = np.max(data["Addr"])
+
+    arraySize = int(np.ceil(np.sqrt(maxAddr))**2)
     side = int(np.sqrt(arraySize))
     image = np.zeros((side,side))
     counts = np.zeros((arraySize,))
