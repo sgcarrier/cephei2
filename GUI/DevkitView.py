@@ -350,6 +350,8 @@ class DevkitView(QtWidgets.QMainWindow):
 
         _logger.info("Changed data format to : " + str(st))
 
+        self.clearLiveData()
+
     def selectionChanged(self, i):
         self.graphsReady = False
         selection = self.graphTypeSelect.currentText()
