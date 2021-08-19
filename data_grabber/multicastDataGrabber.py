@@ -173,7 +173,7 @@ class MulticastDataGrabber():
 
     def manual_data_fetch(self, formatNum=0):
         if not self.data_sock:
-            return None, None
+            return np.array([]), None
 
         sec = 0
         usec = 100
@@ -184,7 +184,7 @@ class MulticastDataGrabber():
         try:
             msg = self.data_sock.recv(100 * 1024)
         except BlockingIOError:
-            return None, None
+            return np.array([]), None
 
         rawData = self.extractData(msg)
 

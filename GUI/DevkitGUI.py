@@ -11,7 +11,13 @@ _logger = logging.getLogger(__name__)
 class DevkitGUI():
     def __init__(self):
         self.__controller = DevkitControl()
-        self.__viewer = DevkitView()
+
+        try:
+            self.__viewer = DevkitView()
+        except Exception as e:
+            _logger.critical("Could not create viewer due to raised exception: " +  str(e))
+            exit(1)
+
 
     def start(self):
         _logger.info("Starting the GUI")
