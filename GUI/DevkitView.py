@@ -7,7 +7,7 @@ import pyqtgraph as pg
 
 from functions.helper_functions import *
 from processing.dataFormats import getFrameDtype
-from processing.visuPostProcessing import processHistogram, processSPADImage, processCountRate
+from processing.visuPostProcessing import processHistogram, processSPADImage, processCountRate, processTotalCountRate
 from data_grabber.multicastDataGrabber import MulticastDataGrabber
 import random
 from utility.QTextEditLogger import QTextEditLogger
@@ -250,9 +250,16 @@ class DevkitView(QtWidgets.QMainWindow):
         if np.sum(image_H0) != 0:
             self.head_0_heatmap.setImage(image_H0, autoLevels=True)
 
+        cr_h0 = processTotalCountRate(self.currentLiveData_H0)
+
+        self.totalCount_H0.display(cr_h0)
+
         image_H1 = processSPADImage(self.currentLiveData_H1)
         if np.sum(image_H1) != 0:
             self.head_1_heatmap.setImage(image_H1, autoLevels=True)
+
+        cr_h1 = processTotalCountRate(self.currentLiveData_H1)
+        self.totalCount_H1.display(cr_h1)
 
     def updateOverviewTab(self):
         status = self.board.getStatus()
