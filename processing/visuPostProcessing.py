@@ -335,3 +335,25 @@ def processSPADImage(data):
 
     return image
 
+
+
+def processTotalCountRate(data):
+
+    if ("Energy" in data.dtype.fields) and ("Global" in data.dtype.fields):
+        totalEnergy = np.sum(data["Energy"])
+
+        #Count number of times global counter reset
+        toAdd = 0
+        for i in range(len(data["Global"])-1):
+            if data["Global"][i+1] < data["Global"][i]:
+                toAdd += 0x1FFFFF
+
+        totalTime = ((data["Global"][-1]+toAdd) - data["Global"][0])
+
+        countRate = totalEnergy / (totalTime * 4) * 1000000 # in khz
+
+        return countRate
+
+    else:
+        return 0
+
