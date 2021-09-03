@@ -488,7 +488,10 @@
            <layout class="QGridLayout" name="gridLayout_13">
             <item row="0" column="0">
              <layout class="QGridLayout" name="gridLayout_11">
-              <item row="11" column="1">
+              <item row="16" column="1">
+               <widget class="QSpinBox" name="asic_number_h0_spinBox"/>
+              </item>
+              <item row="13" column="1">
                <widget class="QPushButton" name="enable_all_tdc_h0_pushButton">
                 <property name="text">
                  <string>Enable_all_tdc</string>
@@ -512,24 +515,24 @@
               <item row="2" column="1">
                <widget class="QComboBox" name="post_processing_select_h0_comboBox"/>
               </item>
-              <item row="10" column="1">
+              <item row="12" column="1">
                <widget class="QPushButton" name="enable_all_quench_h0_pushButton">
                 <property name="text">
                  <string>Enable_all_quench</string>
                 </property>
                </widget>
               </item>
-              <item row="6" column="1">
+              <item row="1" column="1">
+               <widget class="QComboBox" name="array_select_h0_comboBox"/>
+              </item>
+              <item row="7" column="1">
                <widget class="QSpinBox" name="threshold_time_trigger_h0_spinBox">
                 <property name="maximum">
                  <number>10000</number>
                 </property>
                </widget>
               </item>
-              <item row="1" column="1">
-               <widget class="QComboBox" name="array_select_h0_comboBox"/>
-              </item>
-              <item row="12" column="0">
+              <item row="14" column="0">
                <widget class="QPushButton" name="disable_all_ext_trigger_h0_pushButton">
                 <property name="text">
                  <string>disable_all_ext_trigger</string>
@@ -539,14 +542,14 @@
               <item row="3" column="1">
                <widget class="QComboBox" name="trigger_type_h0_comboBox"/>
               </item>
-              <item row="10" column="0">
+              <item row="12" column="0">
                <widget class="QPushButton" name="disable_all_quench_h0_pushButton">
                 <property name="text">
                  <string>Disable_all_quench</string>
                 </property>
                </widget>
               </item>
-              <item row="12" column="1">
+              <item row="14" column="1">
                <widget class="QPushButton" name="enable_all_ext_trigger_h0_pushButton">
                 <property name="text">
                  <string>Enable_all_ext_trigger</string>
@@ -560,26 +563,39 @@
                 </property>
                </widget>
               </item>
-              <item row="7" column="0">
+              <item row="8" column="0">
                <widget class="QLabel" name="label_33">
                 <property name="text">
                  <string>Recharge (uA)</string>
                 </property>
                </widget>
               </item>
-              <item row="9" column="0">
+              <item row="10" column="0">
                <widget class="QLabel" name="label_35">
                 <property name="text">
                  <string>V_COMP (V)</string>
                 </property>
                </widget>
               </item>
-              <item row="11" column="0">
+              <item row="13" column="0">
                <widget class="QPushButton" name="disable_all_tdc_h0_pushButton">
                 <property name="text">
                  <string>Disable_all_tdc</string>
                 </property>
                </widget>
+              </item>
+              <item row="15" column="0">
+               <widget class="Line" name="line">
+                <property name="lineWidth">
+                 <number>4</number>
+                </property>
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="10" column="1">
+               <widget class="QSpinBox" name="v_comp_h0_spinBox"/>
               </item>
               <item row="1" column="0">
                <widget class="QLabel" name="label_23">
@@ -588,6 +604,9 @@
                 </property>
                </widget>
               </item>
+              <item row="9" column="1">
+               <widget class="QSpinBox" name="holdoff_h0_spinBox"/>
+              </item>
               <item row="2" column="0">
                <widget class="QLabel" name="label_26">
                 <property name="text">
@@ -595,26 +614,78 @@
                 </property>
                </widget>
               </item>
-              <item row="9" column="1">
-               <widget class="QSpinBox" name="v_comp_h0_spinBox"/>
-              </item>
               <item row="8" column="1">
-               <widget class="QSpinBox" name="holdoff_h0_spinBox"/>
-              </item>
-              <item row="7" column="1">
                <widget class="QSpinBox" name="recharge_h0_spinBox"/>
               </item>
-              <item row="8" column="0">
+              <item row="9" column="0">
                <widget class="QLabel" name="label_34">
                 <property name="text">
                  <string>Holdoff (uA)</string>
                 </property>
                </widget>
               </item>
-              <item row="6" column="0">
+              <item row="7" column="0">
                <widget class="QLabel" name="label_29">
                 <property name="text">
                  <string>Threshold/Time</string>
+                </property>
+               </widget>
+              </item>
+              <item row="15" column="1">
+               <widget class="Line" name="line_2">
+                <property name="lineWidth">
+                 <number>4</number>
+                </property>
+                <property name="midLineWidth">
+                 <number>4</number>
+                </property>
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="16" column="0">
+               <widget class="QLabel" name="label_41">
+                <property name="text">
+                 <string>ASIC Number</string>
+                </property>
+               </widget>
+              </item>
+              <item row="17" column="0">
+               <widget class="QPushButton" name="apply_correction_h0_pushButtion">
+                <property name="text">
+                 <string>Apply Correction</string>
+                </property>
+               </widget>
+              </item>
+              <item row="17" column="1">
+               <widget class="QComboBox" name="correction_type_h0_comboBox"/>
+              </item>
+              <item row="4" column="1">
+               <widget class="Line" name="line_4">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="0">
+               <widget class="Line" name="line_3">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="11" column="0">
+               <widget class="Line" name="line_5">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="11" column="1">
+               <widget class="Line" name="line_6">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
                 </property>
                </widget>
               </item>
@@ -622,21 +693,24 @@
             </item>
             <item row="0" column="1">
              <layout class="QGridLayout" name="gridLayout_12">
-              <item row="9" column="1">
+              <item row="7" column="1">
+               <widget class="QSpinBox" name="holdoff_h1_spinBox"/>
+              </item>
+              <item row="11" column="1">
                <widget class="QPushButton" name="enable_all_tdc_h1_pushButton">
                 <property name="text">
                  <string>Enable_all_tdc</string>
                 </property>
                </widget>
               </item>
-              <item row="8" column="1">
+              <item row="10" column="1">
                <widget class="QPushButton" name="enable_all_quench_h1_pushButton">
                 <property name="text">
                  <string>Enable_all_quench</string>
                 </property>
                </widget>
               </item>
-              <item row="10" column="1">
+              <item row="12" column="1">
                <widget class="QPushButton" name="enable_all_ext_trigger_h1_pushButton">
                 <property name="text">
                  <string>Enable_all_ext_trigger</string>
@@ -653,22 +727,22 @@
                 </property>
                </widget>
               </item>
-              <item row="6" column="0">
+              <item row="2" column="1">
+               <widget class="QComboBox" name="post_processing_select_h1_comboBox"/>
+              </item>
+              <item row="7" column="0">
                <widget class="QLabel" name="label_37">
                 <property name="text">
                  <string>Holdoff(uA)</string>
                 </property>
                </widget>
               </item>
-              <item row="4" column="0">
+              <item row="5" column="0">
                <widget class="QLabel" name="label_30">
                 <property name="text">
                  <string>Threshold/Time</string>
                 </property>
                </widget>
-              </item>
-              <item row="2" column="1">
-               <widget class="QComboBox" name="post_processing_select_h1_comboBox"/>
               </item>
               <item row="0" column="0">
                <widget class="QLabel" name="label_32">
@@ -684,6 +758,9 @@
                 </property>
                </widget>
               </item>
+              <item row="1" column="1">
+               <widget class="QComboBox" name="array_select_h1_comboBox"/>
+              </item>
               <item row="3" column="0">
                <widget class="QLabel" name="label_28">
                 <property name="text">
@@ -691,31 +768,28 @@
                 </property>
                </widget>
               </item>
-              <item row="4" column="1">
+              <item row="5" column="1">
                <widget class="QSpinBox" name="threshold_time_trigger_h1_spinBox">
                 <property name="maximum">
                  <number>10000</number>
                 </property>
                </widget>
               </item>
-              <item row="1" column="1">
-               <widget class="QComboBox" name="array_select_h1_comboBox"/>
-              </item>
-              <item row="9" column="0">
+              <item row="11" column="0">
                <widget class="QPushButton" name="disable_all_tdc_h1_pushButton">
                 <property name="text">
                  <string>Disable_all_tdc</string>
                 </property>
                </widget>
               </item>
-              <item row="8" column="0">
+              <item row="10" column="0">
                <widget class="QPushButton" name="disable_all_quench_h1_pushButton">
                 <property name="text">
                  <string>Disable_all_quench</string>
                 </property>
                </widget>
               </item>
-              <item row="10" column="0">
+              <item row="12" column="0">
                <widget class="QPushButton" name="disable_all_ext_trigger_h1_pushButton">
                 <property name="text">
                  <string>disable_all_ext_trigger</string>
@@ -729,28 +803,87 @@
                 </property>
                </widget>
               </item>
-              <item row="5" column="0">
+              <item row="6" column="1">
+               <widget class="QSpinBox" name="recharge_h1_spinBox"/>
+              </item>
+              <item row="6" column="0">
                <widget class="QLabel" name="label_36">
                 <property name="text">
                  <string>Recharge (uA)</string>
                 </property>
                </widget>
               </item>
-              <item row="7" column="0">
+              <item row="8" column="0">
                <widget class="QLabel" name="label_38">
                 <property name="text">
                  <string>V_COMP(v)</string>
                 </property>
                </widget>
               </item>
-              <item row="5" column="1">
-               <widget class="QSpinBox" name="recharge_h1_spinBox"/>
-              </item>
-              <item row="6" column="1">
-               <widget class="QSpinBox" name="holdoff_h1_spinBox"/>
-              </item>
-              <item row="7" column="1">
+              <item row="8" column="1">
                <widget class="QSpinBox" name="v_comp_h1_spinBox"/>
+              </item>
+              <item row="14" column="1">
+               <widget class="QSpinBox" name="asic_number_h1_spinBox"/>
+              </item>
+              <item row="14" column="0">
+               <widget class="QLabel" name="label_42">
+                <property name="text">
+                 <string>ASIC Number</string>
+                </property>
+               </widget>
+              </item>
+              <item row="15" column="0">
+               <widget class="QPushButton" name="apply_correction_h1_pushButton">
+                <property name="text">
+                 <string>Apply Correction</string>
+                </property>
+               </widget>
+              </item>
+              <item row="15" column="1">
+               <widget class="QComboBox" name="correction_type_h1_comboBox"/>
+              </item>
+              <item row="13" column="0">
+               <widget class="Line" name="line_9">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="9" column="1">
+               <widget class="Line" name="line_8">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="13" column="1">
+               <widget class="Line" name="line_10">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="9" column="0">
+               <widget class="Line" name="line_7">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="0">
+               <widget class="Line" name="line_11">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <widget class="Line" name="line_12">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
               </item>
              </layout>
             </item>
@@ -900,43 +1033,74 @@
        <attribute name="title">
         <string>SPAD Arrays</string>
        </attribute>
-       <layout class="QGridLayout" name="gridLayout_4">
-        <item row="0" column="0">
-         <layout class="QHBoxLayout" name="horizontalLayout_2">
-          <property name="sizeConstraint">
-           <enum>QLayout::SetMaximumSize</enum>
-          </property>
-          <item>
-           <layout class="QVBoxLayout" name="verticalLayout_8">
-            <item>
-             <widget class="QLabel" name="head_0_label">
-              <property name="text">
-               <string>HEAD 0 Image</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="ImageView" name="head_0_heatmap" native="true"/>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QVBoxLayout" name="verticalLayout_7">
-            <item>
-             <widget class="QLabel" name="head_1_label">
-              <property name="text">
-               <string>HEAD 1 Image</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="ImageView" name="head_1_heatmap" native="true"/>
-            </item>
-           </layout>
-          </item>
-         </layout>
-        </item>
-       </layout>
+       <widget class="QWidget" name="">
+        <property name="geometry">
+         <rect>
+          <x>8</x>
+          <y>8</y>
+          <width>1051</width>
+          <height>671</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_4">
+         <item row="0" column="0">
+          <layout class="QVBoxLayout" name="verticalLayout_8">
+           <item>
+            <widget class="QLabel" name="head_0_label">
+             <property name="text">
+              <string>HEAD 0 Image</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_2">
+             <item>
+              <widget class="QLabel" name="label_39">
+               <property name="text">
+                <string>Total Counts</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLCDNumber" name="totalCount_H0"/>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="ImageView" name="head_0_heatmap" native="true"/>
+           </item>
+          </layout>
+         </item>
+         <item row="0" column="1">
+          <layout class="QVBoxLayout" name="verticalLayout_7">
+           <item>
+            <widget class="QLabel" name="head_1_label">
+             <property name="text">
+              <string>HEAD 1 Image</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_4">
+             <item>
+              <widget class="QLabel" name="label_40">
+               <property name="text">
+                <string>Total Counts</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLCDNumber" name="totalCount_H1"/>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="ImageView" name="head_1_heatmap" native="true"/>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
       </widget>
      </widget>
     </item>
