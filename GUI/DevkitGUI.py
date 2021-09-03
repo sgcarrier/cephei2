@@ -21,7 +21,13 @@ class DevkitGUI():
         root.addHandler(handler)
 
         self.__controller = DevkitControl()
-        self.__viewer = DevkitView()
+
+        try:
+            self.__viewer = DevkitView()
+        except Exception as e:
+            _logger.critical("Could not create viewer due to raised exception: " +  str(e))
+            exit(1)
+
 
 
 

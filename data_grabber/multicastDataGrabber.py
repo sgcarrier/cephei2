@@ -175,7 +175,6 @@ class MulticastDataGrabber():
         if not self.data_sock:
             return np.array([]), None
 
-
         sec = 0
         usec = 100
         timeval = struct.pack('ll', sec, usec)

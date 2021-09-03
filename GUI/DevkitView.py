@@ -24,6 +24,15 @@ class DevkitView(QtWidgets.QMainWindow):
         # Load the UI Page
         uic.loadUi('MainWindow.ui', self)
 
+        self.setWindowModality(QtCore.Qt.WindowModal)
+
+        self.connectDialog = ConnectDialogClass()
+
+        self.connectDialog.exec_()
+
+        self.ip = self.connectDialog.ip
+        self.port = self.connectDialog.port
+
         self.dataFormat = 0
         dtype = getFrameDtype(self.dataFormat, keepRaw=False)
         self.currentLiveData_H0 = np.zeros((0,), dtype=dtype)
@@ -38,7 +47,7 @@ class DevkitView(QtWidgets.QMainWindow):
         self.monitorList = ['Fine', 'Coarse']
         self.graphsReady = True
 
-        self.board = Board(remoteIP='192.168.0.200')
+        self.board = Board(remoteIP=self.ip)
 
         self.buildView()
 
@@ -60,8 +69,11 @@ class DevkitView(QtWidgets.QMainWindow):
         _logger.info("Connecting to network for viewer")
         try:
             self.mdg.connectToNetwork()
+            self.board = Board(remoteIP='192.168.0.200')
         except Exception as e:
             _logger.warning("Failed to connect to network with error: " + str(e))
+
+
 
 
 
@@ -613,3 +625,25 @@ class DevkitView(QtWidgets.QMainWindow):
             self.board.b.ICYSHSR1.TRIGGER_EVENT_DRIVEN_COLUMN_THRESHOLD(1, val, 0)
         elif trigger_type == 2:
             self.board.b.ICYSHSR1.TRIGGER_WINDOW_DRIVEN_THRESHOLD(1, val, 0)
+
+
+
+class ConnectDialogClass(QtWidgets.QDialog):
+    def __init__(self):
+        super(ConnectDialogClass, self).__init__()
+        uic.loadUi("connect.ui", self)
+
+        self.ip = None
+        self.port = None
+
+
+        self.buttonBox.rejected.connect(self.quitProgram)
+        self.buttonBox.accepted.connect(self.storeSettings)
+
+    def quitProgram(self):
+        exit()
+
+
+    def storeSettings(self):
+        self.ip = self.ip_setting.text()
+        self.port = int(self.port_setting.text())
