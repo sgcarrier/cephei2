@@ -936,7 +936,11 @@
                </widget>
               </item>
               <item>
-               <widget class="QLCDNumber" name="numSamplesLive"/>
+               <widget class="QLCDNumber" name="numSamplesLive">
+                <property name="digitCount">
+                 <number>10</number>
+                </property>
+               </widget>
               </item>
              </layout>
             </item>
@@ -1073,7 +1077,11 @@
               </widget>
              </item>
              <item>
-              <widget class="QLCDNumber" name="totalCount_H0"/>
+              <widget class="QLCDNumber" name="totalCount_H0">
+               <property name="digitCount">
+                <number>7</number>
+               </property>
+              </widget>
              </item>
             </layout>
            </item>
@@ -1101,7 +1109,11 @@
               </widget>
              </item>
              <item>
-              <widget class="QLCDNumber" name="totalCount_H1"/>
+              <widget class="QLCDNumber" name="totalCount_H1">
+               <property name="digitCount">
+                <number>7</number>
+               </property>
+              </widget>
              </item>
             </layout>
            </item>
