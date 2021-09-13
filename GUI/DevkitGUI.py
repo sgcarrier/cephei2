@@ -12,11 +12,12 @@ class DevkitGUI():
     def __init__(self):
         self.__controller = DevkitControl()
 
-        try:
-            self.__viewer = DevkitView()
-        except Exception as e:
-            _logger.critical("Could not create viewer due to raised exception: " +  str(e))
-            exit(1)
+        self.__viewer = DevkitView()
+        # try:
+        #
+        # except Exception as e:
+        #     _logger.critical("Could not create viewer due to raised exception: " +  str(e))
+        #     exit(1)
 
 
     def start(self):

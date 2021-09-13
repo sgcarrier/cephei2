@@ -4,6 +4,7 @@ import numpy as np
 from PyQt5 import QtWidgets, uic
 from pyqtgraph import PlotWidget, ColorMap
 import pyqtgraph as pg
+import pickle
 
 from functions.helper_functions import *
 from processing.dataFormats import getFrameDtype
@@ -122,13 +123,13 @@ class DevkitView(QtWidgets.QMainWindow):
         self.tdc_trig_divider_SpinBox.valueChanged.connect(self.tdc_trig_divider_changed)
 
         self.pll_fast_h0_SpinBox.setKeyboardTracking(False)
-        self.pll_fast_h0_SpinBox.valueChanged.connect(self.board.fast_oscillator_head_0.set_frequency)
+        self.pll_fast_h0_SpinBox.valueChanged.connect(lambda p: self.board.fast_oscillator_head_0.set_frequency(p))
         self.pll_slow_h0_SpinBox.setKeyboardTracking(False)
-        self.pll_slow_h0_SpinBox.valueChanged.connect(self.board.slow_oscillator_head_0.set_frequency)
+        self.pll_slow_h0_SpinBox.valueChanged.connect(lambda p: self.board.slow_oscillator_head_0.set_frequency(p))
         self.pll_fast_h1_SpinBox.setKeyboardTracking(False)
-        self.pll_fast_h1_SpinBox.valueChanged.connect(self.board.fast_oscillator_head_1.set_frequency)
+        self.pll_fast_h1_SpinBox.valueChanged.connect(lambda p: self.board.fast_oscillator_head_1.set_frequency(p))
         self.pll_slow_h1_SpinBox.setKeyboardTracking(False)
-        self.pll_slow_h1_SpinBox.valueChanged.connect(self.board.slow_oscillator_head_1.set_frequency)
+        self.pll_slow_h1_SpinBox.valueChanged.connect(lambda p: self.board.slow_oscillator_head_1.set_frequency(p))
 
         self.dac_fast_h0_SpinBox.setKeyboardTracking(False)
         self.dac_fast_h0_SpinBox.valueChanged.connect(self.board.v_fast_head_0.set_voltage)
@@ -149,17 +150,17 @@ class DevkitView(QtWidgets.QMainWindow):
         self.wind_trig_delay_h1_SpinBox.valueChanged.connect(self.board.window_delay_head_1.set_delay)
 
 
-        self.pll_enable_h0_checkBox.stateChanged(self.pll_enable_h0_changed)
-        self.pll_enable_h1_checkBox.stateChanged(self.pll_enable_h1_changed)
+        self.pll_enable_h0_checkBox.stateChanged.connect(self.pll_enable_h0_changed)
+        self.pll_enable_h1_checkBox.stateChanged.connect(self.pll_enable_h1_changed)
 
-        self.window_is_stop_h0_checkBox.stateChanged(self.window_is_stop_h0_changed)
-        self.window_is_stop_h0_checkBox.stateChanged(self.window_is_stop_h1_changed)
+        self.window_is_stop_h0_checkBox.stateChanged.connect(self.window_is_stop_h0_changed)
+        self.window_is_stop_h0_checkBox.stateChanged.connect(self.window_is_stop_h1_changed)
 
 
         """ ASIC TAB"""
 
-        self.reset_h0_pushButton.clicked(self.board.asic_head_0.reset)
-        self.reset_h1_pushButton.clicked(self.board.asic_head_1.reset)
+        self.reset_h0_pushButton.clicked.connect(self.board.asic_head_0.reset)
+        self.reset_h1_pushButton.clicked.connect(self.board.asic_head_1.reset)
 
         self.threshold_time_trigger_h0_spinBox.setKeyboardTracking(False)
         self.threshold_time_trigger_h0_spinBox.valueChanged.connect(self.threshold_time_changed_h0)
@@ -167,20 +168,20 @@ class DevkitView(QtWidgets.QMainWindow):
         self.threshold_time_trigger_h1_spinBox.setKeyboardTracking(False)
         self.threshold_time_trigger_h1_spinBox.valueChanged.connect(self.threshold_time_changed_h1)
 
-        self.disable_all_quench_h0_pushButton(self.board.asic_head_0.disable_all_quench)
-        self.disable_all_quench_h1_pushButton(self.board.asic_head_1.disable_all_quench)
-        self.enable_all_quench_h0_pushButton(self.board.asic_head_0.enable_all_quench)
-        self.enable_all_quench_h1_pushButton(self.board.asic_head_1.enable_all_quench)
+        self.disable_all_quench_h0_pushButton.clicked.connect(lambda: self.board.asic_head_0.disable_all_quench())
+        self.disable_all_quench_h1_pushButton.clicked.connect(lambda: self.board.asic_head_1.disable_all_quench())
+        self.enable_all_quench_h0_pushButton.clicked.connect(lambda: self.board.asic_head_0.enable_all_quench())
+        self.enable_all_quench_h1_pushButton.clicked.connect(lambda: self.board.asic_head_1.enable_all_quench())
 
-        self.disable_all_tdc_h0_pushButton(self.board.asic_head_0.disable_all_tdc)
-        self.disable_all_tdc_h1_pushButton(self.board.asic_head_1.disable_all_tdc)
-        self.enable_all_tdc_h0_pushButton(self.board.asic_head_0.enable_all_tdc)
-        self.enable_all_tdc_h1_pushButton(self.board.asic_head_1.enable_all_tdc)
+        self.disable_all_tdc_h0_pushButton.clicked.connect(lambda: self.board.asic_head_0.disable_all_tdc())
+        self.disable_all_tdc_h1_pushButton.clicked.connect(lambda: self.board.asic_head_1.disable_all_tdc())
+        self.enable_all_tdc_h0_pushButton.clicked.connect(lambda: self.board.asic_head_0.enable_all_tdc())
+        self.enable_all_tdc_h1_pushButton.clicked.connect(lambda: self.board.asic_head_1.enable_all_tdc())
 
-        self.disable_all_ext_trigger_h0_pushButton(self.board.asic_head_0.disable_all_ext_trigger)
-        self.disable_all_ext_trigger_h1_pushButton(self.board.asic_head_1.disable_all_ext_trigger)
-        self.enable_all_ext_trigger_h0_pushButton(self.board.asic_head_0.enable_all_ext_trigger)
-        self.enable_all_ext_trigger_h1_pushButton(self.board.asic_head_1.enable_all_ext_trigger)
+        self.disable_all_ext_trigger_h0_pushButton.clicked.connect(lambda: self.board.asic_head_0.disable_all_ext_trigger())
+        self.disable_all_ext_trigger_h1_pushButton.clicked.connect(lambda: self.board.asic_head_1.disable_all_ext_trigger())
+        self.enable_all_ext_trigger_h0_pushButton.clicked.connect(lambda: self.board.asic_head_0.enable_all_ext_trigger())
+        self.enable_all_ext_trigger_h1_pushButton.clicked.connect(lambda: self.board.asic_head_1.enable_all_ext_trigger())
 
         self.array_select_h0_comboBox.addItems(["0 - ARRAY 0 (14x14)", "1 - ARRAY 1 (8x8) "])
         self.array_select_h0_comboBox.currentIndexChanged.connect(self.mux_select_h0)
@@ -208,6 +209,15 @@ class DevkitView(QtWidgets.QMainWindow):
 
         self.v_comp_h0_spinBox.setKeyboardTracking(False)
         self.v_comp_h0_spinBox.valueChanged.connect(self.board.comparator_threshold.set_voltage)
+
+        self.window_length_h0_SpinBox.setKeyboardTracking(False)
+        self.window_length_h0_SpinBox.valueChanged.connect(self.window_length_h0_changed)
+
+        self.window_length_h1_SpinBox.setKeyboardTracking(False)
+        self.window_length_h1_SpinBox.valueChanged.connect(self.window_length_h1_changed)
+
+        self.correction_type_h0_comboBox.addItems(["lin", "lin_bias", "lin_bias_slope"])
+        self.correction_type_h1_comboBox.addItems(["lin", "lin_bias", "lin_bias_slope"])
 
         time.sleep(1)
 
@@ -570,6 +580,11 @@ class DevkitView(QtWidgets.QMainWindow):
         else:
             self.board.asic_head_1.window_is_stop()
 
+    def window_length_h0_changed(self, window_length):
+        self.board.asic_head_0.set_window_size(window_length)
+
+    def window_length_h1_changed(self, window_length):
+        self.board.asic_head_1.set_window_size(window_length)
 
     def mux_select_h0(self):
         pp = self.post_processing_select_h0_comboBox.currentIndex()
@@ -588,13 +603,13 @@ class DevkitView(QtWidgets.QMainWindow):
 
         if trigger_type == 0:
             self.board.asic_head_0.set_trigger_type(0)
-            self.threshold_time_trigger_h0_spinBox.setValue(self.b.ICYSHSR1.TRIGGER_TIME_DRIVEN_PERIOD(0, 0))
+            self.threshold_time_trigger_h0_spinBox.setValue(self.board.b.ICYSHSR1.TRIGGER_TIME_DRIVEN_PERIOD(0, 0))
         elif trigger_type == 1:
             self.board.asic_head_0.set_trigger_type(1)
-            self.threshold_time_trigger_h0_spinBox.setValue(self.b.ICYSHSR1.TRIGGER_EVENT_DRIVEN_COLUMN_THRESHOLD(0, 0))
+            self.threshold_time_trigger_h0_spinBox.setValue(self.board.b.ICYSHSR1.TRIGGER_EVENT_DRIVEN_COLUMN_THRESHOLD(0, 0))
         elif trigger_type == 2:
             self.board.asic_head_0.set_trigger_type(0x10)
-            self.threshold_time_trigger_h0_spinBox.setValue(self.b.ICYSHSR1.TRIGGER_WINDOW_DRIVEN_THRESHOLD(0, 0))
+            self.threshold_time_trigger_h0_spinBox.setValue(self.board.b.ICYSHSR1.TRIGGER_WINDOW_DRIVEN_THRESHOLD(0, 0))
 
     def trigger_type_h1(self):
         trigger_type = self.trigger_type_h1_comboBox.currentIndex()
@@ -630,6 +645,31 @@ class DevkitView(QtWidgets.QMainWindow):
         elif trigger_type == 2:
             self.board.b.ICYSHSR1.TRIGGER_WINDOW_DRIVEN_THRESHOLD(1, val, 0)
 
+
+    def apply_corrections(self):
+
+        array = self.array_select_h0_comboBox.currentIndex()
+        head  = self.asic_number_h0_spinBox.value()
+        freq = 255
+        type = self.correction_type_h0_comboBox.currentText()
+
+        # with open('skew.pickle', 'rb') as f:
+        #     skew_corr = pickle.load(f)
+        #     for tdc in range(len(skew_corr)):
+        #         self.board.asic_head_0.set_skew_correction(array, tdc*4, skew_corr[tdc])
+
+        corr_filename = "H{0}_M{1}_F{2}_{3}.pickle".format(int(array), int(head), int(freq), type)
+
+        with open(corr_filename, 'rb') as f:
+            coefficients = pickle.load(f)
+            for tdc_id in coefficients:
+                coarse_corr = int(coefficients[tdc_id][0] * 8)
+                fine_corr = int(coefficients[tdc_id][1] * 16)
+                bias_lookup = np.clip((coefficients[tdc_id][2]+128).astype(int), 0, 255)
+                slope_lookup = np.clip((coefficients[tdc_id][3]*8).astype(int), 0, 15)
+                self.board.asic_head_0.set_coarse_correction(array, tdc_id, coarse_corr)
+                self.board.asic_head_0.set_fine_correction(array, tdc_id, fine_corr)
+                self.board.asic_head_0.set_lookup_tables(array, tdc_id, bias_lookup, slope_lookup)
 
 
 class ConnectDialogClass(QtWidgets.QDialog):
