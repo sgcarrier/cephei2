@@ -18,7 +18,7 @@
     <item row="0" column="0">
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="Overview_tab">
        <attribute name="title">
@@ -495,6 +495,13 @@
               <item row="16" column="1">
                <widget class="QSpinBox" name="asic_number_h0_spinBox"/>
               </item>
+              <item row="11" column="0">
+               <widget class="Line" name="line_5">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
+              </item>
               <item row="13" column="1">
                <widget class="QPushButton" name="enable_all_tdc_h0_pushButton">
                 <property name="text">
@@ -672,6 +679,13 @@
                 </property>
                </widget>
               </item>
+              <item row="11" column="1">
+               <widget class="Line" name="line_6">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
+              </item>
               <item row="4" column="0">
                <widget class="Line" name="line_3">
                 <property name="orientation">
@@ -679,17 +693,59 @@
                 </property>
                </widget>
               </item>
-              <item row="11" column="0">
-               <widget class="Line" name="line_5">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
+              <item row="19" column="1">
+               <widget class="QSpinBox" name="bound_1_h0_spinBox">
+                <property name="maximum">
+                 <number>10000</number>
                 </property>
                </widget>
               </item>
-              <item row="11" column="1">
-               <widget class="Line" name="line_6">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
+              <item row="18" column="1">
+               <widget class="QSpinBox" name="bound_0_h0_spinBox">
+                <property name="maximum">
+                 <number>10000</number>
+                </property>
+               </widget>
+              </item>
+              <item row="20" column="1">
+               <widget class="QSpinBox" name="bound_2_h0_spinBox">
+                <property name="maximum">
+                 <number>10000</number>
+                </property>
+               </widget>
+              </item>
+              <item row="21" column="1">
+               <widget class="QSpinBox" name="bound_3_h0_spinBox">
+                <property name="maximum">
+                 <number>10000</number>
+                </property>
+               </widget>
+              </item>
+              <item row="18" column="0">
+               <widget class="QLabel" name="label_43">
+                <property name="text">
+                 <string>Bound 0</string>
+                </property>
+               </widget>
+              </item>
+              <item row="19" column="0">
+               <widget class="QLabel" name="label_44">
+                <property name="text">
+                 <string>Bound 1</string>
+                </property>
+               </widget>
+              </item>
+              <item row="20" column="0">
+               <widget class="QLabel" name="label_45">
+                <property name="text">
+                 <string>Bound 2</string>
+                </property>
+               </widget>
+              </item>
+              <item row="21" column="0">
+               <widget class="QLabel" name="label_46">
+                <property name="text">
+                 <string>Bound 3</string>
                 </property>
                </widget>
               </item>

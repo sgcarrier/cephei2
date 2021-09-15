@@ -31,6 +31,9 @@ class DevkitView(QtWidgets.QMainWindow):
 
         self.connectDialog.exec_()
 
+        self.logTextBox = None
+        self.setupLogger()
+
         self.ip = self.connectDialog.ip
         self.port = self.connectDialog.port
 
@@ -55,8 +58,7 @@ class DevkitView(QtWidgets.QMainWindow):
         self.mdg = MulticastDataGrabber()
         #self.board = None
 
-        self.logTextBox = None
-        self.setupLogger()
+
 
     def setupLogger(self):
         self.logTextBox = QTextEditLogger(self.logTextBrowser)
@@ -88,7 +90,7 @@ class DevkitView(QtWidgets.QMainWindow):
 
         self.clearDataButton.clicked.connect(self.clearLiveData)
 
-        self.graphTypeSelect.addItems(["Histogram", "Timestamp"])
+        self.graphTypeSelect.addItems(["Histogram", "Timestamp", "Bin"])
         self.graphTypeSelect.currentIndexChanged.connect(self.selectionChanged)
 
         self.maxSamplesSelect.setMaximum(10 ** 8)
@@ -219,6 +221,15 @@ class DevkitView(QtWidgets.QMainWindow):
         self.correction_type_h0_comboBox.addItems(["lin", "lin_bias", "lin_bias_slope"])
         self.correction_type_h1_comboBox.addItems(["lin", "lin_bias", "lin_bias_slope"])
 
+        self.bound_0_h0_SpinBox.setKeyboardTracking(False)
+        self.bound_0_h0_SpinBox.valueChanged.connect(self.bound_0_h0_changed)
+        self.bound_1_h0_SpinBox.setKeyboardTracking(False)
+        self.bound_1_h0_SpinBox.valueChanged.connect(self.bound_1_h0_changed)
+        self.bound_2_h0_SpinBox.setKeyboardTracking(False)
+        self.bound_2_h0_SpinBox.valueChanged.connect(self.bound_2_h0_changed)
+        self.bound_3_h0_SpinBox.setKeyboardTracking(False)
+        self.bound_3_h0_SpinBox.valueChanged.connect(self.bound_3_h0_changed)
+
         time.sleep(1)
 
         self.updateOverviewTab()
@@ -333,6 +344,11 @@ class DevkitView(QtWidgets.QMainWindow):
                     field = self.monitorList[fieldNumber]
                     df = processHistogram(liveDataToUse, self.tdcOfInterest, field)
                     self.barGraphs[fieldNumber].setOpts(x=df.x, height=df.y)
+            if selection == "Bin":
+                for fieldNumber in range(len(self.monitorList)):
+                    field = self.monitorList[fieldNumber]
+                    df = processHistogram(liveDataToUse, self.tdcOfInterest, field)
+                    self.barGraphs[fieldNumber].setOpts(x=df.x, height=df.y)
 
             if selection == "Timestamp Difference":
                 hist = self.processDiffTimestamp(liveDataToUse, 50, 8)
@@ -403,6 +419,12 @@ class DevkitView(QtWidgets.QMainWindow):
             self.barGraphs = []
             self.barGraphs.append(pg.BarGraphItem(x=[0], height=[0], width=0.3, brush='r'))
             p = self.liveDataGraph.addPlot(title="Timestamp")
+            p.addItem(self.barGraphs[-1])
+        elif selection == "Bin":
+            self.monitorList = ['Bin']
+            self.barGraphs = []
+            self.barGraphs.append(pg.BarGraphItem(x=[0], height=[0], width=0.3, brush='r'))
+            p = self.liveDataGraph.addPlot(title="Bin")
             p.addItem(self.barGraphs[-1])
         elif selection == "TimestampDiff":
             self.barGraphs = []
@@ -669,8 +691,21 @@ class DevkitView(QtWidgets.QMainWindow):
                 slope_lookup = np.clip((coefficients[tdc_id][3]*8).astype(int), 0, 15)
                 self.board.asic_head_0.set_coarse_correction(array, tdc_id, coarse_corr)
                 self.board.asic_head_0.set_fine_correction(array, tdc_id, fine_corr)
-                self.board.asic_head_0.set_lookup_tables(array, tdc_id, bias_lookup, slope_lookup)
+                if ((type == "lin_bias") or (type == "lin_bias_slope")):
+                    self.board.asic_head_0.set_lookup_tables(array, tdc_id, bias_lookup, slope_lookup)
 
+
+    def bound_0_h0_changed(self, val):
+        self.b.ICYSHSR1.TIME_BIN_BOUNDS_0(0, int(val), 0)
+        
+    def bound_1_h0_changed(self, val):
+        self.b.ICYSHSR1.TIME_BIN_BOUNDS_0_1(0, int(val), 0)
+
+    def bound_2_h0_changed(self, val):
+        self.b.ICYSHSR1.TIME_BIN_BOUNDS_1_2(0, int(val), 0)
+
+    def bound_3_h0_changed(self, val):
+        self.b.ICYSHSR1.TIME_BIN_BOUNDS_2(0, int(val), 0)
 
 class ConnectDialogClass(QtWidgets.QDialog):
     def __init__(self):
