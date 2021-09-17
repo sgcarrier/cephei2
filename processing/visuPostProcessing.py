@@ -119,7 +119,7 @@ def findMatchingTDCEvents(tdc1Num, tdc2Num, data):
 
 
     idx = 0
-    for i in tqdm(range(len(TDC1Data))):
+    for i in (range(len(TDC1Data))):
         '''Find global counter matches from data1 in data2. The indexes don't match, but should be fairly close [-5,5]'''
         for j in range(-5, 6, 1):
 
@@ -170,7 +170,7 @@ def findMatchingTDCEventsFast(tdc1Num, tdc2Num, data):
     shift = len(TDC1Data) - len(TDC2Data)
     step = 0
     idx = 0
-    for i in tqdm(range(len(TDC1Data))):
+    for i in (range(len(TDC1Data))):
         if (i + step) >= len(TDC2Data['Global']):
             continue
 
@@ -187,7 +187,7 @@ def findMatchingTDCEventsFast(tdc1Num, tdc2Num, data):
 
     data1 = np.resize(data1, idx)
     data2 = np.resize(data2, idx)
-    print(len(data1))
+    #print(len(data1))
     return data1, data2
 
 
@@ -227,7 +227,7 @@ def processHistogram(data, addr, field):
 
 def processCountRate(data, addr):
 
-    if data.size == 0:
+    if data.size <= 1:
         return 0
 
     single_tdc = False
@@ -235,17 +235,20 @@ def processCountRate(data, addr):
         data = data[data["Addr"] == addr]
         single_tdc = True
 
+    if data.size <= 1:
+        return 0
+
     if ("Energy" in data.dtype.fields) and ("Global" in data.dtype.fields) and single_tdc:
         count_plot = np.zeros((len(data) - 1,), dtype="uint64")
 
         for i in range(len(data) - 1):
-            if (data['Global'][i + 1] - data['Global'][i]) > 0:
+            if (np.int64(data['Global'][i + 1] - data['Global'][i])) > 0:
                 # Convert from 4ns steps to KHz
                 if (data['Energy'][i + 1] == 0):
-                    count_plot[i] = 4 / ((data['Global'][i + 1] - data['Global'][i]) * 4) * 1000000
+                    count_plot[i] = 4 / (np.int64((data['Global'][i + 1] - data['Global'][i])) * 4) * 1000000
                 else:
                     count_plot[i] = (data['Energy'][i + 1] / 4) / (
-                                (data['Global'][i + 1] - data['Global'][i]) * 4) * 1000000
+                                (np.int64(data['Global'][i + 1] - data['Global'][i])) * 4) * 1000000
             else:  # in the case that the global counter overflows
                 time_diff = (0x1FFFFF - data['Global'][i]) + data['Global'][i + 1]
                 # Convert from 4ns steps to KHz
@@ -340,6 +343,8 @@ def processSPADImage(data):
 def processTotalCountRate(data):
 
     if ("Energy" in data.dtype.fields) and ("Global" in data.dtype.fields):
+        if data["Global"].size == 0:
+            return 0
         totalEnergy = np.sum(data["Energy"])
 
         #Count number of times global counter reset

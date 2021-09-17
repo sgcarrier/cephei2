@@ -22,7 +22,7 @@ class RawDataProcessor():
         #garbage frames
         data['DATA'] = [value for value in data['DATA'] if value != 0xFFFFFFFFFFFFFFFF]
         # Frame type
-        data['DATA'] = [value for value in data['DATA'] if value > 0xF]
+        data['DATA'] = [value for value in data['DATA'] if (value >> np.uint64(24)) > 0xF]
 
         data['LEN'] = len(data['DATA'])
 
@@ -79,7 +79,7 @@ class RawDataProcessor():
         if dataLen == 0:
             return None
 
-        for field, parameters in tqdm(format.items()):
+        for field, parameters in (format.items()):
             outArr[field] = (np.bitwise_and(np.right_shift(filteredData['DATA'], parameters['offset']), parameters['bitMask']))  #.as_type(parameters['dtype'])
             if self.format_reverse_bits:
                 for i in range(len(outArr[field])):

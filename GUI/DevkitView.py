@@ -4,6 +4,7 @@ import numpy as np
 from PyQt5 import QtWidgets, uic
 from pyqtgraph import PlotWidget, ColorMap
 import pyqtgraph as pg
+import pickle
 
 from functions.helper_functions import *
 from processing.dataFormats import getFrameDtype
@@ -87,7 +88,7 @@ class DevkitView(QtWidgets.QMainWindow):
 
         self.clearDataButton.clicked.connect(self.clearLiveData)
 
-        self.graphTypeSelect.addItems(["Histogram", "Timestamp"])
+        self.graphTypeSelect.addItems(["Histogram", "Timestamp", "Bin"])
         self.graphTypeSelect.currentIndexChanged.connect(self.selectionChanged)
 
         self.maxSamplesSelect.setMaximum(10 ** 8)
@@ -127,9 +128,9 @@ class DevkitView(QtWidgets.QMainWindow):
         self.pll_slow_h0_SpinBox.setKeyboardTracking(False)
         self.pll_slow_h0_SpinBox.valueChanged.connect(lambda p: self.board.slow_oscillator_head_0.set_frequency(p))
         self.pll_fast_h1_SpinBox.setKeyboardTracking(False)
-        self.pll_fast_h1_SpinBox.valueChanged.connect(self.board.fast_oscillator_head_1.set_frequency)
+        self.pll_fast_h1_SpinBox.valueChanged.connect(lambda p: self.board.fast_oscillator_head_1.set_frequency(p))
         self.pll_slow_h1_SpinBox.setKeyboardTracking(False)
-        self.pll_slow_h1_SpinBox.valueChanged.connect(self.board.slow_oscillator_head_1.set_frequency)
+        self.pll_slow_h1_SpinBox.valueChanged.connect(lambda p: self.board.slow_oscillator_head_1.set_frequency(p))
 
         self.dac_fast_h0_SpinBox.setKeyboardTracking(False)
         self.dac_fast_h0_SpinBox.valueChanged.connect(self.board.v_fast_head_0.set_voltage)
@@ -169,9 +170,9 @@ class DevkitView(QtWidgets.QMainWindow):
         self.threshold_time_trigger_h1_spinBox.valueChanged.connect(self.threshold_time_changed_h1)
 
         self.disable_all_quench_h0_pushButton.clicked.connect(self.disable_all_quench_h0)
-        self.disable_all_quench_h1_pushButton.clicked.connect(self.board.asic_head_1.disable_all_quench)
-        self.enable_all_quench_h0_pushButton.clicked.connect(self.board.asic_head_0.enable_all_quench)
-        self.enable_all_quench_h1_pushButton.clicked.connect(self.board.asic_head_1.enable_all_quench)
+        self.disable_all_quench_h1_pushButton.clicked.connect(self.disable_all_quench_h1)
+        self.enable_all_quench_h0_pushButton.clicked.connect(self.enable_all_quench_h0)
+        self.enable_all_quench_h1_pushButton.clicked.connect(self.enable_all_quench_h1)
 
         self.disable_all_tdc_h0_pushButton.clicked.connect(self.disable_all_tdc_h0)
         self.disable_all_tdc_h1_pushButton.clicked.connect(self.board.asic_head_1.disable_all_tdc)
@@ -202,28 +203,49 @@ class DevkitView(QtWidgets.QMainWindow):
         self.trigger_type_h1_comboBox.currentIndexChanged.connect(self.trigger_type_h1)
 
         self.recharge_h0_spinBox.setKeyboardTracking(False)
-        self.recharge_h0_spinBox.valueChanged.connect(self.board.recharge_current.set_current)
+        self.recharge_h0_spinBox.valueChanged.connect(self.recharge_current_h0)
 
         self.holdoff_h0_spinBox.setKeyboardTracking(False)
-        self.holdoff_h0_spinBox.valueChanged.connect(self.board.holdoff_current.set_current)
+        self.holdoff_h0_spinBox.valueChanged.connect(self.holdoff_current_h0)
 
         self.v_comp_h0_spinBox.setKeyboardTracking(False)
-        self.v_comp_h0_spinBox.valueChanged.connect(self.board.comparator_threshold.set_voltage)
-
+        self.v_comp_h0_spinBox.valueChanged.connect(self.comparator_voltage_h0)
 
         self.window_length_h0_SpinBox.setKeyboardTracking(False)
         self.window_length_h0_SpinBox.valueChanged.connect(self.window_length_h0_changed)
 
+        self.window_length_h1_SpinBox.setKeyboardTracking(False)
+        self.window_length_h1_SpinBox.valueChanged.connect(self.window_length_h1_changed)
 
+        self.correction_type_h0_comboBox.addItems(["lin", "lin_bias", "lin_bias_slope"])
+        self.correction_type_h1_comboBox.addItems(["lin", "lin_bias", "lin_bias_slope"])
+
+        self.apply_correction_h0_pushButtion.clicked.connect(self.apply_corrections)
 
         time.sleep(1)
 
         self.updateOverviewTab()
 
+    def recharge_current_h0(self, value):
+        self.board.recharge_current.set_current(value)
+
+    def holdoff_current_h0(self, value):
+        self.board.holdoff_current.set_current(value)
+
+    def comparator_voltage_h0(self, value):
+        self.board.comparator_threshold.set_voltage((value/3.3)*5)
 
     def disable_all_quench_h0(self):
-        print("Hello")
         self.board.asic_head_0.disable_all_quench()
+
+    def disable_all_quench_h1(self):
+        self.board.asic_head_1.disable_all_quench()
+
+    def enable_all_quench_h0(self):
+        self.board.asic_head_0.enable_all_quench()
+
+    def enable_all_quench_h1(self):
+        self.board.asic_head_1.enable_all_quench()
 
     def disable_all_tdc_h0(self):
         self.board.asic_head_0.disable_all_tdc()
@@ -347,6 +369,11 @@ class DevkitView(QtWidgets.QMainWindow):
                     field = self.monitorList[fieldNumber]
                     df = processHistogram(liveDataToUse, self.tdcOfInterest, field)
                     self.barGraphs[fieldNumber].setOpts(x=df.x, height=df.y)
+            if selection == "Bin":
+                for fieldNumber in range(len(self.monitorList)):
+                    field = self.monitorList[fieldNumber]
+                    df = processHistogram(liveDataToUse, self.tdcOfInterest, field)
+                    self.barGraphs[fieldNumber].setOpts(x=df.x, height=df.y)
 
             if selection == "Timestamp Difference":
                 hist = self.processDiffTimestamp(liveDataToUse, 50, 8)
@@ -419,6 +446,12 @@ class DevkitView(QtWidgets.QMainWindow):
             self.barGraphs = []
             self.barGraphs.append(pg.BarGraphItem(x=[0], height=[0], width=0.3, brush='r'))
             p = self.liveDataGraph.addPlot(title="Timestamp")
+            p.addItem(self.barGraphs[-1])
+        elif selection == "Bin":
+            self.monitorList = ['Bin']
+            self.barGraphs = []
+            self.barGraphs.append(pg.BarGraphItem(x=[0], height=[0], width=0.3, brush='r'))
+            p = self.liveDataGraph.addPlot(title="Bin")
             p.addItem(self.barGraphs[-1])
         elif selection == "TimestampDiff":
             self.barGraphs = []
@@ -602,6 +635,9 @@ class DevkitView(QtWidgets.QMainWindow):
     def window_length_h0_changed(self, window_length):
         self.board.asic_head_0.set_window_size(int(window_length))
 
+    def window_length_h1_changed(self, window_length):
+        self.board.asic_head_1.set_window_size(int(window_length))
+
 
     def mux_select_h0(self):
         pp = self.post_processing_select_h0_comboBox.currentIndex()
@@ -662,6 +698,32 @@ class DevkitView(QtWidgets.QMainWindow):
         elif trigger_type == 2:
             self.board.b.ICYSHSR1.TRIGGER_WINDOW_DRIVEN_THRESHOLD(1, val, 0)
 
+
+    def apply_corrections(self):
+
+        array = self.array_select_h0_comboBox.currentIndex()
+        head  = self.asic_number_h0_spinBox.value()
+        freq = 255
+        type = self.correction_type_h0_comboBox.currentText()
+
+        # with open('skew.pickle', 'rb') as f:
+        #     skew_corr = pickle.load(f)
+        #     for tdc in range(len(skew_corr)):
+        #         self.board.asic_head_0.set_skew_correction(array, tdc*4, skew_corr[tdc])
+
+        corr_filename = "H{0}_M{1}_F{2}_{3}.pickle".format(int(head), int(array), int(freq), type)
+
+        with open(corr_filename, 'rb') as f:
+            coefficients = pickle.load(f)
+            for tdc_id in coefficients:
+                coarse_corr = int(coefficients[tdc_id][0] * 8)
+                fine_corr = int(coefficients[tdc_id][1] * 16)
+                bias_lookup = np.clip((coefficients[tdc_id][2]+128).astype(int), 0, 255)
+                slope_lookup = np.clip((coefficients[tdc_id][3]*8).astype(int), 0, 15)
+                self.board.asic_head_0.set_coarse_correction(array, tdc_id, coarse_corr)
+                self.board.asic_head_0.set_fine_correction(array, tdc_id, fine_corr)
+                if (type == "lin_bias") or (type == "lin_bias_slope"):
+                    self.board.asic_head_0.set_lookup_tables(array, tdc_id, bias_lookup, slope_lookup)
 
 
 class ConnectDialogClass(QtWidgets.QDialog):

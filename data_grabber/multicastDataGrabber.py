@@ -344,7 +344,7 @@ class MulticastDataGrabber():
             #print(msg['ACQ_ID'])
             #msg['ACQ_ID'] = int.from_bytes(msg['ACQ_ID'], 'little')
             msg['ACQ_ID'] = int(msg['ACQ_ID'])
-            print(msg['ACQ_ID'])
+            #print(msg['ACQ_ID'])
 
         else:
             return None
