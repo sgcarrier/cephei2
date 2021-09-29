@@ -143,13 +143,15 @@ class DevkitView(QtWidgets.QMainWindow):
         self.dac_slow_h1_SpinBox.valueChanged.connect(self.board.v_slow_head_1.set_voltage)
 
         self.tdc_trig_delay_h0_SpinBox.setKeyboardTracking(False)
-        self.tdc_trig_delay_h0_SpinBox.valueChanged.connect(self.board.trigger_delay_head_0.set_delay)
+        self.tdc_trig_delay_h0_SpinBox.valueChanged.connect(self.trigger_h0_delay)
         self.tdc_trig_delay_h1_SpinBox.setKeyboardTracking(False)
-        self.tdc_trig_delay_h1_SpinBox.valueChanged.connect(self.board.trigger_delay_head_1.set_delay)
+        self.tdc_trig_delay_h1_SpinBox.valueChanged.connect(self.trigger_h1_delay)
         self.wind_trig_delay_h0_SpinBox.setKeyboardTracking(False)
-        self.wind_trig_delay_h0_SpinBox.valueChanged.connect(self.board.window_delay_head_0.set_delay)
+        self.wind_trig_delay_h0_SpinBox.valueChanged.connect(self.window_h0_delay)
         self.wind_trig_delay_h1_SpinBox.setKeyboardTracking(False)
-        self.wind_trig_delay_h1_SpinBox.valueChanged.connect(self.board.window_delay_head_1.set_delay)
+        self.wind_trig_delay_h1_SpinBox.valueChanged.connect(self.window_h1_delay)
+
+
 
 
         self.pll_enable_h0_checkBox.stateChanged.connect(self.pll_enable_h0_changed)
@@ -697,7 +699,7 @@ class DevkitView(QtWidgets.QMainWindow):
 
     def bound_0_h0_changed(self, val):
         self.b.ICYSHSR1.TIME_BIN_BOUNDS_0(0, int(val), 0)
-        
+
     def bound_1_h0_changed(self, val):
         self.b.ICYSHSR1.TIME_BIN_BOUNDS_0_1(0, int(val), 0)
 
@@ -706,6 +708,18 @@ class DevkitView(QtWidgets.QMainWindow):
 
     def bound_3_h0_changed(self, val):
         self.b.ICYSHSR1.TIME_BIN_BOUNDS_2(0, int(val), 0)
+
+    def trigger_h0_delay(self, val):
+        self.board.trigger_delay_head_0.set_delay(val)
+
+    def trigger_h1_delay(self, val):
+        self.board.trigger_delay_head_1.set_delay(val)
+
+    def window_h0_delay(self, val):
+        self.board.window_delay_head_0.set_delay(val)
+
+    def window_h1_delay(self, val):
+        self.board.window_delay_head_1.set_delay(val)
 
 class ConnectDialogClass(QtWidgets.QDialog):
     def __init__(self):
