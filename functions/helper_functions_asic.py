@@ -37,9 +37,9 @@ class ASIC:
 
     # This function doesn't reset multiple chips at the same time.
     def reset(self):
-        self.b.ICYSHSR1.GPIO(self.head_id, "REINIT", True)
-        time.sleep(1)
         self.b.ICYSHSR1.GPIO(self.head_id, "REINIT", False)
+        time.sleep(1)
+        self.b.ICYSHSR1.GPIO(self.head_id, "REINIT", True)
         time.sleep(1)
 
     # This function doesn't sync multiple chips together.
@@ -344,6 +344,7 @@ class ASIC:
         self.disable_all_tdc_but(1, [])
 
     def disable_all_quench(self):
+        print("Disable all quench")
         self.disable_all_quench_but(0, [])
         self.disable_all_quench_but(1, [])
 

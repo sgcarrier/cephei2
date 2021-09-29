@@ -10,6 +10,16 @@ _logger = logging.getLogger(__name__)
 
 class DevkitGUI():
     def __init__(self):
+
+        root = logging.getLogger()
+        root.setLevel(logging.DEBUG)
+
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        root.addHandler(handler)
+
         self.__controller = DevkitControl()
 
         self.__viewer = DevkitView()
@@ -18,6 +28,8 @@ class DevkitGUI():
         # except Exception as e:
         #     _logger.critical("Could not create viewer due to raised exception: " +  str(e))
         #     exit(1)
+
+
 
 
     def start(self):

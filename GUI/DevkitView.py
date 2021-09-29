@@ -94,6 +94,7 @@ class DevkitView(QtWidgets.QMainWindow):
         self.graphTypeSelect.currentIndexChanged.connect(self.selectionChanged)
 
         self.maxSamplesSelect.setMaximum(10 ** 8)
+        self.maxSamplesSelect.setKeyboardTracking(False)
         self.maxSamplesSelect.setValue(self.maxSamples)
         self.maxSamplesSelect.valueChanged.connect(self.newMaxSamples)
 
@@ -163,7 +164,7 @@ class DevkitView(QtWidgets.QMainWindow):
 
         """ ASIC TAB"""
 
-        self.reset_h0_pushButton.clicked.connect(self.board.asic_head_0.reset)
+        self.reset_h0_pushButton.clicked.connect(self.reset_h0)
         self.reset_h1_pushButton.clicked.connect(self.board.asic_head_1.reset)
 
         self.threshold_time_trigger_h0_spinBox.setKeyboardTracking(False)
@@ -172,20 +173,20 @@ class DevkitView(QtWidgets.QMainWindow):
         self.threshold_time_trigger_h1_spinBox.setKeyboardTracking(False)
         self.threshold_time_trigger_h1_spinBox.valueChanged.connect(self.threshold_time_changed_h1)
 
-        self.disable_all_quench_h0_pushButton.clicked.connect(lambda: self.board.asic_head_0.disable_all_quench())
-        self.disable_all_quench_h1_pushButton.clicked.connect(lambda: self.board.asic_head_1.disable_all_quench())
-        self.enable_all_quench_h0_pushButton.clicked.connect(lambda: self.board.asic_head_0.enable_all_quench())
-        self.enable_all_quench_h1_pushButton.clicked.connect(lambda: self.board.asic_head_1.enable_all_quench())
+        self.disable_all_quench_h0_pushButton.clicked.connect(self.disable_all_quench_h0)
+        self.disable_all_quench_h1_pushButton.clicked.connect(self.disable_all_quench_h1)
+        self.enable_all_quench_h0_pushButton.clicked.connect(self.enable_all_quench_h0)
+        self.enable_all_quench_h1_pushButton.clicked.connect(self.enable_all_quench_h1)
 
-        self.disable_all_tdc_h0_pushButton.clicked.connect(lambda: self.board.asic_head_0.disable_all_tdc())
-        self.disable_all_tdc_h1_pushButton.clicked.connect(lambda: self.board.asic_head_1.disable_all_tdc())
-        self.enable_all_tdc_h0_pushButton.clicked.connect(lambda: self.board.asic_head_0.enable_all_tdc())
-        self.enable_all_tdc_h1_pushButton.clicked.connect(lambda: self.board.asic_head_1.enable_all_tdc())
+        self.disable_all_tdc_h0_pushButton.clicked.connect(self.disable_all_tdc_h0)
+        self.disable_all_tdc_h1_pushButton.clicked.connect(self.board.asic_head_1.disable_all_tdc)
+        self.enable_all_tdc_h0_pushButton.clicked.connect(self.enable_all_tdc_h0)
+        self.enable_all_tdc_h1_pushButton.clicked.connect(self.board.asic_head_1.enable_all_tdc)
 
-        self.disable_all_ext_trigger_h0_pushButton.clicked.connect(lambda: self.board.asic_head_0.disable_all_ext_trigger())
-        self.disable_all_ext_trigger_h1_pushButton.clicked.connect(lambda: self.board.asic_head_1.disable_all_ext_trigger())
-        self.enable_all_ext_trigger_h0_pushButton.clicked.connect(lambda: self.board.asic_head_0.enable_all_ext_trigger())
-        self.enable_all_ext_trigger_h1_pushButton.clicked.connect(lambda: self.board.asic_head_1.enable_all_ext_trigger())
+        self.disable_all_ext_trigger_h0_pushButton.clicked.connect(self.disable_all_ext_trigger_h0)
+        self.disable_all_ext_trigger_h1_pushButton.clicked.connect(self.board.asic_head_1.disable_all_ext_trigger)
+        self.enable_all_ext_trigger_h0_pushButton.clicked.connect(self.enable_all_ext_trigger_h0)
+        self.enable_all_ext_trigger_h1_pushButton.clicked.connect(self.board.asic_head_1.enable_all_ext_trigger)
 
         self.array_select_h0_comboBox.addItems(["0 - ARRAY 0 (14x14)", "1 - ARRAY 1 (8x8) "])
         self.array_select_h0_comboBox.currentIndexChanged.connect(self.mux_select_h0)
@@ -206,13 +207,13 @@ class DevkitView(QtWidgets.QMainWindow):
         self.trigger_type_h1_comboBox.currentIndexChanged.connect(self.trigger_type_h1)
 
         self.recharge_h0_spinBox.setKeyboardTracking(False)
-        self.recharge_h0_spinBox.valueChanged.connect(self.board.recharge_current.set_current)
+        self.recharge_h0_spinBox.valueChanged.connect(self.recharge_current_h0)
 
         self.holdoff_h0_spinBox.setKeyboardTracking(False)
-        self.holdoff_h0_spinBox.valueChanged.connect(self.board.holdoff_current.set_current)
+        self.holdoff_h0_spinBox.valueChanged.connect(self.holdoff_current_h0)
 
         self.v_comp_h0_spinBox.setKeyboardTracking(False)
-        self.v_comp_h0_spinBox.valueChanged.connect(self.board.comparator_threshold.set_voltage)
+        self.v_comp_h0_spinBox.valueChanged.connect(self.comparator_voltage_h0)
 
         self.window_length_h0_SpinBox.setKeyboardTracking(False)
         self.window_length_h0_SpinBox.valueChanged.connect(self.window_length_h0_changed)
@@ -223,6 +224,9 @@ class DevkitView(QtWidgets.QMainWindow):
         self.correction_type_h0_comboBox.addItems(["lin", "lin_bias", "lin_bias_slope"])
         self.correction_type_h1_comboBox.addItems(["lin", "lin_bias", "lin_bias_slope"])
 
+<<<<<<< HEAD
+        self.apply_correction_h0_pushButtion.clicked.connect(self.apply_corrections)
+=======
         self.bound_0_h0_SpinBox.setKeyboardTracking(False)
         self.bound_0_h0_SpinBox.valueChanged.connect(self.bound_0_h0_changed)
         self.bound_1_h0_SpinBox.setKeyboardTracking(False)
@@ -231,11 +235,45 @@ class DevkitView(QtWidgets.QMainWindow):
         self.bound_2_h0_SpinBox.valueChanged.connect(self.bound_2_h0_changed)
         self.bound_3_h0_SpinBox.setKeyboardTracking(False)
         self.bound_3_h0_SpinBox.valueChanged.connect(self.bound_3_h0_changed)
+>>>>>>> a8b1b958a467ae400bb616e538dc0ea8fa2bd0f4
 
         time.sleep(1)
 
         self.updateOverviewTab()
 
+    def recharge_current_h0(self, value):
+        self.board.recharge_current.set_current(value)
+
+    def holdoff_current_h0(self, value):
+        self.board.holdoff_current.set_current(value)
+
+    def comparator_voltage_h0(self, value):
+        self.board.comparator_threshold.set_voltage((value/3.3)*5)
+
+    def disable_all_quench_h0(self):
+        self.board.asic_head_0.disable_all_quench()
+
+    def disable_all_quench_h1(self):
+        self.board.asic_head_1.disable_all_quench()
+
+    def enable_all_quench_h0(self):
+        self.board.asic_head_0.enable_all_quench()
+
+    def enable_all_quench_h1(self):
+        self.board.asic_head_1.enable_all_quench()
+
+    def disable_all_tdc_h0(self):
+        self.board.asic_head_0.disable_all_tdc()
+
+    def enable_all_tdc_h0(self):
+        self.board.asic_head_0.enable_all_tdc()
+
+
+    def enable_all_ext_trigger_h0(self):
+        self.board.asic_head_0.enable_all_ext_trigger()
+
+    def disable_all_ext_trigger_h0(self):
+        self.board.asic_head_0.disable_all_ext_trigger()
 
     def update(self):
         data, headNum = self.mdg.manual_data_fetch(formatNum=self.dataFormat)
@@ -358,7 +396,7 @@ class DevkitView(QtWidgets.QMainWindow):
                 self.barGraphs[0].setOpts(x=x, height=hist)
 
 
-        self.numSamplesLive.display(len(liveDataToUse))
+        self.numSamplesLive.display(liveDataToUse.size)
 
         self.countRateNumber.display(processCountRate(liveDataToUse, self.tdcOfInterest))
 
@@ -369,7 +407,7 @@ class DevkitView(QtWidgets.QMainWindow):
         self.currentLiveData_H1 = np.zeros((0,), dtype=dtype)
 
     def newMaxSamples(self, val):
-        self.maxSamples = val
+        self.maxSamples = np.int64(val)
 
     def newtdcOfInterest(self, val):
         self.tdcOfInterest = val
@@ -395,6 +433,8 @@ class DevkitView(QtWidgets.QMainWindow):
             self.dataFormat = 0
 
         _logger.info("Changed data format to : " + str(st))
+
+        self.clearLiveData()
 
     def selectionChanged(self, i):
         self.graphsReady = False
@@ -462,6 +502,7 @@ class DevkitView(QtWidgets.QMainWindow):
                 self.board.trigger_divider.set_divider(div, Divider.MUX_NOT_CORR)
                 self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
                 self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
+                self.board.trigger_delay_head_0.set_delay_code(0)
             elif selection == "EXT":
                 self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
                 self.board.mux_trigger_external.select_input(MUX.EXTERNAL_INPUT)
@@ -579,6 +620,8 @@ class DevkitView(QtWidgets.QMainWindow):
 
         self.updateOverviewTab()
 
+    def reset_h0(self):
+        self.board.asic_head_0.reset()
 
     def pll_enable_h0_changed(self, state):
         if state ==0:
@@ -605,10 +648,11 @@ class DevkitView(QtWidgets.QMainWindow):
             self.board.asic_head_1.window_is_stop()
 
     def window_length_h0_changed(self, window_length):
-        self.board.asic_head_0.set_window_size(window_length)
+        self.board.asic_head_0.set_window_size(int(window_length))
 
     def window_length_h1_changed(self, window_length):
-        self.board.asic_head_1.set_window_size(window_length)
+        self.board.asic_head_1.set_window_size(int(window_length))
+
 
     def mux_select_h0(self):
         pp = self.post_processing_select_h0_comboBox.currentIndex()
@@ -640,13 +684,13 @@ class DevkitView(QtWidgets.QMainWindow):
 
         if trigger_type == 0:
             self.board.asic_head_1.set_trigger_type(0)
-            self.threshold_time_trigger_h1_spinBox.setValue(self.b.ICYSHSR1.TRIGGER_TIME_DRIVEN_PERIOD(1, 0))
+            self.threshold_time_trigger_h1_spinBox.setValue(self.board.b.ICYSHSR1.TRIGGER_TIME_DRIVEN_PERIOD(1, 0))
         elif trigger_type == 1:
             self.board.asic_head_1.set_trigger_type(1)
-            self.threshold_time_trigger_h1_spinBox.setValue(self.b.ICYSHSR1.TRIGGER_EVENT_DRIVEN_COLUMN_THRESHOLD(1, 0))
+            self.threshold_time_trigger_h1_spinBox.setValue(self.board.b.ICYSHSR1.TRIGGER_EVENT_DRIVEN_COLUMN_THRESHOLD(1, 0))
         elif trigger_type == 2:
             self.board.asic_head_1.set_trigger_type(0x10)
-            self.threshold_time_trigger_h1_spinBox.setValue(self.b.ICYSHSR1.TRIGGER_WINDOW_DRIVEN_THRESHOLD(1, 0))
+            self.threshold_time_trigger_h1_spinBox.setValue(self.board.b.ICYSHSR1.TRIGGER_WINDOW_DRIVEN_THRESHOLD(1, 0))
 
 
     def threshold_time_changed_h0(self, val):
@@ -682,7 +726,7 @@ class DevkitView(QtWidgets.QMainWindow):
         #     for tdc in range(len(skew_corr)):
         #         self.board.asic_head_0.set_skew_correction(array, tdc*4, skew_corr[tdc])
 
-        corr_filename = "H{0}_M{1}_F{2}_{3}.pickle".format(int(array), int(head), int(freq), type)
+        corr_filename = "H{0}_M{1}_F{2}_{3}.pickle".format(int(head), int(array), int(freq), type)
 
         with open(corr_filename, 'rb') as f:
             coefficients = pickle.load(f)
@@ -693,6 +737,10 @@ class DevkitView(QtWidgets.QMainWindow):
                 slope_lookup = np.clip((coefficients[tdc_id][3]*8).astype(int), 0, 15)
                 self.board.asic_head_0.set_coarse_correction(array, tdc_id, coarse_corr)
                 self.board.asic_head_0.set_fine_correction(array, tdc_id, fine_corr)
+<<<<<<< HEAD
+                if (type == "lin_bias") or (type == "lin_bias_slope"):
+                    self.board.asic_head_0.set_lookup_tables(array, tdc_id, bias_lookup, slope_lookup)
+=======
                 if ((type == "lin_bias") or (type == "lin_bias_slope")):
                     self.board.asic_head_0.set_lookup_tables(array, tdc_id, bias_lookup, slope_lookup)
 
@@ -705,6 +753,7 @@ class DevkitView(QtWidgets.QMainWindow):
 
     def bound_2_h0_changed(self, val):
         self.b.ICYSHSR1.TIME_BIN_BOUNDS_1_2(0, int(val), 0)
+>>>>>>> a8b1b958a467ae400bb616e538dc0ea8fa2bd0f4
 
     def bound_3_h0_changed(self, val):
         self.b.ICYSHSR1.TIME_BIN_BOUNDS_2(0, int(val), 0)
@@ -740,3 +789,5 @@ class ConnectDialogClass(QtWidgets.QDialog):
     def storeSettings(self):
         self.ip = self.ip_setting.text()
         self.port = int(self.port_setting.text())
+
+
