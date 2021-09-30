@@ -8,7 +8,7 @@ import pickle
 
 from functions.helper_functions import *
 from processing.dataFormats import getFrameDtype
-from processing.visuPostProcessing import processHistogram, processSPADImage, processCountRate, processTotalCountRate
+from processing.visuPostProcessing import processHistogram, processHistogramAll, processSPADImage, processCountRate, processTotalCountRate
 from data_grabber.multicastDataGrabber import MulticastDataGrabber
 import random
 from utility.QTextEditLogger import QTextEditLogger
@@ -90,7 +90,7 @@ class DevkitView(QtWidgets.QMainWindow):
 
         self.clearDataButton.clicked.connect(self.clearLiveData)
 
-        self.graphTypeSelect.addItems(["Histogram", "Timestamp", "Bin"])
+        self.graphTypeSelect.addItems(["Histogram", "Timestamp", "Bin", "TimestampAll"])
         self.graphTypeSelect.currentIndexChanged.connect(self.selectionChanged)
 
         self.maxSamplesSelect.setMaximum(10 ** 8)
@@ -389,6 +389,11 @@ class DevkitView(QtWidgets.QMainWindow):
                     field = self.monitorList[fieldNumber]
                     df = processHistogram(liveDataToUse, self.tdcOfInterest, field)
                     self.barGraphs[fieldNumber].setOpts(x=df.x, height=df.y)
+            if selection == "TimestampAll":
+                for fieldNumber in range(len(self.monitorList)):
+                    field = self.monitorList[fieldNumber]
+                    df = processHistogramAll(liveDataToUse, field)
+                    self.barGraphs[fieldNumber].setOpts(x=df.x, height=df.y)
             if selection == "Bin":
                 for fieldNumber in range(len(self.monitorList)):
                     field = self.monitorList[fieldNumber]
@@ -466,6 +471,12 @@ class DevkitView(QtWidgets.QMainWindow):
             self.barGraphs = []
             self.barGraphs.append(pg.BarGraphItem(x=[0], height=[0], width=0.3, brush='r'))
             p = self.liveDataGraph.addPlot(title="Timestamp")
+            p.addItem(self.barGraphs[-1])
+        elif selection == "TimestampAll":
+            self.monitorList = ['TimestampAll']
+            self.barGraphs = []
+            self.barGraphs.append(pg.BarGraphItem(x=[0], height=[0], width=0.3, brush='r'))
+            p = self.liveDataGraph.addPlot(title="TimestampAll")
             p.addItem(self.barGraphs[-1])
         elif selection == "Bin":
             self.monitorList = ['Bin']
