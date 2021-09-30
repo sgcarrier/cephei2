@@ -173,6 +173,9 @@ class DevkitView(QtWidgets.QMainWindow):
         self.threshold_time_trigger_h1_spinBox.setKeyboardTracking(False)
         self.threshold_time_trigger_h1_spinBox.valueChanged.connect(self.threshold_time_changed_h1)
 
+        self.laser_trigger_thres_spinBox.setKeyboardTracking(False)
+        self.laser_trigger_thres_spinBox.valueChanged.connect(self.laser_trigger_thres_changed)
+
         self.disable_all_quench_h0_pushButton.clicked.connect(self.disable_all_quench_h0)
         self.disable_all_quench_h1_pushButton.clicked.connect(self.disable_all_quench_h1)
         self.enable_all_quench_h0_pushButton.clicked.connect(self.enable_all_quench_h0)
@@ -224,9 +227,8 @@ class DevkitView(QtWidgets.QMainWindow):
         self.correction_type_h0_comboBox.addItems(["lin", "lin_bias", "lin_bias_slope"])
         self.correction_type_h1_comboBox.addItems(["lin", "lin_bias", "lin_bias_slope"])
 
-<<<<<<< HEAD
         self.apply_correction_h0_pushButtion.clicked.connect(self.apply_corrections)
-=======
+
         self.bound_0_h0_SpinBox.setKeyboardTracking(False)
         self.bound_0_h0_SpinBox.valueChanged.connect(self.bound_0_h0_changed)
         self.bound_1_h0_SpinBox.setKeyboardTracking(False)
@@ -235,11 +237,14 @@ class DevkitView(QtWidgets.QMainWindow):
         self.bound_2_h0_SpinBox.valueChanged.connect(self.bound_2_h0_changed)
         self.bound_3_h0_SpinBox.setKeyboardTracking(False)
         self.bound_3_h0_SpinBox.valueChanged.connect(self.bound_3_h0_changed)
->>>>>>> a8b1b958a467ae400bb616e538dc0ea8fa2bd0f4
+
 
         time.sleep(1)
 
         self.updateOverviewTab()
+
+    def laser_trigger_thres_changed(self, value):
+        self.board.laser_threshold.set_voltage(value)
 
     def recharge_current_h0(self, value):
         self.board.recharge_current.set_current(value)
@@ -737,10 +742,7 @@ class DevkitView(QtWidgets.QMainWindow):
                 slope_lookup = np.clip((coefficients[tdc_id][3]*8).astype(int), 0, 15)
                 self.board.asic_head_0.set_coarse_correction(array, tdc_id, coarse_corr)
                 self.board.asic_head_0.set_fine_correction(array, tdc_id, fine_corr)
-<<<<<<< HEAD
-                if (type == "lin_bias") or (type == "lin_bias_slope"):
-                    self.board.asic_head_0.set_lookup_tables(array, tdc_id, bias_lookup, slope_lookup)
-=======
+
                 if ((type == "lin_bias") or (type == "lin_bias_slope")):
                     self.board.asic_head_0.set_lookup_tables(array, tdc_id, bias_lookup, slope_lookup)
 
@@ -753,7 +755,6 @@ class DevkitView(QtWidgets.QMainWindow):
 
     def bound_2_h0_changed(self, val):
         self.b.ICYSHSR1.TIME_BIN_BOUNDS_1_2(0, int(val), 0)
->>>>>>> a8b1b958a467ae400bb616e538dc0ea8fa2bd0f4
 
     def bound_3_h0_changed(self, val):
         self.b.ICYSHSR1.TIME_BIN_BOUNDS_2(0, int(val), 0)
