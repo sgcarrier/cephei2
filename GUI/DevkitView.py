@@ -144,13 +144,15 @@ class DevkitView(QtWidgets.QMainWindow):
         self.dac_slow_h1_SpinBox.valueChanged.connect(self.board.v_slow_head_1.set_voltage)
 
         self.tdc_trig_delay_h0_SpinBox.setKeyboardTracking(False)
-        self.tdc_trig_delay_h0_SpinBox.valueChanged.connect(self.board.trigger_delay_head_0.set_delay)
+        self.tdc_trig_delay_h0_SpinBox.valueChanged.connect(self.trigger_h0_delay)
         self.tdc_trig_delay_h1_SpinBox.setKeyboardTracking(False)
-        self.tdc_trig_delay_h1_SpinBox.valueChanged.connect(self.board.trigger_delay_head_1.set_delay)
+        self.tdc_trig_delay_h1_SpinBox.valueChanged.connect(self.trigger_h1_delay)
         self.wind_trig_delay_h0_SpinBox.setKeyboardTracking(False)
-        self.wind_trig_delay_h0_SpinBox.valueChanged.connect(self.board.window_delay_head_0.set_delay)
+        self.wind_trig_delay_h0_SpinBox.valueChanged.connect(self.window_h0_delay)
         self.wind_trig_delay_h1_SpinBox.setKeyboardTracking(False)
-        self.wind_trig_delay_h1_SpinBox.valueChanged.connect(self.board.window_delay_head_1.set_delay)
+        self.wind_trig_delay_h1_SpinBox.valueChanged.connect(self.window_h1_delay)
+
+
 
 
         self.pll_enable_h0_checkBox.stateChanged.connect(self.pll_enable_h0_changed)
@@ -170,6 +172,9 @@ class DevkitView(QtWidgets.QMainWindow):
 
         self.threshold_time_trigger_h1_spinBox.setKeyboardTracking(False)
         self.threshold_time_trigger_h1_spinBox.valueChanged.connect(self.threshold_time_changed_h1)
+
+        self.laser_trigger_thres_spinBox.setKeyboardTracking(False)
+        self.laser_trigger_thres_spinBox.valueChanged.connect(self.laser_trigger_thres_changed)
 
         self.disable_all_quench_h0_pushButton.clicked.connect(self.disable_all_quench_h0)
         self.disable_all_quench_h1_pushButton.clicked.connect(self.disable_all_quench_h1)
@@ -222,7 +227,6 @@ class DevkitView(QtWidgets.QMainWindow):
         self.correction_type_h0_comboBox.addItems(["lin", "lin_bias", "lin_bias_slope"])
         self.correction_type_h1_comboBox.addItems(["lin", "lin_bias", "lin_bias_slope"])
 
-
         self.apply_correction_h0_pushButtion.clicked.connect(self.apply_corrections)
 
         self.bound_0_h0_spinBox.setKeyboardTracking(False)
@@ -234,9 +238,13 @@ class DevkitView(QtWidgets.QMainWindow):
         self.bound_3_h0_spinBox.setKeyboardTracking(False)
         self.bound_3_h0_spinBox.valueChanged.connect(self.bound_3_h0_changed)
 
+
         time.sleep(1)
 
         self.updateOverviewTab()
+
+    def laser_trigger_thres_changed(self, value):
+        self.board.laser_threshold.set_voltage(value)
 
     def recharge_current_h0(self, value):
         self.board.recharge_current.set_current(value)
@@ -741,7 +749,7 @@ class DevkitView(QtWidgets.QMainWindow):
 
     def bound_0_h0_changed(self, val):
         self.board.b.ICYSHSR1.TIME_BIN_BOUNDS_0(0, int(val), 0)
-        
+
     def bound_1_h0_changed(self, val):
         self.board.b.ICYSHSR1.TIME_BIN_BOUNDS_0_1(0, int(val), 0)
 
@@ -750,6 +758,18 @@ class DevkitView(QtWidgets.QMainWindow):
 
     def bound_3_h0_changed(self, val):
         self.board.b.ICYSHSR1.TIME_BIN_BOUNDS_2(0, int(val), 0)
+
+    def trigger_h0_delay(self, val):
+        self.board.trigger_delay_head_0.set_delay(val)
+
+    def trigger_h1_delay(self, val):
+        self.board.trigger_delay_head_1.set_delay(val)
+
+    def window_h0_delay(self, val):
+        self.board.window_delay_head_0.set_delay(val)
+
+    def window_h1_delay(self, val):
+        self.board.window_delay_head_1.set_delay(val)
 
 class ConnectDialogClass(QtWidgets.QDialog):
     def __init__(self):
