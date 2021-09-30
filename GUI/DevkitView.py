@@ -473,7 +473,7 @@ class DevkitView(QtWidgets.QMainWindow):
             p = self.liveDataGraph.addPlot(title="Timestamp")
             p.addItem(self.barGraphs[-1])
         elif selection == "TimestampAll":
-            self.monitorList = ['TimestampAll']
+            self.monitorList = ['Timestamp']
             self.barGraphs = []
             self.barGraphs.append(pg.BarGraphItem(x=[0], height=[0], width=0.3, brush='r'))
             p = self.liveDataGraph.addPlot(title="TimestampAll")
