@@ -173,8 +173,8 @@ class DevkitView(QtWidgets.QMainWindow):
         self.threshold_time_trigger_h1_spinBox.setKeyboardTracking(False)
         self.threshold_time_trigger_h1_spinBox.valueChanged.connect(self.threshold_time_changed_h1)
 
-        self.laser_trigger_thres_spinBox.setKeyboardTracking(False)
-        self.laser_trigger_thres_spinBox.valueChanged.connect(self.laser_trigger_thres_changed)
+        self.laser_trigger_thresh_spinBox.setKeyboardTracking(False)
+        self.laser_trigger_thresh_spinBox.valueChanged.connect(self.laser_trigger_thres_changed)
 
         self.disable_all_quench_h0_pushButton.clicked.connect(self.disable_all_quench_h0)
         self.disable_all_quench_h1_pushButton.clicked.connect(self.disable_all_quench_h1)
