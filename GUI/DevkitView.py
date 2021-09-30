@@ -229,14 +229,14 @@ class DevkitView(QtWidgets.QMainWindow):
 
         self.apply_correction_h0_pushButtion.clicked.connect(self.apply_corrections)
 
-        self.bound_0_h0_SpinBox.setKeyboardTracking(False)
-        self.bound_0_h0_SpinBox.valueChanged.connect(self.bound_0_h0_changed)
-        self.bound_1_h0_SpinBox.setKeyboardTracking(False)
-        self.bound_1_h0_SpinBox.valueChanged.connect(self.bound_1_h0_changed)
-        self.bound_2_h0_SpinBox.setKeyboardTracking(False)
-        self.bound_2_h0_SpinBox.valueChanged.connect(self.bound_2_h0_changed)
-        self.bound_3_h0_SpinBox.setKeyboardTracking(False)
-        self.bound_3_h0_SpinBox.valueChanged.connect(self.bound_3_h0_changed)
+        self.bound_0_h0_spinBox.setKeyboardTracking(False)
+        self.bound_0_h0_spinBox.valueChanged.connect(self.bound_0_h0_changed)
+        self.bound_1_h0_spinBox.setKeyboardTracking(False)
+        self.bound_1_h0_spinBox.valueChanged.connect(self.bound_1_h0_changed)
+        self.bound_2_h0_spinBox.setKeyboardTracking(False)
+        self.bound_2_h0_spinBox.valueChanged.connect(self.bound_2_h0_changed)
+        self.bound_3_h0_spinBox.setKeyboardTracking(False)
+        self.bound_3_h0_spinBox.valueChanged.connect(self.bound_3_h0_changed)
 
 
         time.sleep(1)
@@ -748,16 +748,16 @@ class DevkitView(QtWidgets.QMainWindow):
 
 
     def bound_0_h0_changed(self, val):
-        self.b.ICYSHSR1.TIME_BIN_BOUNDS_0(0, int(val), 0)
+        self.board.b.ICYSHSR1.TIME_BIN_BOUNDS_0(0, int(val), 0)
 
     def bound_1_h0_changed(self, val):
-        self.b.ICYSHSR1.TIME_BIN_BOUNDS_0_1(0, int(val), 0)
+        self.board.b.ICYSHSR1.TIME_BIN_BOUNDS_0_1(0, int(val), 0)
 
     def bound_2_h0_changed(self, val):
-        self.b.ICYSHSR1.TIME_BIN_BOUNDS_1_2(0, int(val), 0)
+        self.board.b.ICYSHSR1.TIME_BIN_BOUNDS_1_2(0, int(val), 0)
 
     def bound_3_h0_changed(self, val):
-        self.b.ICYSHSR1.TIME_BIN_BOUNDS_2(0, int(val), 0)
+        self.board.b.ICYSHSR1.TIME_BIN_BOUNDS_2(0, int(val), 0)
 
     def trigger_h0_delay(self, val):
         self.board.trigger_delay_head_0.set_delay(val)

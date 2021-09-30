@@ -330,9 +330,9 @@ def processSPADImage(data):
 
         x_pos = (2 * tdc) % side + (sub % 2)
         if (sub < 2):
-            y_pos = ((tdc) // (side//2)) * 2
-        else:
             y_pos = ((tdc) // (side//2)) * 2 + 1
+        else:
+            y_pos = ((tdc) // (side//2)) * 2
 
         image[x_pos][y_pos] = counts[i]
 
