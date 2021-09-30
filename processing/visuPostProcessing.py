@@ -225,6 +225,20 @@ def processHistogram(data, addr, field):
 
     return pd.DataFrame({'x': np.arange(lengthData), 'y': hist})
 
+
+def processHistogramAll(data, field):
+
+    if field not in data.dtype.fields:
+        return pd.DataFrame({'x': [], 'y': []})
+
+    #filteredData = data[data["Addr"] == addr]
+    filteredData = data[field]
+
+    hist = np.bincount(filteredData)
+    lengthData = len(hist)
+
+    return pd.DataFrame({'x': np.arange(lengthData), 'y': hist})
+
 def processCountRate(data, addr):
 
     if data.size <= 1:
