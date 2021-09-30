@@ -222,18 +222,17 @@ class DevkitView(QtWidgets.QMainWindow):
         self.correction_type_h0_comboBox.addItems(["lin", "lin_bias", "lin_bias_slope"])
         self.correction_type_h1_comboBox.addItems(["lin", "lin_bias", "lin_bias_slope"])
 
-<<<<<<< HEAD
+
         self.apply_correction_h0_pushButtion.clicked.connect(self.apply_corrections)
-=======
-        self.bound_0_h0_SpinBox.setKeyboardTracking(False)
-        self.bound_0_h0_SpinBox.valueChanged.connect(self.bound_0_h0_changed)
-        self.bound_1_h0_SpinBox.setKeyboardTracking(False)
-        self.bound_1_h0_SpinBox.valueChanged.connect(self.bound_1_h0_changed)
-        self.bound_2_h0_SpinBox.setKeyboardTracking(False)
-        self.bound_2_h0_SpinBox.valueChanged.connect(self.bound_2_h0_changed)
-        self.bound_3_h0_SpinBox.setKeyboardTracking(False)
-        self.bound_3_h0_SpinBox.valueChanged.connect(self.bound_3_h0_changed)
->>>>>>> a8b1b958a467ae400bb616e538dc0ea8fa2bd0f4
+
+        self.bound_0_h0_spinBox.setKeyboardTracking(False)
+        self.bound_0_h0_spinBox.valueChanged.connect(self.bound_0_h0_changed)
+        self.bound_1_h0_spinBox.setKeyboardTracking(False)
+        self.bound_1_h0_spinBox.valueChanged.connect(self.bound_1_h0_changed)
+        self.bound_2_h0_spinBox.setKeyboardTracking(False)
+        self.bound_2_h0_spinBox.valueChanged.connect(self.bound_2_h0_changed)
+        self.bound_3_h0_spinBox.setKeyboardTracking(False)
+        self.bound_3_h0_spinBox.valueChanged.connect(self.bound_3_h0_changed)
 
         time.sleep(1)
 
@@ -735,26 +734,22 @@ class DevkitView(QtWidgets.QMainWindow):
                 slope_lookup = np.clip((coefficients[tdc_id][3]*8).astype(int), 0, 15)
                 self.board.asic_head_0.set_coarse_correction(array, tdc_id, coarse_corr)
                 self.board.asic_head_0.set_fine_correction(array, tdc_id, fine_corr)
-<<<<<<< HEAD
-                if (type == "lin_bias") or (type == "lin_bias_slope"):
-                    self.board.asic_head_0.set_lookup_tables(array, tdc_id, bias_lookup, slope_lookup)
-=======
+
                 if ((type == "lin_bias") or (type == "lin_bias_slope")):
                     self.board.asic_head_0.set_lookup_tables(array, tdc_id, bias_lookup, slope_lookup)
 
 
     def bound_0_h0_changed(self, val):
-        self.b.ICYSHSR1.TIME_BIN_BOUNDS_0(0, int(val), 0)
+        self.board.b.ICYSHSR1.TIME_BIN_BOUNDS_0(0, int(val), 0)
         
     def bound_1_h0_changed(self, val):
-        self.b.ICYSHSR1.TIME_BIN_BOUNDS_0_1(0, int(val), 0)
+        self.board.b.ICYSHSR1.TIME_BIN_BOUNDS_0_1(0, int(val), 0)
 
     def bound_2_h0_changed(self, val):
-        self.b.ICYSHSR1.TIME_BIN_BOUNDS_1_2(0, int(val), 0)
->>>>>>> a8b1b958a467ae400bb616e538dc0ea8fa2bd0f4
+        self.board.b.ICYSHSR1.TIME_BIN_BOUNDS_1_2(0, int(val), 0)
 
     def bound_3_h0_changed(self, val):
-        self.b.ICYSHSR1.TIME_BIN_BOUNDS_2(0, int(val), 0)
+        self.board.b.ICYSHSR1.TIME_BIN_BOUNDS_2(0, int(val), 0)
 
 class ConnectDialogClass(QtWidgets.QDialog):
     def __init__(self):
