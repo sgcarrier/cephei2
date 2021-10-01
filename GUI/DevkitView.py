@@ -238,10 +238,18 @@ class DevkitView(QtWidgets.QMainWindow):
         self.bound_3_h0_spinBox.setKeyboardTracking(False)
         self.bound_3_h0_spinBox.valueChanged.connect(self.bound_3_h0_changed)
 
+        self.disable_all_quench_but.clicked.connect(self.disable_all_quench_but_h0)
+
 
         time.sleep(1)
 
         self.updateOverviewTab()
+
+    def disable_all_quench_but_h0(self):
+        quench = self.quench_exception_h0_spinBox.value()
+        array = self.array_select_h0_comboBox.currentIndex()
+        self.board.disable_all_quench_but(array, quench)
+
 
     def laser_trigger_thres_changed(self, value):
         self.board.laser_threshold.set_voltage(value)
