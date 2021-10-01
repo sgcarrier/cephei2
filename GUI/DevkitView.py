@@ -342,15 +342,15 @@ class DevkitView(QtWidgets.QMainWindow):
         self.tdc_trig_divider_SpinBox.setValue(status["trigger_divider"]["divider"])
         self.wind_trig_divider_SpinBox.setValue(status["window_divider"]["divider"])
 
-        if status["trigger_divider"]["mux_sel"] == 0:
-            self.tdc_trig_source_comboBox.setCurrentText("NON_CORR")
-        elif status["trigger_divider"]["mux_sel"] == 1:
-            self.tdc_trig_source_comboBox.setCurrentText("CORR")
-
-        if status["window_divider"]["mux_sel"] == 0:
-            self.wind_trig_source_comboBox.setCurrentText("NON_CORR")
-        elif status["window_divider"]["mux_sel"] == 1:
-            self.wind_trig_source_comboBox.setCurrentText("CORR")
+        # if status["trigger_divider"]["mux_sel"] == 0:
+        #     self.tdc_trig_source_comboBox.setCurrentText("NON_CORR")
+        # elif status["trigger_divider"]["mux_sel"] == 1:
+        #     self.tdc_trig_source_comboBox.setCurrentText("CORR")
+        #
+        # if status["window_divider"]["mux_sel"] == 0:
+        #     self.wind_trig_source_comboBox.setCurrentText("NON_CORR")
+        # elif status["window_divider"]["mux_sel"] == 1:
+        #     self.wind_trig_source_comboBox.setCurrentText("CORR")
 
         tdc_trig_source = self.tdc_trig_source_comboBox.currentText()
         if tdc_trig_source == "CORR":
@@ -737,10 +737,10 @@ class DevkitView(QtWidgets.QMainWindow):
         freq = 255
         type = self.correction_type_h0_comboBox.currentText()
 
-        # with open('skew.pickle', 'rb') as f:
-        #     skew_corr = pickle.load(f)
-        #     for tdc in range(len(skew_corr)):
-        #         self.board.asic_head_0.set_skew_correction(array, tdc*4, skew_corr[tdc])
+        with open('H7_M1_255_skew.pickle', 'rb') as f:
+            skew_corr = pickle.load(f)
+            for tdc in range(len(skew_corr)):
+                self.board.asic_head_0.set_skew_correction(array, tdc*4, int(skew_corr[tdc]))
 
         corr_filename = "H{0}_M{1}_F{2}_{3}.pickle".format(int(head), int(array), int(freq), type)
 
