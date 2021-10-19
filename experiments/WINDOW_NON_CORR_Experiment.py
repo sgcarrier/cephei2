@@ -77,7 +77,7 @@ class WINDOW_NON_CORR_Experiment(BasicExperiment):
         self.board.asic_head_0.disable_all_tdc_but(0, [0])
         self.board.asic_head_0.disable_all_ext_trigger_but(0, [0])
 
-    def run(self, fast_freq, slow_freq, delay, window_length):
+    def run(self, fast_freq, slow_freq, array, delay, window_length):
         # Set PLL Frequencies and enable
         self.board.slow_oscillator_head_0.set_frequency(slow_freq)
         self.board.fast_oscillator_head_0.set_frequency(fast_freq)
@@ -218,3 +218,4 @@ if __name__ == '__main__':
         exit()
 
     runner.stop()
+

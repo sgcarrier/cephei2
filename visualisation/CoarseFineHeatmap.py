@@ -203,11 +203,11 @@ if __name__ == '__main__':
     #                          figureNum=2,
     #                          numberOfTDCs=49)
 
-    BH.heatmap_with_decimal(filename="C:\\Users\\labm1507\\Documents\\DATA\\TDC_M0_NON_CORR_All-20210423-174203.hdf5",
-                            basePath="/CHARTIER/ASIC0/TDC/M0/ALL_TDC_ACTIVE/PLL/FAST_252.5/SLOW_250/NON_CORR/EXT/ADDR_ALL/RAW",
+    BH.heatmap(filename="/run/media/cars2019/harambe/18oct2021/NON_CORR_ALL_DAC_M1_D5.hdf5",
+                            basePath="/CHARTIER/ASIC7/TDC/M1/ALL_TDC_ACTIVE/DAC/FAST_1.268/SLOW_1.248/NON_CORR/EXT/ADDR_ALL/RAW",
                             formatNum=0,
                             figureNum=3,
-                            numberOfTDCs=49)
+                            numberOfTDCs=16)
 
     # Actually display the graphs
     plt.show()

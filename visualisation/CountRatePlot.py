@@ -28,12 +28,18 @@ class CountRatePlot():
 
                 for i in range(len(data_TDC_global)-1):
                     if (data_TDC_global[i+1] - data_TDC_global[i]) > 0:
-                        #Convert from 4ns steps to KHz
-                        count_plot[i] = data_TDC_energy[i+1] / ((data_TDC_global[i+1] - data_TDC_global[i])*4) * 1000000
+                        # Convert from 4ns steps to KHz
+                        if (data_TDC_energy[i + 1] == 0) :
+                            count_plot[i] = 4 / ((data_TDC_global[i+1] - data_TDC_global[i])*4) * 1000000
+                        else:
+                            count_plot[i] = (data_TDC_energy[i+1] / 4)  / ((data_TDC_global[i+1] - data_TDC_global[i])*4) * 1000000
                     else: # in the case that the global counter overflows
                         time_diff = (0x1FFFFF - data_TDC_global[i]) + data_TDC_global[i+1]
                         # Convert from 4ns steps to KHz
-                        count_plot[i] = data_TDC_energy[i + 1] / (time_diff * 4) * 1000000
+                        if (data_TDC_energy[i + 1] == 0):
+                            count_plot[i] = 4 / (time_diff * 4) * 1000000
+                        else:
+                            count_plot[i] = (data_TDC_energy[i + 1] / 4) / (time_diff * 4) * 1000000
 
                 # Figure Formatting
                 ax = plt.subplot(1, 1, 1)
@@ -72,10 +78,10 @@ if __name__ == '__main__':
     #             1 = PLL 20 bits
     # tdcNums = Array of tdcs addresses to display
     #"/home/simonc/Documents/DATA/data28mai/DARK/TDC_NON_CORR-20210528-172742.hdf5"
-    BH.count_plot(filename="/home/simonc/Documents/DATA/data28mai/DARK/TDC_NON_CORR-20210528-172742.hdf5",
-                 basePath="/CHARTIER/ASIC0/TDC/M0/1_TDC_ACTIVE/PLL/FAST_255/SLOW_250/NON_CORR/SPAD/ADDR_6/RCH_12/HOLDOFF_5/RAW",
+    BH.count_plot(filename="/home2/cars2019/Documents/DATA/chartier/SPAD37_M1_dark_8V.hdf5",
+                 basePath="/CHARTIER/ASIC4/TDC/M1/1_TDC_ACTIVE/PLL/FAST_260/SLOW_250/NON_CORR/SPAD/ADDR_9/RCH_6/HOLDOFF_2/TD_period_5000/RAW",
                  formatNum=0,
-                 tdcNums=[25])
+                 tdcNums=[37])
     # Actually display
     plt.show()
 

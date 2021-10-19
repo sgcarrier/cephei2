@@ -63,7 +63,7 @@ class DelayLineExperiment(BasicExperiment):
         self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
         self.board.trigger_delay_head_0.set_delay_code(0)
 
-        self.datafile_prefix = "delay_line_charac-" + time.strftime("%Y%m%d-%H%M%S")
+        self.datafile_prefix = "delay_line_charac_DEVKIT01-" + time.strftime("%Y%m%d-%H%M%S")
         self.dataTotal = np.array([], dtype=delay_line_type)
 
         currTemp = 0
@@ -90,7 +90,7 @@ class DelayLineExperiment(BasicExperiment):
 
         self.board.trigger_delay_head_0.set_fine_tune(ftune)
 
-        delay_code = 1 << int(delay_code_bit)
+        delay_code = delay_code_bit
         _logger.info("Delay code = " + str(delay_code))
         self.board.trigger_delay_head_0.set_delay_code(delay_code)
 
@@ -123,7 +123,7 @@ class DelayLineExperiment(BasicExperiment):
         print(self.dataTotal)
         np.savetxt(self.datafile_prefix + ".csv", self.dataTotal, delimiter=",")
 
-        self.agilent.close()
+        #self.agilent.close()
 
 
 if __name__ == '__main__':

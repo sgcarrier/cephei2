@@ -20,13 +20,13 @@ class TDCHistogram():
 
             data1, data2 = findMatchingTDCEvents(tdc1Num=0, tdc2Num=4, data=ds)
 
-            print(data1[0])
-            print(data2[0])
-            print(data1[100])
-            print(data2[100])
-            print(data1[10000])
-            print(data2[10000])
-            exit()
+            # print(data1[0])
+            # print(data2[0])
+            # print(data1[100])
+            # print(data2[100])
+            # print(data1[10000])
+            # print(data2[10000])
+            # exit()
 
             for tdcNum in tdcNums:
                 #Setup Plot Figure
@@ -67,10 +67,10 @@ if __name__ == '__main__':
     #             0 = Normal 64 bits no post-processing
     #             1 = PLL 20 bits
     # tdcNums = Array of tdcs addresses to display
-    BH.tdcHist(filename="C:\\Users\\labm1507\\Documents\\DATA\\TDC_M0_NON_CORR_All-20210423-174203.hdf5",
-               basePath="/CHARTIER/ASIC0/TDC/M0/ALL_TDC_ACTIVE/PLL/FAST_252.5/SLOW_250/NON_CORR/EXT/ADDR_ALL/RAW",
+    BH.tdcHist(filename="/CMC/partage/GRAMS/DATA/ICYSHSR1/ASIC_07/raw_data/18oct2021/NON_CORR_ALL_DAC_M1_D500.hdf5",
+               basePath="/CHARTIER/ASIC7/TDC/M1/ALL_TDC_ACTIVE/DAC/FAST_1.268/SLOW_1.248/NON_CORR/EXT/ADDR_ALL/RAW",
                formatNum=0,
-               tdcNums=list(range(49)))
+               tdcNums=[11])
 
     #NeverForgetti
     plt.show()

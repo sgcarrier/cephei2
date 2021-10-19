@@ -44,6 +44,8 @@ class TimingTableVisualizer:
         conditionIndex = (lfh['Coarse'] < maxCoarse) & (lfh['Fine'] < maxFine ) & (lfh['Addr'] == TDCNum)
 
         fine = ((lfh['Fine'][:])[conditionIndex]).astype('int64')
+        # if fine.size != 0:
+        #     fine -= np.min(fine)
         coarse = ((lfh['Coarse'][:])[conditionIndex]).astype('int64')
 
         TDCCodes = (coarse * maxFine) + fine
@@ -51,6 +53,38 @@ class TimingTableVisualizer:
 
 
         return TDCCodes, maxFine, maxCoarse
+
+    def coarseZeroHist(self, basePath, TDCNum=0):
+
+        total_data = np.empty((0, ))
+        for delayPath in self.fh[basePath].keys():
+            if "DELAY_" in delayPath:
+                currDelay = int(delayPath.split('_')[1])
+                currPath = basePath + "/" + delayPath + '/RAW'
+
+                data = self.fh[currPath]
+
+                dataZero = (data[(data['Coarse'] == 0) & (data['Addr'] == TDCNum)])['Fine']
+
+                if dataZero.size != 0:
+                    total_data = np.append(total_data, dataZero)
+
+        hist_fine = np.bincount(total_data.astype("int32"))
+
+        plt.figure(5)
+        ax = plt.subplot(1, 1, 1)
+        ax.bar(np.arange(len(hist_fine)), hist_fine, align='center')
+
+        ax.set_title(" Histogram for Coarse == 0")
+
+        ax.set_xlabel('Code')
+        ax.set_ylabel('Samples')
+
+        plt.show()
+
+
+
+
 
     def genDistOfCodesFile(self, basePath, maxFine=None, maxCoarse=None, TDCNum=0, nonCorrPath=None):
 
@@ -122,11 +156,11 @@ class TimingTableVisualizer:
         # # xAxis.paint()
         # # axis.setSize(self.valueNumber, self.valueNumber, self.valueNumber)
         # w.addItem(axis)
-        #
+
         #
         # x = np.arange(timingTable.shape[0])
         # y = np.arange(timingTable.shape[1])
-        # z = timingTable[0:2000] * (10**2)
+        # z = timingTable / np.max(timingTable) * 10#* (10**2)
         # plt = gl.GLSurfacePlotItem(z=z, shader='normalColor')
         # w.addItem(plt)
 
@@ -153,16 +187,17 @@ class TimingTableVisualizer:
     #     plt.show()
 
     def showTotalHist(self):
-        ttt = self.total_timingTable[0:2000, :]
+        timetable_size = self.total_timingTable.shape[0]
+        ttt = np.copy(self.total_timingTable[0:timetable_size, :])
 
         maxCode = len(ttt[0,:])
 
         for code in range(len(ttt[0,:])):
             if np.sum(ttt[:,code]) == 0:
                 continue
-            avg_delay = np.average(list(range(0, 2000)), weights=ttt[:,code])
+            avg_delay = np.average(list(range(0, timetable_size)), weights=ttt[:,code])
             avg_delay_w_step = np.floor(avg_delay / 2) * 2
-            ttt[:,code] = np.roll(ttt[:,code], 1000 - int(avg_delay_w_step))
+            ttt[:,code] = np.roll(ttt[:,code], int(timetable_size/2) - int(avg_delay_w_step))
 
 
         total_hist_sum = np.sum(ttt, axis=1).astype(np.int64)
@@ -188,8 +223,8 @@ class TimingTableVisualizer:
         def gaussian(x, mean, amplitude, standard_deviation):
             return amplitude * np.exp(- (x - mean) ** 2 / (2 * standard_deviation ** 2))
 
-        popt, pcov = curve_fit(gaussian, list(range(0, 2000,2)), total_hist_sum[0:2000:2], p0=[1000, max(total_hist_sum)*1.5, 20])
-        x_interval_for_fit = np.linspace(0, 2000, 10000)
+        popt, pcov = curve_fit(gaussian, list(range(0, timetable_size,1)), total_hist_sum[0:timetable_size:1], p0=[(timetable_size/2), max(total_hist_sum)*1.5, 20])
+        x_interval_for_fit = np.linspace(0, timetable_size, 10000)
         fitGaussian = gaussian(x_interval_for_fit, *popt)
         ax.plot(x_interval_for_fit, fitGaussian, label='fit', color='r')
 
@@ -206,7 +241,8 @@ class TimingTableVisualizer:
 
 
     def jitterVsCode(self):
-        ttt = self.total_timingTable[0:2000, :]
+        ttt = np.copy(self.total_timingTable)
+        size = ttt.shape[0]
 
         jitterRMS =  np.empty((len(ttt[0,:])))
         delayAVG =  np.empty((len(ttt[0,:])))
@@ -219,19 +255,25 @@ class TimingTableVisualizer:
             for i in range(len(slice)):
                 raw_data_recon = np.append(raw_data_recon, [i] * int(slice[i]))
 
+            # if (raw_data_recon.size > 0):
+            #     if (np.max(raw_data_recon) - np.min(raw_data_recon) > 2000):
+            #         raw_data_recon[raw_data_recon > 2000] = raw_data_recon[raw_data_recon > 2000] - 4000
+
             jitterRMS[code] = np.std(raw_data_recon)
             delayAVG[code] = np.mean(raw_data_recon)
 
+        jitterRMS_noDelay = np.sqrt((jitterRMS**2) - (4.5**2))
+
         plt.figure(3)
         ax = plt.subplot(2, 1, 1)
-        ax.plot(np.arange(len(jitterRMS)), jitterRMS)
+        ax.plot(np.arange(len(jitterRMS_noDelay)), jitterRMS_noDelay)
 
-        ax.set_title(" Code vs Jitter")
+        ax.set_title(" Code vs Jitter with delay line (4.5ps RMS jitter) removed")
 
         ax.set_xlabel('Code')
         ax.set_ylabel('Jitter RMS')
 
-        ax2 = plt.subplot(2, 1, 2)
+        ax2 = plt.subplot(2, 1, 2, sharex=ax)
         ax2.plot(np.arange(len(delayAVG)), delayAVG)
 
         ax2.set_xlabel('Code')
@@ -248,19 +290,22 @@ if __name__ == '__main__':
 
     app = QtGui.QApplication([])
 
-    filename = "/home2/cars2019/Documents/DATA/TDC_CORR_ALL-20210427-130600.hdf5"
-    baseDatesetPath = "CHARTIER/ASIC0/TDC/M0/ALL_TDC_ACTIVE/PLL/FAST_255/SLOW_250/CORR/EXT/ADDR_ALL/"
+    filename = "/CMC/partage/GRAMS/DATA/ICYSHSR1/ASIC_07/raw_data/18oct2021/CORR_ALL_DAC_M1_D500.hdf5"
+    baseDatesetPath = "CHARTIER/ASIC7/TDC/M1/ALL_TDC_ACTIVE/DAC/FAST_1.268/SLOW_1.248/CORR/EXT/ADDR_ALL/"
 
 
 
     TT = TimingTableVisualizer()
 
     TT.open(filename=filename)
-    TT.showTimingTable(baseDatesetPath, 100, 9, 0, None)
 
-    TT.showTotalHist()
+    #TT.coarseZeroHist(baseDatesetPath, TDCNum=0)
 
-    #TT.jitterVsCode()
+    TT.showTimingTable(baseDatesetPath, 30, 9, TDCNum=0, nonCorrPath=None)
+
+    #TT.showTotalHist()
+
+    TT.jitterVsCode()
 
     TT.close()
 

@@ -64,57 +64,64 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
         '''
 
         # Frames are type short
-        self.board.asic_head_0.frame_type_normal()
+        #self.board.asic_head_0.frame_type_normal()
 
         self.board.trigger_oscillator.set_frequency(10)  # div by 2 later
         self.board.trigger_divider.set_divider(500, Divider.MUX_NOT_CORR)
         self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
         self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
         self.board.trigger_delay_head_0.set_delay_code(0)
-        self.board.asic_head_0.reset()
+        #self.board.asic_head_0.reset()
+        self.board.b.ICYSHSR1.gpio_set(0,"REINIT", False)                                               
+        time.sleep(1)                                                                     
+        self.board.b.ICYSHSR1.gpio_set(0,"REINIT", True)         
 
         time.sleep(1)
-        self.board.b.GEN_GPIO.gpio_set("MUX_COMM_SELECT", False)
-        self.board.b.GEN_GPIO.gpio_set("EN_COMM_COUNTER", False)
-        self.board.asic_head_0.mux_select(0, 1)
+        #self.board.b.GEN_GPIO.gpio_set("MUX_COMM_SELECT", False)
+        #self.board.b.GEN_GPIO.gpio_set("EN_COMM_COUNTER", False)
+        #self.board.asic_head_0.mux_select(0, 1)
 
 
         #self.board.asic_head_0.disable_all_tdc()
         self.board.asic_head_0.disable_all_quench()
         #self.board.asic_head_0.disable_all_ext_trigger()
 
-        with open('20may_corr_coef_lin_bias_slope.pickle', 'rb') as f:
+        with open('19oct_corr_coef_lin_bias_slope.pickle', 'rb') as f:
             coefficients = pickle.load(f)
             for tdc_id in coefficients:
                 coarse_corr = int(coefficients[tdc_id][0] * 8)
                 fine_corr = int(coefficients[tdc_id][1] * 16)
                 bias_lookup = np.clip((coefficients[tdc_id][2]+128).astype(int), 0, 255)
                 slope_lookup = np.clip((coefficients[tdc_id][3]*8).astype(int), 0, 15)
-                self.board.asic_head_0.set_coarse_correction(array, tdc_id, coarse_corr)
-                self.board.asic_head_0.set_fine_correction(array, tdc_id, fine_corr)
-                self.board.asic_head_0.set_lookup_tables(array, tdc_id, bias_lookup, slope_lookup)
+                self.board.asic_head_0.set_coarse_correction(1, tdc_id, coarse_corr)
+                self.board.asic_head_0.set_fine_correction(1, tdc_id, fine_corr)
+                self.board.asic_head_0.set_lookup_tables(1, tdc_id, bias_lookup, slope_lookup)
 
         self.pbar = tqdm(total=self.countLimit)
 
 
     def run(self, fast_freq, slow_freq, array):
         #self.board.b.ICYSHSR1.SERIAL_READOUT_TYPE(0, 0, 0)
-        self.board.asic_head_0.mux_select(0, 1)
+        self.board.asic_head_0.mux_select(array, 1)
 
         # Set PLL frequencies
-        self.board.slow_oscillator_head_0.set_frequency(slow_freq)
-        self.board.fast_oscillator_head_0.set_frequency(fast_freq)
+        #self.board.slow_oscillator_head_0.set_frequency(slow_freq)
+        #self.board.fast_oscillator_head_0.set_frequency(fast_freq)
+        
+        # Set DACs
+        self.board.v_slow_head_0.set_voltage(slow_freq)                                                  
+        self.board.v_fast_head_0.set_voltage(fast_freq)        
 
         self.board.asic_head_0.enable_all_tdc()
         self.board.asic_head_0.enable_all_ext_trigger()
 
-        self.board.b.ICYSHSR1.PLL_ENABLE(0, 1, 0)
+        #self.board.b.ICYSHSR1.PLL_ENABLE(0, 1, 0)
 
         #self.board.b.ICYSHSR1.SERIAL_READOUT_TYPE(0, 1, 0)
         self.board.asic_head_0.set_trigger_type(1)
         self.board.b.ICYSHSR1.TRIGGER_EVENT_DRIVEN_COLUMN_THRESHOLD(0, 1, 0)
         path = genPathName_TDC( boardName="CHARTIER",
-                                ASICNum=0,
+                                ASICNum=7,
                                 matrixNum=array,
                                 TDCsActive="ALL",
                                 controlSource="PLL",
@@ -133,7 +140,7 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
         time.sleep(1)
         # This line is blocking
         #self.board.b.DMA.start_data_acquisition(acqID, self.countLimit, self.timeLimit, maxEmptyTimeout=100)
-        self.board.b.DMA.start_data_acquisition_HDF(self.filename, groupName, datasetPath, self.countLimit, maxEmptyTimeout=-1,
+        self.board.b.DMA.start_data_acquisition_HDF(7, self.filename, groupName, datasetPath, self.countLimit, maxEmptyTimeout=-1,
                                                     type=0, compression=0)
         time.sleep(1)
 

@@ -1,6 +1,9 @@
 import math
 import h5py
 import numpy as np
+import scipy as sp
+from scipy import stats
+from matplotlib import pyplot as plt
 
 
 ########################################################
@@ -8,36 +11,65 @@ import numpy as np
 ########################################################
 PERIOD_IN_PS = 4000.0
 NUMBER_OF_TDC = 1
-OUTLIER_THRESHOLD = 0.00
+OUTLIER_THRESHOLD = 0.02
 ########################################################
 
 
 class TransferFunctions:
     # Everything computation related should be called from the constructor
-    def __init__(self, filename, basePath, pixel_id, filter_lower_than=0.00):
+    def __init__(self, filename, basePath, pixel_id, filter_lower_than=0.05):
         self.density_code, self.fine_by_coarse, self.min_fine_by_coarse, self.min_coarse = self.get_density_code(filename, basePath, pixel_id, filter_lower_than)
         self.number_of_coarse = len(self.fine_by_coarse)
 
         #print(self.min_coarse)
         #print(self.min_fine_by_coarse)
+
+        self.slopes_new = np.zeros((14,))
+        self.biases_new = np.zeros((14,))
+
         ps_per_count = PERIOD_IN_PS / np.sum(self.density_code)
         time_per_code = self.density_code * ps_per_count
         self.ps_per_coarse = PERIOD_IN_PS / (np.sum(self.fine_by_coarse) / np.mean(self.fine_by_coarse[:-1]))   # Last coarse smaller so remove it from mean
         self.ideal_tf = np.cumsum(time_per_code)
         #print(len(self.ideal_tf))
-        #print(self.ps_per_coarse)
         self.global_bias = 0
 
-        self.coarse_lookup_table = np.zeros(2 ** 4)
+        self.coarse_lookup_table = np.zeros(2**4)
         self.fine_slope_corr_lookup_table = np.zeros(2 ** 4)
 
-        self.lin_reg = self._linear_regression_algorithm()
+        self.tf_recon_alt = None
+
+        bounds = np.append([0], np.cumsum(self.fine_by_coarse))
+        bounds[-1] = bounds[-1] - 1
+        res_list = [self.ideal_tf[i] for i in bounds]
+        ret = self.inchip_function(res_list)
+
+        bound_list = sp.optimize.minimize(self.inchip_function, [0] * (self.number_of_coarse + 1))
+
+
+        self.lin_reg = self.linear_regression_algorithm()
         #elf.save_coefficients("linear")
         self.med_reg = self._median_algorithm()
-        self.bias_reg = self._linear_regression_algorithm(True, False)
+        self.bias_reg = self.linear_regression_algorithm(True, False)
         #self.save_coefficients("bias")
-        self.bias_slope_reg = self._linear_regression_algorithm(True, True)
+        self.bias_slope_reg = self.linear_regression_algorithm(True, True)
         #self.save_coefficients("all")
+
+
+
+
+
+
+        # plt.figure(2)
+        # ax = plt.subplot(1, 1, 1)
+        # ax.plot(self.ideal_tf, label="Ideal")
+        # ax.plot(bounds,bound_list.x, 'x-', label="Recon")
+        #
+        # handles, labels = ax.get_legend_handles_labels()
+        # ax.legend(handles, labels)
+        #
+        # plt.show()
+
 
     def get_density_code(self, filename, basePath, pixel_id, filter_lower_than):
         with h5py.File(filename, "r") as h:
@@ -46,6 +78,9 @@ class TransferFunctions:
             fine = np.array(ds['Fine'], dtype='int64')
             addr = np.array(ds['Addr'], dtype='int64')
 
+
+            c0 = fine[coarse == 0]
+
             addr_filter = (addr == pixel_id)
             if not addr_filter.any():
                 raise Exception("It seems like the targeted pixel was disabled or didn't trigger")
@@ -53,13 +88,19 @@ class TransferFunctions:
             coarse = coarse[addr_filter]
             fine = fine[addr_filter]
 
+            c0 = fine[coarse == 0]
+
             H, xedges, yedges = np.histogram2d(coarse, fine, [max(coarse), max(fine)],
                                                range=[[0, max(coarse)+1], [0, max(fine)+1]])
-
             # Filter out
             min_fine_by_coarse = np.argmax(~(H < (np.amax(H) * filter_lower_than)), axis=1)
+            maxFine = stats.mode(c0)[0]
             fine_by_coarse = np.sum(~(H < (np.amax(H) * filter_lower_than)), axis=1)
             fine_by_coarse = fine_by_coarse[fine_by_coarse != 0]
+            if maxFine:
+                fine_by_coarse[fine_by_coarse > maxFine] = maxFine
+                H = H[:,0:int(maxFine)]
+                filter_lower_than = 0
             density_code = H[~(H < (np.amax(H) * filter_lower_than))]
             return density_code, fine_by_coarse, min_fine_by_coarse, min(coarse)
 
@@ -84,6 +125,7 @@ class TransferFunctions:
 
     def get_coefficients(self):
         return self.coarse_period, self.fine_period, self.coarse_lookup_table, self.fine_slope_corr_lookup_table
+
 
     #######################################################################
     #                      PRIVATE FUNCTIONS
@@ -127,7 +169,40 @@ class TransferFunctions:
         self.coarse_period = np.around(self.ps_per_coarse)
         return self._compute_transfer_function_y(range(len(self.ideal_tf)))
 
-    def _linear_regression_algorithm(self, lookup_bias=False, lookup_slope=False):
+
+    def inchip_function(self, y_at_bounds):
+        """
+        Takes all the boundaries set and returns the error. Used for error minimalization
+        :param x:
+        :param bounds:
+        :return:
+        """
+        tf_recon = np.zeros((len(self.ideal_tf),))
+        x_bounds = np.append([0], np.cumsum(self.fine_by_coarse))
+
+        #x_bounds[-1] = x_bounds[-1] - 1
+        for xi in range(0,len(x_bounds)-1):
+            x1 = x_bounds[xi]
+            x2 = x_bounds[xi+1]
+            y1 = y_at_bounds[xi]
+            y2 = y_at_bounds[xi+1]
+            a = (y2-y1)/(x2-x1)
+            b = y1 - (a*x1)
+            self.slopes_new[xi] = a
+            self.biases_new[xi] = y1
+            tf_recon[x_bounds[xi]:x_bounds[xi+1]] = (a*np.arange(x_bounds[xi],x_bounds[xi+1])) + b
+            #print(a)
+
+        self.tf_recon_alt = tf_recon
+
+        return np.sum((self.ideal_tf - tf_recon)**2)
+
+
+
+    def linear_regression_with_continuity(self, ideal_tf, fine_per_coarse, number_of_coarse):
+        pass
+
+    def linear_regression_algorithm(self, lookup_bias=False, lookup_slope=False, smooth_trans=False):
         self.coarse_lookup_table = np.zeros(2**4)
         self.fine_slope_corr_lookup_table = np.zeros(2 ** 4)
         # Do a linear regression for every coarse, then average it
@@ -176,15 +251,25 @@ class TransferFunctions:
 
         bias_offset = 0
         if not lookup_slope:
-            self.fine_period = np.around(np.average(np.array(slopes)) * 16) / 16
+            if smooth_trans:
+                self.fine_period = np.around(np.average(np.array(self.slopes_new[:7])) * 16) / 16
+            else:
+                self.fine_period = np.around(np.average(np.array(slopes)) * 16) / 16
             #self.global_bias += np.average(bias)
         else:
-            self.fine_period = min(slopes)
-            self._fill_correction_table_for_fine_slope(slopes)
+            if smooth_trans:
+                self.fine_period = min(self.slopes_new[:7])
+                self._fill_correction_table_for_fine_slope(self.slopes_new[:7])
+            else:
+                self.fine_period = min(slopes)
+                self._fill_correction_table_for_fine_slope(slopes)
 
         if lookup_bias:
-            #self._fill_lookup_bias(bias, slopes)
-            self._fill_lookup_table_coarse(self.ideal_tf)
+            if smooth_trans:
+                self._fill_lookup_table_coarse(self.tf_recon_alt)
+            else:
+                #self._fill_lookup_bias(bias, slopes)
+                self._fill_lookup_table_coarse(self.ideal_tf)
 
         return self._compute_transfer_function_y(range(len(self.ideal_tf)))
 
