@@ -18,7 +18,7 @@
     <item row="0" column="0">
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>3</number>
+       <number>5</number>
       </property>
       <widget class="QWidget" name="Overview_tab">
        <attribute name="title">
@@ -492,6 +492,13 @@
            <layout class="QGridLayout" name="gridLayout_13">
             <item row="0" column="0">
              <layout class="QGridLayout" name="gridLayout_11">
+              <item row="17" column="0">
+               <widget class="QPushButton" name="disable_all_quench_but_pushButton">
+                <property name="text">
+                 <string>Disable All Quench except</string>
+                </property>
+               </widget>
+              </item>
               <item row="18" column="1">
                <widget class="QSpinBox" name="asic_number_h0_spinBox"/>
               </item>
@@ -766,19 +773,22 @@
                 </property>
                </widget>
               </item>
-              <item row="17" column="0">
-               <widget class="QPushButton" name="disable_all_quench_but_pushButton">
-                <property name="text">
-                 <string>Disable All Quench except</string>
-                </property>
-               </widget>
-              </item>
               <item row="17" column="1">
                <widget class="QSpinBox" name="quench_exception_h0_spinBox">
                 <property name="maximum">
                  <number>192</number>
                 </property>
                </widget>
+              </item>
+              <item row="24" column="0">
+               <widget class="QLabel" name="label_57">
+                <property name="text">
+                 <string>DCA Threshold</string>
+                </property>
+               </widget>
+              </item>
+              <item row="24" column="1">
+               <widget class="QSpinBox" name="dca_threshold_h0_spinBox"/>
               </item>
              </layout>
             </item>
@@ -1324,6 +1334,43 @@
          </item>
          <item row="1" column="2">
           <widget class="ImageView" name="bin3_heatmap" native="true"/>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="dca_tab">
+       <attribute name="title">
+        <string>DCA</string>
+       </attribute>
+       <widget class="QWidget" name="">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>20</y>
+          <width>1041</width>
+          <height>741</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_17">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_58">
+           <property name="text">
+            <string>DCA Head 0</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLabel" name="label_59">
+           <property name="text">
+            <string>DCA Head 1</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="ImageView" name="dca_trig_h0_heatmap" native="true"/>
+         </item>
+         <item row="1" column="1">
+          <widget class="ImageView" name="dca_trig_h1_heatmap" native="true"/>
          </item>
         </layout>
        </widget>

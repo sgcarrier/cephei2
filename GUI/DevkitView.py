@@ -244,6 +244,9 @@ class DevkitView(QtWidgets.QMainWindow):
 
         self.disable_all_quench_but_pushButton.clicked.connect(self.disable_all_quench_but_h0)
 
+        self.dca_threshold_h0_spinBox.setKeyboardTracking(False)
+        self.dca_threshold_h0_spinBox.valueChanged.connect(self.set_DCA_threshold_h0)
+
         """Recording Tab"""
 
         self.record_start_pushButton.clicked.connect(self.start_recording)
@@ -384,7 +387,7 @@ class DevkitView(QtWidgets.QMainWindow):
         self.plotLiveData()
 
     def updateSPADTab(self):
-        image_H0, bin1,bin2,bin3 = processSPADImage(self.currentLiveData_H0)
+        image_H0, bin1,bin2,bin3, dca = processSPADImage(self.currentLiveData_H0)
         if np.sum(image_H0) != 0:
             self.head_0_heatmap.setImage(image_H0, autoLevels=True)
         if np.sum(bin1) != 0:
@@ -393,20 +396,24 @@ class DevkitView(QtWidgets.QMainWindow):
             self.bin2_heatmap.setImage(bin2, autoLevels=True)
         if np.sum(bin3) != 0:
             self.bin3_heatmap.setImage(bin3, autoLevels=True)
+        if np.sum(dca) != 0:
+            self.dca_trig_h0_heatmap.setImage(dca, autoLevels=True)
 
         cr_h0 = processTotalCountRate(self.currentLiveData_H0)
 
         self.totalCount_H0.display(cr_h0)
 
-        image_H1,_,_,_ = processSPADImage(self.currentLiveData_H1)
+        image_H1,_,_,_,_ = processSPADImage(self.currentLiveData_H1)
         if np.sum(image_H1) != 0:
             self.head_1_heatmap.setImage(image_H1, autoLevels=True)
 
         cr_h1 = processTotalCountRate(self.currentLiveData_H1)
         self.totalCount_H1.display(cr_h1)
 
-        self.most_active_spad_h0_lcdNumber.display(stats.mode(self.currentLiveData_H0['Addr']).mode[0])
-        self.most_active_spad_h1_lcdNumber.display(stats.mode(self.currentLiveData_H1['Addr']).mode[0])
+        if len(self.currentLiveData_H0['Addr']) != 0:
+            self.most_active_spad_h0_lcdNumber.display(stats.mode(self.currentLiveData_H0['Addr']).mode[0])
+        if len(self.currentLiveData_H1['Addr']) != 0:
+            self.most_active_spad_h1_lcdNumber.display(stats.mode(self.currentLiveData_H1['Addr']).mode[0])
 
 
     def updateOverviewTab(self):
@@ -618,6 +625,14 @@ class DevkitView(QtWidgets.QMainWindow):
 
         self.updateOverviewTab()
 
+    def set_DCA_threshold_h0(self, val):
+        if val > 0:
+            self.board.b.ICYSHSR1.DCA_ENABLE(0,1,0)
+        else:
+            self.board.b.ICYSHSR1.DCA_ENABLE(0,0,0)
+        self.board.b.ICYSHSR1.DCA_THRESHOLD(0, val, 0)
+
+
 
     def wind_trig_source_changed(self):
         selection = self.wind_trig_source_comboBox.currentText()
@@ -722,16 +737,26 @@ class DevkitView(QtWidgets.QMainWindow):
     def reset_h0(self):
         self.board.asic_head_0.reset()
 
-        array_selected = self.board.b.ICYSHSR1.OUTPUT_MUX_SELECT(0, 0)
-        self.array_select_h0_comboBox.setCurrentIndex(array_selected)
-
-        pp = self.board.b.ICYSHSR1.POST_PROCESSING_SELECT(0, 0)
-        self.post_processing_select_h0_comboBox.setCurrentIndex(pp)
-
-        trigger_type =  self.board.b.ICYSHSR1.TRIGGER_TYPE(0,0)
-        if (trigger_type == 0x10):
-            trigger_type = 2
-        self.trigger_type_h0_comboBox.setCurrentIndex(trigger_type)
+        # #array_selected = self.board.b.ICYSHSR1.OUTPUT_MUX_SELECT(0, 0)
+        # # a read of OUTPUT_MUX_SELECT will always return 2, because we have to be in read mode to read
+        # self.array_select_h0_comboBox.blockSignals(True)
+        self.board.b.ICYSHSR1.OUTPUT_MUX_SELECT(0, 0, 0)
+        self.array_select_h0_comboBox.setCurrentIndex(0)
+        # self.array_select_h0_comboBox.blockSignals(False)
+        # #
+        # # pp = self.board.b.ICYSHSR1.POST_PROCESSING_SELECT(0, 0)
+        # self.post_processing_select_h0_comboBox.blockSignals(True)
+        self.board.b.ICYSHSR1.POST_PROCESSING_SELECT(0, 0, 0)
+        self.post_processing_select_h0_comboBox.setCurrentIndex(0)
+        # self.post_processing_select_h0_comboBox.blockSignals(False)
+        # #
+        # # trigger_type =  self.board.b.ICYSHSR1.TRIGGER_TYPE(0,0)
+        # # if (trigger_type == 0x10):
+        # #     trigger_type = 2
+        # self.trigger_type_h0_comboBox.blockSignals(True)
+        self.board.b.ICYSHSR1.TRIGGER_TYPE(0, 0, 0)
+        self.trigger_type_h0_comboBox.setCurrentIndex(0)
+        # self.trigger_type_h0_comboBox.blockSignals(False)
 
         bound_0 = self.board.b.ICYSHSR1.TIME_BIN_BOUNDS_0(0,0)
         self.bound_0_h0_spinBox.setValue(bound_0)
