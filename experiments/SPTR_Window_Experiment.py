@@ -49,9 +49,9 @@ class SPTR_Window_Experiment(BasicExperiment):
         This is where you assign setting that will not change during your experiment
         '''
         self.board.mux_laser_polarity.select_input(MUX.NON_INVERTED) # 0 original, 1 inverted
-        self.board.mux_coarse_delay.select_input(MUX.MONOSTABLE) # DELAYED_LASER or MONOSTABLE
+        self.board.mux_coarse_delay.select_input(MUX.DELAYED_LASER) # DELAYED_LASER or MONOSTABLE
 
-        self.board.laser_threshold.set_voltage(-0.1)
+        self.board.laser_threshold.set_voltage(-0.10)
 
         self.board.b.LMK04610.gpio_set(0, "RESET", True)
         self.board.b.LMK04610.gpio_set(0, "RESET", False)
@@ -60,11 +60,29 @@ class SPTR_Window_Experiment(BasicExperiment):
         #PLL2_LD_WNDW_SIZE(0,0)
         #PLL2_LD_WNDW_SIZE_INITIAL(0,0)
         #PLL2_DLD_EN(0,1)
-        self.board.b.LMK04610.OUTCH34_LDO_BYP_MODE(0,0)
+        #self.board.b.LMK04610.OUTCH34_LDO_BYP_MODE(0,0)
+        #self.board.b.LMK04610.OUTCH34_DIV_CLKEN(0,1)
+        #self.board.b.LMK04610.OUTCH34_DIV(0, 10)
+
+
+        self.board.b.LMK04610.CLKIN0_EN(0,1)
+        self.board.b.LMK04610.CLKIN0_SE_MODE(0,0)
+        self.board.b.LMK04610.SW_REFINSEL(0, 0x4)
+        self.board.b.LMK04610.PLL2EN(0,0)
+
+        self.board.b.LMK04610.PLL2_BYP_OSC(0,1)
+        self.board.b.LMK04610.PLL2_GLOBAL_BYP(0,1)
+
+        self.board.b.LMK04610.OUTCH1_DIV_CLKEN(0,1)
         self.board.b.LMK04610.OUTCH34_DIV_CLKEN(0,1)
-        self.board.b.LMK04610.OUTCH34_DIV(0, 10)
 
+        self.board.b.LMK04610.OUTCH1_LDO_BYP_MODE(0,1) # 1 is bypass
+        self.board.b.LMK04610.OUTCH34_LDO_BYP_MODE(0,1)
 
+        self.board.b.LMK04610.OUTCH1_DIV(0, 80)
+        self.board.b.LMK04610.OUTCH34_DIV(0, 80)
+
+        input("Check output now")
         self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
         self.board.mux_trigger_external.select_input(MUX.PCB_INPUT) # 0 SMA, 1 trig tdc
 
@@ -79,11 +97,18 @@ class SPTR_Window_Experiment(BasicExperiment):
 
         '''Set window driven mode'''
         self.board.asic_head_0.set_trigger_type(0x10)
+        self.board.b.ICYSHSR1.TRIGGER_WINDOW_DRIVEN_THRESHOLD(0,1,0)
         # Set Window length
-        self.board.asic_head_0.set_window_size(500)
+        self.board.asic_head_0.set_window_size(45)
 
         self.board.b.ICYSHSR1.TDC_GATING_MODE(0, 1, 0)
         self.board.asic_head_0.window_is_stop()
+
+
+        '''Activate the TDC we are interrested in'''                                                     
+        self.board.asic_head_0.disable_all_tdc_but(0, [2])                                 
+        '''Activate the corresponding SPAD to the TDC'''                                                 
+        self.board.asic_head_0.disable_all_quench_but(0, [2*4]) 
 
 
     def run(self, fast_freq, slow_freq, array, window_delay, target_spad, rch, holdoff):
@@ -109,36 +134,31 @@ class SPTR_Window_Experiment(BasicExperiment):
         '''Set HOLDOFF current'''
         CE_T_HOLDOFF = holdoff #uA
         '''Set comparator threshold'''
-        CE_V_COMP = 3 #V
+        CE_V_COMP = 3.0 #V
 
         self.board.recharge_current.set_current(CE_T_RCH)
         self.board.holdoff_current.set_current(CE_T_HOLDOFF)
         self.board.comparator_threshold.set_voltage((CE_V_COMP/3.3) * 5)
 
-        '''Activate the TDC we are interrested in'''
-        self.board.asic_head_0.disable_all_tdc_but(array, [target_spad])
-        '''Activate the corresponding SPAD to the TDC'''
-        self.board.asic_head_0.disable_all_quench_but(array, [target_spad*4])
-
         ''' Enable the PLL that acts as the time reference of all TDCs'''
         self.board.b.ICYSHSR1.PLL_ENABLE(0, 1, 0)
 
-        self.board.window_delay_head_0.set_delay_code(window_delay)
+        self.board.window_delay_head_0.set_delay_code(int(window_delay))
 
-
+        input("please set HV")
 
         '''Generate the path name to write in the HDF5'''
         path = genPathName_TDC(boardName="CHARTIER",
-                               ASICNum=4,
+                               ASICNum=2,
                                matrixNum=array,
                                TDCsActive=[target_spad],
                                controlSource="PLL",
                                fastVal=fast_freq,
                                slowVal=slow_freq,
                                testType="CORR",
-                               triggerType="TRIG_SPAD")
+                               triggerType="SPAD")
 
-        groupName = path + "/RCH_" + str(rch) + "/HOLDOFF_" + str(holdoff)
+        groupName = path + "/RCH_" + str(rch) + "/HOLDOFF_" + str(holdoff) + "/DELAY_" + str(window_delay)
         datasetPath = groupName + "/RAW"
 
         time.sleep(2)
@@ -157,6 +177,7 @@ class SPTR_Window_Experiment(BasicExperiment):
         operation.
         :return:
         '''
+        input("please disable hv")
         self.board.asic_head_0.reset()
 
 if __name__ == '__main__':
@@ -202,7 +223,7 @@ if __name__ == '__main__':
     if args.f:
         filename = args.f
     else:
-        filename = "SPTR_TEST-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
+        filename = "SPTR_WINDOW_TEST-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
 
     if args.d:
         if (args.d[-1] == '/'):
@@ -227,7 +248,7 @@ if __name__ == '__main__':
                                          'slow_freq': slow_freq,
                                          'array': array,
                                          'window_delay': window_delay,
-                                         'target_SPAD': target_spad,
+                                         'target_spad': target_spad,
                                          'rch': rch,
                                          'holdoff': holdoff})
 

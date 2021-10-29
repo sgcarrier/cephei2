@@ -60,55 +60,60 @@ class TDC_CORR_ALL_Experiment(BasicExperiment):
         #Setting external trigger
         #self.board.pll.set_frequencies(10, 10, 5000)
         self.board.pll.set_6_25mhz()
-        self.board.trigger_divider.set_divider(500, Divider.MUX_CORR)
+        self.board.trigger_divider.set_divider(2, Divider.MUX_CORR)
         self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
         self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
         self.board.trigger_delay_head_0.set_delay_code(0)
-        self.board.asic_head_0.reset()
-
+        #self.board.asic_head_0.reset()
+        self.board.b.ICYSHSR1.gpio_set(0,"REINIT", False)                                               
+        time.sleep(1)                                                                                   
+        self.board.b.ICYSHSR1.gpio_set(0,"REINIT", True)
         time.sleep(1)
 
+
         self.board.asic_head_0.disable_all_quench()
+        self.board.asic_head_0.enable_all_tdc()
+        self.board.asic_head_0.enable_all_ext_trigger()
+
+        self.board.asic_head_0.mux_select(1, 0)  
+        
+        self.board.b.ICYSHSR1.PLL_ENABLE(0, 1, 0)
+        
+        self.board.asic_head_0.set_trigger_type(1)
+        self.board.b.ICYSHSR1.TRIGGER_EVENT_DRIVEN_COLUMN_THRESHOLD(0, 1, 0)
+
 
     def run(self, fast_freq, slow_freq, array,  delay):
 
-        self.board.b.ICYSHSR1.SERIAL_READOUT_TYPE(0, 0, 0)
-
         # Set PLL frequencies
-        self.board.slow_oscillator_head_0.set_frequency(slow_freq)
-        self.board.fast_oscillator_head_0.set_frequency(fast_freq)
+        #self.board.slow_oscillator_head_0.set_frequency(slow_freq)
+        #self.board.fast_oscillator_head_0.set_frequency(fast_freq)
+        self.board.v_slow_head_0.set_voltage(slow_freq)                                                  
+        self.board.v_fast_head_0.set_voltage(fast_freq)  
+        #self.board.asic_head_0.mux_select(array, 0)                                                      
 
         # Set delay
         actual_delay, delay_code, ftune_volt = self.board.trigger_delay_head_0.delay_to_bit_code_and_ftune(delay)
         self.board.trigger_delay_head_0.set_fine_tune(ftune_volt)
         self.board.trigger_delay_head_0.set_delay_code(delay_code)
 
-        self.board.asic_head_0.enable_all_tdc()
-        self.board.asic_head_0.enable_all_ext_trigger()
-
-        self.board.b.ICYSHSR1.PLL_ENABLE(0, 1, 0)
-
-        # self.board.b.ICYSHSR1.SERIAL_READOUT_TYPE(0, 1, 0)
-        self.board.asic_head_0.set_trigger_type(1)
-        self.board.b.ICYSHSR1.TRIGGER_EVENT_DRIVEN_COLUMN_THRESHOLD(0, 1, 0)
-
         path = genPathName_TDC(boardName="CHARTIER",
-                               ASICNum=0,
+                               ASICNum=7,
                                matrixNum=array,
                                TDCsActive="ALL",
-                               controlSource="PLL",
+                               controlSource="DAC",
                                fastVal=fast_freq,
                                slowVal=slow_freq,
                                testType="CORR",
                                triggerType="EXT")
 
-        groupName = path
-        datasetPath = path + "/RAW"
+        groupName = path + "/DELAY_" + str(delay)
+        datasetPath = groupName + "/RAW"
 
 
-        time.sleep(1)
+        time.sleep(2)
         # This line is blocking
-        self.board.b.DMA.start_data_acquisition_HDF(self.filename, groupName, datasetPath, self.countLimit,
+        self.board.b.DMA.start_data_acquisition_HDF(0, self.filename, groupName, datasetPath, self.countLimit,
                                                     maxEmptyTimeout=-1,
                                                     type=1, compression=0)
         time.sleep(1)
@@ -121,8 +126,9 @@ class TDC_CORR_ALL_Experiment(BasicExperiment):
         operation.
         :return:
         '''
-        self.board.asic_head_0.reset_TDC_mux()
-        self.board.asic_head_0.frame_type_normal()
+        #self.board.asic_head_0.reset_TDC_mux()
+        #self.board.asic_head_0.frame_type_normal()
+        pass
 
 if __name__ == '__main__':
     from utility.ExperimentRunner import ExperimentRunner
@@ -137,7 +143,7 @@ if __name__ == '__main__':
     parser.add_argument("fast_freq", help="Frequency of the fast pll")
     parser.add_argument("slow_freq", help="Frequency of the slow pll")
     parser.add_argument("array", help="Array to use on the chip (0-1)")
-    parser.add_argument("delay_ps", help="Array to use on the chip (0-1)")
+    parser.add_argument("delay", help="Array to use on the chip (0-1)")
     parser.add_argument("-f", help="Filename of HDF5 file")
     parser.add_argument("-d", help="Folder destination of HDF5 file")
     parser.add_argument("-c", type=int, help="Data count limit")
@@ -146,12 +152,12 @@ if __name__ == '__main__':
     fast_freq = ast.literal_eval(args.fast_freq)
     slow_freq = ast.literal_eval(args.slow_freq)
     array = ast.literal_eval(args.array)
-    delay_ps = ast.literal_eval(args.delay_ps)
+    delay = ast.literal_eval(args.delay)
 
     _logger.info("fast_freq set to :" + str(fast_freq))
     _logger.info("slow_freq set to :" + str(slow_freq))
     _logger.info("array set to :" + str(array))
-    _logger.info("delay_ps set to :" + str(delay_ps))
+    _logger.info("delay set to :" + str(delay))
 
     # Set destination data filename
     if args.f:
@@ -176,7 +182,7 @@ if __name__ == '__main__':
 
     # Assign the experiment to the runner and tell the variables you have and if you want to iterate
     runner = ExperimentRunner(experiment=experiment,
-                              variables={'fast_freq': fast_freq, 'slow_freq': slow_freq, 'array': array, 'delay_ps': delay_ps})
+                              variables={'fast_freq': fast_freq, 'slow_freq': slow_freq, 'array': array, 'delay': delay})
 
     # run and stop it. Ctrl-C can stop it prematurely.
     try:

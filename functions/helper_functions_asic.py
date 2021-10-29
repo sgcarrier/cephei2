@@ -344,7 +344,6 @@ class ASIC:
         self.disable_all_tdc_but(1, [])
 
     def disable_all_quench(self):
-        print("Disable all quench")
         self.disable_all_quench_but(0, [])
         self.disable_all_quench_but(1, [])
 

@@ -5,7 +5,8 @@ import logging
 import time
 import random
 from tqdm import tqdm
-
+import pickle
+import numpy as np
 
 
 
@@ -71,8 +72,8 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
         self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
         self.board.trigger_delay_head_0.set_delay_code(0)
         #self.board.asic_head_0.reset()
-        self.board.b.ICYSHSR1.gpio_set(0,"REINIT", False)
-        time.sleep(1)
+        self.board.b.ICYSHSR1.gpio_set(0,"REINIT", False)                                               
+        time.sleep(1)                                                                                   
         self.board.b.ICYSHSR1.gpio_set(0,"REINIT", True)
 
         time.sleep(1)
@@ -83,24 +84,37 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
         self.board.asic_head_0.disable_all_quench()
         #self.board.asic_head_0.disable_all_ext_trigger()
 
+
+        with open('19oct_corr_coef_lin_bias_slope.pickle', 'rb') as f:   
+            coefficients = pickle.load(f)                                                  
+            for tdc_id in coefficients:                                             
+                coarse_corr = int(coefficients[tdc_id][0] * 8)           
+                fine_corr = int(coefficients[tdc_id][1] * 16)            
+                bias_lookup = np.clip((coefficients[tdc_id][2]+128).astype(int), 0, 255)
+                slope_lookup = np.clip((coefficients[tdc_id][3]*8).astype(int), 0, 15)  
+                self.board.asic_head_0.set_coarse_correction(1, tdc_id, coarse_corr)    
+                self.board.asic_head_0.set_fine_correction(1, tdc_id, fine_corr)        
+                self.board.asic_head_0.set_lookup_tables(1, tdc_id, bias_lookup, slope_lookup) 
+
+        with open('H7_M1_1v278_skew.pickle', 'rb') as f:
+            skew_corr = pickle.load(f)
+            for tdc in range(len(skew_corr)):
+                self.board.asic_head_0.set_skew_correction(1, tdc*4, int(skew_corr[tdc]))
+
+
         self.pbar = tqdm(total=self.countLimit)
 
 
     def run(self, fast_freq, slow_freq, array):
         self.board.b.ICYSHSR1.SERIAL_READOUT_TYPE(0, 0, 0)
-        
-        self.board.asic_head_0.mux_select(array, 0)
+        self.board.asic_head_0.mux_select(array, 1)
 
-        # Set PLL frequencies
-        self.board.slow_oscillator_head_0.set_frequency(slow_freq)
-        self.board.fast_oscillator_head_0.set_frequency(fast_freq)
+        self.board.v_slow_head_0.set_voltage(slow_freq)
+        self.board.v_fast_head_0.set_voltage(fast_freq)
 
         self.board.asic_head_0.enable_all_tdc()
         self.board.asic_head_0.enable_all_ext_trigger()
 
-        self.board.b.ICYSHSR1.PLL_ENABLE(0, 1, 0)
-
-        #self.board.b.ICYSHSR1.SERIAL_READOUT_TYPE(0, 1, 0)
         self.board.asic_head_0.set_trigger_type(1)
         self.board.b.ICYSHSR1.TRIGGER_EVENT_DRIVEN_COLUMN_THRESHOLD(0, 1, 0)
 
@@ -108,7 +122,7 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
                                 ASICNum=7,
                                 matrixNum=array,
                                 TDCsActive="ALL",
-                                controlSource="PLL",
+                                controlSource="DAC",
                                 fastVal=fast_freq,
                                 slowVal=slow_freq,
                                 testType="NON_CORR",
@@ -117,15 +131,13 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
         groupName = path
         datasetPath = path + "/RAW"
 
-        #path = "{0}/FAST_{1}/SLOW_{2}/ARRAY_{3}".format(self.basePath, fast_freq, slow_freq, array)
-        acqID = random.randint(0, 65535)
 
-        #self.board.b.DMA.set_meta_data(self.filename, path, acqID, 0)
         time.sleep(1)
         # This line is blocking
-        #self.board.b.DMA.start_data_acquisition(acqID, self.countLimit, self.timeLimit, maxEmptyTimeout=100)
         self.board.b.DMA.start_data_acquisition_HDF(0, self.filename, groupName, datasetPath, self.countLimit, maxEmptyTimeout=-1,
-                                                    type=1, compression=0)
+                                                    type=0, compression=0)
+
+ 
         time.sleep(1)
 
 
@@ -206,3 +218,4 @@ if __name__ == '__main__':
         exit()
 
     runner.stop()
+

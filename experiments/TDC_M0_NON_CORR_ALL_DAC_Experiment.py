@@ -71,8 +71,8 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
         self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
         self.board.trigger_delay_head_0.set_delay_code(0)
         #self.board.asic_head_0.reset()
-        self.board.b.ICYSHSR1.gpio_set(0,"REINIT", False)
-        time.sleep(1)
+        self.board.b.ICYSHSR1.gpio_set(0,"REINIT", False)                                               
+        time.sleep(1)                                                                                   
         self.board.b.ICYSHSR1.gpio_set(0,"REINIT", True)
 
         time.sleep(1)
@@ -88,19 +88,14 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
 
     def run(self, fast_freq, slow_freq, array):
         self.board.b.ICYSHSR1.SERIAL_READOUT_TYPE(0, 0, 0)
-        
         self.board.asic_head_0.mux_select(array, 0)
 
-        # Set PLL frequencies
-        self.board.slow_oscillator_head_0.set_frequency(slow_freq)
-        self.board.fast_oscillator_head_0.set_frequency(fast_freq)
+        self.board.v_slow_head_0.set_voltage(slow_freq)
+        self.board.v_fast_head_0.set_voltage(fast_freq)
 
         self.board.asic_head_0.enable_all_tdc()
         self.board.asic_head_0.enable_all_ext_trigger()
 
-        self.board.b.ICYSHSR1.PLL_ENABLE(0, 1, 0)
-
-        #self.board.b.ICYSHSR1.SERIAL_READOUT_TYPE(0, 1, 0)
         self.board.asic_head_0.set_trigger_type(1)
         self.board.b.ICYSHSR1.TRIGGER_EVENT_DRIVEN_COLUMN_THRESHOLD(0, 1, 0)
 
@@ -108,7 +103,7 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
                                 ASICNum=7,
                                 matrixNum=array,
                                 TDCsActive="ALL",
-                                controlSource="PLL",
+                                controlSource="DAC",
                                 fastVal=fast_freq,
                                 slowVal=slow_freq,
                                 testType="NON_CORR",
@@ -117,15 +112,13 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
         groupName = path
         datasetPath = path + "/RAW"
 
-        #path = "{0}/FAST_{1}/SLOW_{2}/ARRAY_{3}".format(self.basePath, fast_freq, slow_freq, array)
-        acqID = random.randint(0, 65535)
 
-        #self.board.b.DMA.set_meta_data(self.filename, path, acqID, 0)
         time.sleep(1)
         # This line is blocking
-        #self.board.b.DMA.start_data_acquisition(acqID, self.countLimit, self.timeLimit, maxEmptyTimeout=100)
         self.board.b.DMA.start_data_acquisition_HDF(0, self.filename, groupName, datasetPath, self.countLimit, maxEmptyTimeout=-1,
                                                     type=1, compression=0)
+
+ 
         time.sleep(1)
 
 
@@ -206,3 +199,4 @@ if __name__ == '__main__':
         exit()
 
     runner.stop()
+

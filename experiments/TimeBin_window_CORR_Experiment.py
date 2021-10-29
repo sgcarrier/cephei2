@@ -20,7 +20,7 @@ _logger = logging.getLogger(__name__)
 """
 
 
-class TimeBin_window_NON_CORR_Experiment(BasicExperiment):
+class TimeBin_window_CORR_Experiment(BasicExperiment):
     '''
     This is an example of an experiment. The execution goes as follows:
 
@@ -56,17 +56,39 @@ class TimeBin_window_NON_CORR_Experiment(BasicExperiment):
         This is where you assign setting that will not change during your experiment
         '''
 
-        self.board.trigger_oscillator.set_frequency(20)  # div by 2 later
-        self.board.trigger_divider.set_divider(154, Divider.MUX_NOT_CORR)
+        #self.board.trigger_oscillator.set_frequency(20)  # div by 2 later
+        #self.board.trigger_divider.set_divider(154, Divider.MUX_NOT_CORR)
+        #self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
+        #self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
+        #self.board.trigger_delay_head_0.set_delay_code(0)
+       
+        #self.board.window_oscillator.set_frequency(20)
+        #self.board.window_divider.set_divider(500, Divider.MUX_NOT_CORR)
+        #self.board.mux_window_laser.select_input(MUX.DIVIDER_INPUT)
+        #self.board.mux_window_external.select_input(MUX.PCB_INPUT)
+        #self.board.window_delay_head_0.set_delay_code(400)
+
+        self.board.pll.set_6_25mhz()
+        self.board.trigger_divider.set_divider(2, Divider.MUX_CORR)
+        self.board.window_divider.set_divider(2, Divider.MUX_CORR)
         self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
         self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
-        self.board.trigger_delay_head_0.set_delay_code(0)
-
-        self.board.window_oscillator.set_frequency(20)
-        self.board.window_divider.set_divider(500, Divider.MUX_NOT_CORR)
         self.board.mux_window_laser.select_input(MUX.DIVIDER_INPUT)
         self.board.mux_window_external.select_input(MUX.PCB_INPUT)
-        self.board.window_delay_head_0.set_delay_code(400)
+        self.board.trigger_delay_head_0.set_delay_code(0)
+        self.board.window_delay_head_0.set_delay_code(0)
+
+
+        self.board.b.LMK01020.gpio_set(0, "TRIG_SYNC", False)
+        self.board.b.LMK01020.gpio_set(0, "WIND_SYNC", False)
+ 
+        time.sleep(0.5)
+
+        self.board.b.LMK01020.gpio_set(0, "DUAL_SYNC", True)
+        time.sleep(0.5)
+        self.board.b.LMK01020.gpio_set(0, "DUAL_SYNC", False)
+        time.sleep(0.5)
+        self.board.b.LMK01020.gpio_set(0, "DUAL_SYNC", True)
 
         self.board.asic_head_0.reset()
 
@@ -75,8 +97,11 @@ class TimeBin_window_NON_CORR_Experiment(BasicExperiment):
         self.board.asic_head_0.disable_all_quench()
         self.board.asic_head_0.disable_all_tdc_but(0, [0])
         self.board.asic_head_0.disable_all_ext_trigger_but(0, [0])
-
+        #self.board.asic_head_0.enable_all_tdc()
+        #self.board.asic_head_0.enable_all_ext_trigger()
+ 
         with open('20may_corr_coef_lin_bias_slope.pickle', 'rb') as f:
+        #with open('TEST_COEF_lin_bias_slope.pickle', 'rb') as f:
             coefficients = pickle.load(f)
             for tdc_id in coefficients:
                 coarse_corr = int(coefficients[tdc_id][0] * 8)
@@ -85,44 +110,49 @@ class TimeBin_window_NON_CORR_Experiment(BasicExperiment):
                 slope_lookup = np.clip((coefficients[tdc_id][3]*8).astype(int), 0, 15)
                 self.board.asic_head_0.set_coarse_correction(array, tdc_id, coarse_corr)
                 self.board.asic_head_0.set_fine_correction(array, tdc_id, fine_corr)
-                self.board.asic_head_0.set_lookup_tables(array, tdc_id, bias_lookup, slope_lookup)
+                self.board.asic_head_0.set_lookup_tables_fast(array, tdc_id, bias_lookup, slope_lookup)
 
-    def run(self, fast_freq, slow_freq, delay, window_length):
-        # Set PLL Frequencies and enable
+
+
         self.board.slow_oscillator_head_0.set_frequency(slow_freq)
         self.board.fast_oscillator_head_0.set_frequency(fast_freq)
         self.board.b.ICYSHSR1.PLL_ENABLE(0, 1, 0)
 
-        # Set trigger delay
-        # self.board.trigger_delay_head_0.set_delay_code(int(delay))
+        self.board.b.ICYSHSR1.TIME_BIN_BOUNDS_0(0,   1050, 0)
+        self.board.b.ICYSHSR1.TIME_BIN_BOUNDS_0_1(0, 1150, 0)
+        self.board.b.ICYSHSR1.TIME_BIN_BOUNDS_1_2(0, 1250, 0)
+        self.board.b.ICYSHSR1.TIME_BIN_BOUNDS_2(0,   1350, 0)
 
-        # Set Window length
-        self.board.asic_head_0.set_window_size(window_length)
 
-        # Set timebins and other QKD registers
-        # timeBins = [0, (window_length // 3), 2*(window_length // 3), window_length]
-        self.board.asic_head_0.confgure_QKD_mode(0, [50, 100, 150, 200], threshold=1)
+        self.board.asic_head_0.set_window_size(2)
+
 
         self.board.b.ICYSHSR1.TIME_CONVERSION_CLOCK_PERIOD_0(0, 4000, 0)
-        # self.board.asic_head_0.set_individual_spad_access(1)
-        #self.board.asic_head_0.mux_select(0, ConstantsASIC.SEL_QKD_TIME_BIN)
+        self.board.asic_head_0.mux_select(0, 11)
+        self.board.b.ICYSHSR1.TDC_GATING_MODE(0, 1, 0)
+        self.board.asic_head_0.window_is_stop()
 
-        currPost = self.board.b.ICYSHSR1.POST_PROCESSING_SELECT(0, 0)
-        _logger.info("Post processing set to : " + str(currPost))
+        self.board.asic_head_0.set_trigger_type(1)
+        self.board.b.ICYSHSR1.TRIGGER_EVENT_DRIVEN_COLUMN_THRESHOLD(0, 1, 0)
 
-        # self.board.asic_head_0.set_trigger_type(0x10)
-        # self.board.b.ICYSHSR1.READOUT_MODE(0, 1, 0)
-        #self.board.b.ICYSHSR1.TDC_GATING_MODE(0, 1, 0)
-        # self.board.b.ICYSHSR1.TRIGGER_WINDOW_DRIVEN_THRESHOLD(0, 0, 0)
-        #self.board.asic_head_0.window_is_stop()
+        self.board.b.ICYSHSR1.SERIAL_READOUT_TYPE(0, 1, 0)
 
-        # self.board.b.ICYSHSR1.TIME_BIN_BOUNDS_0(0, 50, 0)
-        # self.board.b.ICYSHSR1.TIME_BIN_BOUNDS_0_1(0, 100, 0)
-        # self.board.b.ICYSHSR1.TIME_BIN_BOUNDS_1_2(0, 150, 0)
-        # self.board.b.ICYSHSR1.TIME_BIN_BOUNDS_2(0, 200, 0)
 
-        # self.board.b.ICYSHSR1.SERIAL_READOUT_TYPE(0,1,0)
 
+    def run(self, fast_freq, slow_freq, array, delay, window_length):
+        # Set PLL Frequencies and enable
+        self.board.slow_oscillator_head_0.set_frequency(slow_freq)
+        self.board.fast_oscillator_head_0.set_frequency(fast_freq)
+
+        # Set trigger delay
+        actual_delay, delay_code, ftune_volt = self.board.trigger_delay_head_0.delay_to_bit_code_and_ftune(delay)
+        
+        _logger.info("Setting delay code to : " + str(delay_code))
+        _logger.info("Setting ftune code to : " + str(ftune_volt))
+   
+        self.board.trigger_delay_head_0.set_fine_tune(ftune_volt)
+        self.board.trigger_delay_head_0.set_delay_code(delay_code)
+        
 
         path = genPathName_TDC(boardName="CHARTIER",
                                ASICNum=0,
@@ -141,7 +171,7 @@ class TimeBin_window_NON_CORR_Experiment(BasicExperiment):
         time.sleep(2)
         # This line is blocking
         self.board.b.DMA.start_data_acquisition_HDF(self.filename, groupName, datasetPath, self.countLimit,
-                                                    maxEmptyTimeout=-1,
+                                                    maxEmptyTimeout=1500,
                                                     type=10, compression=0)
         time.sleep(1)
 
@@ -162,7 +192,7 @@ if __name__ == '__main__':
     import argparse
     import ast
 
-    loggingSetup("WINDOW_NON_CORR_Experiment", level=logging.DEBUG)
+    loggingSetup("WINDOW_NON_CORR_Experiment", level=logging.INFO)
 
     # Setup the argument parser
     parser = argparse.ArgumentParser()
@@ -192,7 +222,7 @@ if __name__ == '__main__':
     if args.f:
         filename = args.f
     else:
-        filename = "WINDOW_NON_CORR-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
+        filename = "TIME_BIN_WINDOW_CORR-" + time.strftime("%Y%m%d-%H%M%S") + ".hdf5"
 
     if args.d:
         if (args.d[-1] == '/'):
@@ -207,7 +237,7 @@ if __name__ == '__main__':
         countLimit = 10000
 
     # Instanciate the experiment
-    experiment = TimeBin_window_NON_CORR_Experiment(filename=filename,
+    experiment = TimeBin_window_CORR_Experiment(filename=filename,
                                             countLimit=countLimit,
                                             timeLimit=-1)
 
@@ -227,3 +257,4 @@ if __name__ == '__main__':
         exit()
 
     runner.stop()
+

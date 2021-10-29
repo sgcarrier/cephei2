@@ -63,21 +63,18 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
         '''
 
         # Frames are type short
-        #self.board.asic_head_0.frame_type_normal()
+        self.board.asic_head_0.frame_type_normal()
 
         self.board.trigger_oscillator.set_frequency(20)  # div by 2 later
-        self.board.trigger_divider.set_divider(5, Divider.MUX_NOT_CORR)
+        self.board.trigger_divider.set_divider(500, Divider.MUX_NOT_CORR)
         self.board.mux_trigger_laser.select_input(MUX.DIVIDER_INPUT)
         self.board.mux_trigger_external.select_input(MUX.PCB_INPUT)
         self.board.trigger_delay_head_0.set_delay_code(0)
-        #self.board.asic_head_0.reset()
-        self.board.b.ICYSHSR1.gpio_set(0,"REINIT", False)
-        time.sleep(1)
-        self.board.b.ICYSHSR1.gpio_set(0,"REINIT", True)
+        self.board.asic_head_0.reset()
 
         time.sleep(1)
-        #self.board.b.GEN_GPIO.gpio_set("MUX_COMM_SELECT", False)
-        #self.board.b.GEN_GPIO.gpio_set("EN_COMM_COUNTER", False)
+        self.board.b.GEN_GPIO.gpio_set("MUX_COMM_SELECT", False)
+        self.board.b.GEN_GPIO.gpio_set("EN_COMM_COUNTER", False)
 
         #self.board.asic_head_0.disable_all_tdc()
         self.board.asic_head_0.disable_all_quench()
@@ -88,26 +85,24 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
 
     def run(self, fast_freq, slow_freq, array):
         self.board.b.ICYSHSR1.SERIAL_READOUT_TYPE(0, 0, 0)
-        
         self.board.asic_head_0.mux_select(array, 0)
-
         # Set PLL frequencies
-        self.board.slow_oscillator_head_0.set_frequency(slow_freq)
-        self.board.fast_oscillator_head_0.set_frequency(fast_freq)
+        #self.board.slow_oscillator_head_0.set_frequency(slow_freq)
+        #self.board.fast_oscillator_head_0.set_frequency(fast_freq)
 
-        self.board.asic_head_0.enable_all_tdc()
-        self.board.asic_head_0.enable_all_ext_trigger()
+        self.board.asic_head_0.disable_all_tdc_but(array, [0])
+        self.board.asic_head_0.disable_all_ext_trigger_but(array, [0])
 
         self.board.b.ICYSHSR1.PLL_ENABLE(0, 1, 0)
 
         #self.board.b.ICYSHSR1.SERIAL_READOUT_TYPE(0, 1, 0)
-        self.board.asic_head_0.set_trigger_type(1)
-        self.board.b.ICYSHSR1.TRIGGER_EVENT_DRIVEN_COLUMN_THRESHOLD(0, 1, 0)
+        #self.board.asic_head_0.set_trigger_type(1)
+        #self.board.b.ICYSHSR1.TRIGGER_EVENT_DRIVEN_COLUMN_THRESHOLD(0, 1, 0)
 
         path = genPathName_TDC( boardName="CHARTIER",
-                                ASICNum=7,
+                                ASICNum=1,
                                 matrixNum=array,
-                                TDCsActive="ALL",
+                                TDCsActive=[2],
                                 controlSource="PLL",
                                 fastVal=fast_freq,
                                 slowVal=slow_freq,
@@ -124,8 +119,16 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
         time.sleep(1)
         # This line is blocking
         #self.board.b.DMA.start_data_acquisition(acqID, self.countLimit, self.timeLimit, maxEmptyTimeout=100)
-        self.board.b.DMA.start_data_acquisition_HDF(0, self.filename, groupName, datasetPath, self.countLimit, maxEmptyTimeout=-1,
-                                                    type=1, compression=0)
+        #self.board.b.DMA.start_data_acquisition_HDF(self.filename, groupName, datasetPath, self.countLimit, maxEmptyTimeout=-1,
+        #                                            type=1, compression=0)
+
+        try:
+            self.board.b.DMA.start_data_acquisition(0, maxSamples=-1)
+        except KeyboardInterrupt:
+            self.board.b.DMA.stop_data_acquisition()
+            _logger.info("Stopping live feed")
+
+ 
         time.sleep(1)
 
 
@@ -136,6 +139,7 @@ class TDC_M0_NON_CORR_All_Experiment(BasicExperiment):
         operation.
         :return:
         '''
+        input("Reset?")
         self.board.asic_head_0.reset()
         self.pbar.close()
 
@@ -206,3 +210,4 @@ if __name__ == '__main__':
         exit()
 
     runner.stop()
+

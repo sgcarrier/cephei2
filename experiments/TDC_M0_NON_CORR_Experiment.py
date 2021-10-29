@@ -94,14 +94,15 @@ class TDC_NON_CORR_Experiment(BasicExperiment):
         time.sleep(1)
 
 
-
+        
     def cleanup(self):
         '''
         This is where you do all your cleanup. Close resources you want to free up, set back some settings to normal
         operation.
         :return:
         '''
-        self.board.asic_head_0.reset()
+        #self.board.asic_head_0.reset()
+        pass
 
 if __name__ == '__main__':
     from utility.ExperimentRunner import ExperimentRunner
