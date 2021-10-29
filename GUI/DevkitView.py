@@ -5,6 +5,9 @@ from PyQt5 import QtWidgets, uic
 from pyqtgraph import PlotWidget, ColorMap
 import pyqtgraph as pg
 import pickle
+from scipy import stats
+
+import h5py
 
 from functions.helper_functions import *
 from processing.dataFormats import getFrameDtype
@@ -42,7 +45,8 @@ class DevkitView(QtWidgets.QMainWindow):
         self.currentLiveData_H0 = np.zeros((0,), dtype=dtype)
         self.currentLiveData_H1 = np.zeros((0,), dtype=dtype)
 
-
+        self.__recording = False
+        self.currentHDFFile = None
         self.maxSamples = 1000
         self.tdcOfInterest = 0
         self.headOfInterest = 0
@@ -135,13 +139,13 @@ class DevkitView(QtWidgets.QMainWindow):
         self.pll_slow_h1_SpinBox.valueChanged.connect(lambda p: self.board.slow_oscillator_head_1.set_frequency(p))
 
         self.dac_fast_h0_SpinBox.setKeyboardTracking(False)
-        self.dac_fast_h0_SpinBox.valueChanged.connect(self.board.v_fast_head_0.set_voltage)
+        self.dac_fast_h0_SpinBox.valueChanged.connect(self.set_dac_fast_h0)
         self.dac_slow_h0_SpinBox.setKeyboardTracking(False)
-        self.dac_slow_h0_SpinBox.valueChanged.connect(self.board.v_slow_head_0.set_voltage)
+        self.dac_slow_h0_SpinBox.valueChanged.connect(self.set_dac_slow_h0)
         self.dac_fast_h1_SpinBox.setKeyboardTracking(False)
-        self.dac_fast_h1_SpinBox.valueChanged.connect(self.board.v_fast_head_1.set_voltage)
+        self.dac_fast_h1_SpinBox.valueChanged.connect(self.set_dac_fast_h1)
         self.dac_slow_h1_SpinBox.setKeyboardTracking(False)
-        self.dac_slow_h1_SpinBox.valueChanged.connect(self.board.v_slow_head_1.set_voltage)
+        self.dac_slow_h1_SpinBox.valueChanged.connect(self.set_dac_slow_h1)
 
         self.tdc_trig_delay_h0_SpinBox.setKeyboardTracking(False)
         self.tdc_trig_delay_h0_SpinBox.valueChanged.connect(self.trigger_h0_delay)
@@ -238,18 +242,37 @@ class DevkitView(QtWidgets.QMainWindow):
         self.bound_3_h0_spinBox.setKeyboardTracking(False)
         self.bound_3_h0_spinBox.valueChanged.connect(self.bound_3_h0_changed)
 
-        self.disable_all_quench_but.clicked.connect(self.disable_all_quench_but_h0)
+        self.disable_all_quench_but_pushButton.clicked.connect(self.disable_all_quench_but_h0)
 
+        """Recording Tab"""
+
+        self.record_start_pushButton.clicked.connect(self.start_recording)
 
         time.sleep(1)
 
         self.updateOverviewTab()
 
+    def start_recording(self):
+        self.__recording = True
+        self.time_record_start = time.time()
+        _logger.info("Started Recording")
+
     def disable_all_quench_but_h0(self):
         quench = self.quench_exception_h0_spinBox.value()
         array = self.array_select_h0_comboBox.currentIndex()
-        self.board.disable_all_quench_but(array, quench)
+        self.board.asic_head_0.disable_all_quench_but(array, [quench])
 
+    def set_dac_fast_h0(self, val):
+        self.board.v_fast_head_0.set_voltage(val)
+
+    def set_dac_slow_h0(self, val):
+        self.board.v_slow_head_0.set_voltage(val)
+
+    def set_dac_fast_h1(self, val):
+        self.board.v_fast_head_1.set_voltage(val)
+
+    def set_dac_slow_h1(self, val):
+        self.board.v_slow_head_1.set_voltage(val)
 
     def laser_trigger_thres_changed(self, value):
         self.board.laser_threshold.set_voltage(value)
@@ -299,8 +322,14 @@ class DevkitView(QtWidgets.QMainWindow):
         #     d = (random.randint(0, 63), 10, 10000, random.randint(1, 50), random.randint(1, 8), 0, 0)
         #     data[i] = d
 
+
+
         if data is not None:
             if (data.size != 0):
+                if self.__recording:
+                    self.saveDataToHDF(headNum, data)
+                    return
+
                 if headNum == 1:
                     self.currentLiveData_H1 = np.append(self.currentLiveData_H1, data)
                     if (len(self.currentLiveData_H1) > self.maxSamples):
@@ -314,25 +343,71 @@ class DevkitView(QtWidgets.QMainWindow):
                 self.updateSPADTab()
 
 
+    def saveDataToHDF(self, headNum, data):
+        filename = self.hdf_filename_lineEdit.text()
+        path = self.hdf_path_lineEdit.text()
+        samples = self.hdf_samples_spinBox.value()
+
+        self.hdf_recording_progressBar.setRange(0, samples)
+
+        if self.currentHDFFile == None:
+            self.currentHDFFile = h5py.File(filename, "a")
+
+        if path not in self.currentHDFFile:
+            self.currentHDFFile.create_dataset(path, (0,), maxshape=(None,), dtype=data.dtype)
+
+        L = len(data)
+        EOFFlag = False
+        if (L + self.currentHDFFile[path].shape[0]) > samples:
+            L = samples - len(self.currentHDFFile[path])
+            EOFFlag = True
+
+        current_time = time.time()
+        if ((current_time - self.time_record_start) > self.hdf_time_limit_spinBox.value()):
+            EOFFlag = True
+
+        self.currentHDFFile[path].resize((self.currentHDFFile[path].shape[0] + L), axis=0)
+        self.currentHDFFile[path][-L:] = data[:L]
+
+        self.currentHDFFile.flush()
+
+        self.hdf_recording_progressBar.setValue(self.currentHDFFile[path].shape[0])
+
+        if EOFFlag:
+            self.currentHDFFile.close()
+            self.currentHDFFile = None
+            self.__recording = False
+            _logger.info("Done Recording")
+
 
     def updateLiveDataTab(self):
         self.plotLiveData()
 
     def updateSPADTab(self):
-        image_H0 = processSPADImage(self.currentLiveData_H0)
+        image_H0, bin1,bin2,bin3 = processSPADImage(self.currentLiveData_H0)
         if np.sum(image_H0) != 0:
             self.head_0_heatmap.setImage(image_H0, autoLevels=True)
+        if np.sum(bin1) != 0:
+            self.bin1_heatmap.setImage(bin1, autoLevels=True)
+        if np.sum(bin2) != 0:
+            self.bin2_heatmap.setImage(bin2, autoLevels=True)
+        if np.sum(bin3) != 0:
+            self.bin3_heatmap.setImage(bin3, autoLevels=True)
 
         cr_h0 = processTotalCountRate(self.currentLiveData_H0)
 
         self.totalCount_H0.display(cr_h0)
 
-        image_H1 = processSPADImage(self.currentLiveData_H1)
+        image_H1,_,_,_ = processSPADImage(self.currentLiveData_H1)
         if np.sum(image_H1) != 0:
             self.head_1_heatmap.setImage(image_H1, autoLevels=True)
 
         cr_h1 = processTotalCountRate(self.currentLiveData_H1)
         self.totalCount_H1.display(cr_h1)
+
+        self.most_active_spad_h0_lcdNumber.display(stats.mode(self.currentLiveData_H0['Addr']).mode[0])
+        self.most_active_spad_h1_lcdNumber.display(stats.mode(self.currentLiveData_H1['Addr']).mode[0])
+
 
     def updateOverviewTab(self):
         status = self.board.getStatus()
@@ -647,6 +722,36 @@ class DevkitView(QtWidgets.QMainWindow):
     def reset_h0(self):
         self.board.asic_head_0.reset()
 
+        array_selected = self.board.b.ICYSHSR1.OUTPUT_MUX_SELECT(0, 0)
+        self.array_select_h0_comboBox.setCurrentIndex(array_selected)
+
+        pp = self.board.b.ICYSHSR1.POST_PROCESSING_SELECT(0, 0)
+        self.post_processing_select_h0_comboBox.setCurrentIndex(pp)
+
+        trigger_type =  self.board.b.ICYSHSR1.TRIGGER_TYPE(0,0)
+        if (trigger_type == 0x10):
+            trigger_type = 2
+        self.trigger_type_h0_comboBox.setCurrentIndex(trigger_type)
+
+        bound_0 = self.board.b.ICYSHSR1.TIME_BIN_BOUNDS_0(0,0)
+        self.bound_0_h0_spinBox.setValue(bound_0)
+        bound_1 = self.board.b.ICYSHSR1.TIME_BIN_BOUNDS_0_1(0,0)
+        self.bound_1_h0_spinBox.setValue(bound_1)
+        bound_2 = self.board.b.ICYSHSR1.TIME_BIN_BOUNDS_1_2(0,0)
+        self.bound_2_h0_spinBox.setValue(bound_2)
+        bound_3 = self.board.b.ICYSHSR1.TIME_BIN_BOUNDS_2(0,0)
+        self.bound_3_h0_spinBox.setValue(bound_3)
+
+        pll_enable = (self.board.b.ICYSHSR1.PLL_ENABLE(0,0) == 1)
+        self.pll_enable_h0_checkBox.setChecked(pll_enable)
+
+        window_is_stop = (self.board.b.ICYSHSR1.TDC_STOP_SIGNAL(0,0) == 1)
+        self.window_is_stop_h0_checkBox.setChecked(window_is_stop)
+
+        window_len = self.board.b.ICYSHSR1.WINDOW(0,0)
+        self.window_length_h0_SpinBox.setValue(window_len)
+
+
     def pll_enable_h0_changed(self, state):
         if state ==0:
             self.board.b.ICYSHSR1.PLL_ENABLE(0, 0, 0)
@@ -740,17 +845,21 @@ class DevkitView(QtWidgets.QMainWindow):
 
     def apply_corrections(self):
 
-        array = self.array_select_h0_comboBox.currentIndex()
+        #array = self.array_select_h0_comboBox.currentIndex()
+        array = 1
         head  = self.asic_number_h0_spinBox.value()
         freq = 255
         type = self.correction_type_h0_comboBox.currentText()
 
-        with open('H7_M1_255_skew.pickle', 'rb') as f:
+        with open('H7_M1_1v278_skew.pickle', 'rb') as f:
             skew_corr = pickle.load(f)
             for tdc in range(len(skew_corr)):
                 self.board.asic_head_0.set_skew_correction(array, tdc*4, int(skew_corr[tdc]))
 
-        corr_filename = "H{0}_M{1}_F{2}_{3}.pickle".format(int(head), int(array), int(freq), type)
+
+        #corr_filename = "H{0}_M{1}_F{2}_{3}.pickle".format(int(head), int(array), int(freq), type)
+
+        corr_filename = "19oct_corr_coef_lin_bias_slope.pickle"
 
         with open(corr_filename, 'rb') as f:
             coefficients = pickle.load(f)

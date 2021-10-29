@@ -18,7 +18,7 @@
     <item row="0" column="0">
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>1</number>
+       <number>3</number>
       </property>
       <widget class="QWidget" name="Overview_tab">
        <attribute name="title">
@@ -380,7 +380,7 @@
               <item row="7" column="0">
                <widget class="QLabel" name="label_15">
                 <property name="text">
-                 <string>Window Length (ps)</string>
+                 <string>Window Length</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
@@ -519,7 +519,7 @@
               <item row="0" column="1">
                <widget class="QPushButton" name="reset_h0_pushButton">
                 <property name="text">
-                 <string>Reset</string>
+                 <string>Reset and fetch</string>
                 </property>
                </widget>
               </item>
@@ -1151,43 +1151,11 @@
          <rect>
           <x>8</x>
           <y>8</y>
-          <width>1051</width>
-          <height>741</height>
+          <width>1061</width>
+          <height>761</height>
          </rect>
         </property>
         <layout class="QGridLayout" name="gridLayout_4">
-         <item row="0" column="0">
-          <layout class="QVBoxLayout" name="verticalLayout_8">
-           <item>
-            <widget class="QLabel" name="head_0_label">
-             <property name="text">
-              <string>HEAD 0 Image</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_2">
-             <item>
-              <widget class="QLabel" name="label_39">
-               <property name="text">
-                <string>Total Counts</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLCDNumber" name="totalCount_H0">
-               <property name="digitCount">
-                <number>7</number>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <widget class="ImageView" name="head_0_heatmap" native="true"/>
-           </item>
-          </layout>
-         </item>
          <item row="0" column="1">
           <layout class="QVBoxLayout" name="verticalLayout_7">
            <item>
@@ -1208,8 +1176,37 @@
              </item>
              <item>
               <widget class="QLCDNumber" name="totalCount_H1">
+               <property name="font">
+                <font>
+                 <pointsize>12</pointsize>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
                <property name="digitCount">
                 <number>7</number>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_6">
+             <item>
+              <widget class="QLabel" name="label_56">
+               <property name="text">
+                <string>Most Active SPAD</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLCDNumber" name="most_active_spad_h1_lcdNumber">
+               <property name="font">
+                <font>
+                 <pointsize>12</pointsize>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
                </property>
               </widget>
              </item>
@@ -1219,6 +1216,205 @@
             <widget class="ImageView" name="head_1_heatmap" native="true"/>
            </item>
           </layout>
+         </item>
+         <item row="0" column="0">
+          <layout class="QVBoxLayout" name="verticalLayout_8">
+           <item>
+            <widget class="QLabel" name="head_0_label">
+             <property name="text">
+              <string>HEAD 0 Image</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_2">
+             <item>
+              <widget class="QLabel" name="label_39">
+               <property name="text">
+                <string>Total Counts</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLCDNumber" name="totalCount_H0">
+               <property name="font">
+                <font>
+                 <pointsize>12</pointsize>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="digitCount">
+                <number>7</number>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_5">
+             <item>
+              <widget class="QLabel" name="label_55">
+               <property name="text">
+                <string>Most Active SPAD</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLCDNumber" name="most_active_spad_h0_lcdNumber">
+               <property name="font">
+                <font>
+                 <pointsize>12</pointsize>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="ImageView" name="head_0_heatmap" native="true"/>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="time_bin_tab">
+       <attribute name="title">
+        <string>Time Bin Arrays</string>
+       </attribute>
+       <widget class="QWidget" name="layoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>80</y>
+          <width>1041</width>
+          <height>541</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_16">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_51">
+           <property name="text">
+            <string>Bin 1</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLabel" name="label_52">
+           <property name="text">
+            <string>Bin 2</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QLabel" name="label_53">
+           <property name="text">
+            <string>Bin 3</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="ImageView" name="bin1_heatmap" native="true"/>
+         </item>
+         <item row="1" column="1">
+          <widget class="ImageView" name="bin2_heatmap" native="true"/>
+         </item>
+         <item row="1" column="2">
+          <widget class="ImageView" name="bin3_heatmap" native="true"/>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="recording_tab">
+       <attribute name="title">
+        <string>Record</string>
+       </attribute>
+       <widget class="QWidget" name="layoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>30</x>
+          <y>280</y>
+          <width>1001</width>
+          <height>153</height>
+         </rect>
+        </property>
+        <layout class="QFormLayout" name="formLayout_3">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_48">
+           <property name="text">
+            <string>Filename</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="hdf_filename_lineEdit"/>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_49">
+           <property name="text">
+            <string>path in hdf5</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLineEdit" name="hdf_path_lineEdit"/>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_50">
+           <property name="text">
+            <string>Number of Samples</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QSpinBox" name="hdf_samples_spinBox">
+           <property name="minimum">
+            <number>0</number>
+           </property>
+           <property name="maximum">
+            <number>1000000000</number>
+           </property>
+           <property name="singleStep">
+            <number>1000</number>
+           </property>
+           <property name="value">
+            <number>1000000</number>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QPushButton" name="record_start_pushButton">
+           <property name="text">
+            <string>Start</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QProgressBar" name="hdf_recording_progressBar">
+           <property name="value">
+            <number>0</number>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QSpinBox" name="hdf_time_limit_spinBox">
+           <property name="maximum">
+            <number>10000</number>
+           </property>
+           <property name="value">
+            <number>10</number>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_54">
+           <property name="text">
+            <string>Time limit (sec)</string>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -1233,7 +1429,7 @@
      <x>0</x>
      <y>0</y>
      <width>1084</width>
-     <height>28</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

@@ -328,15 +328,25 @@ def processCountRate(data, addr):
 
 def processSPADImage(data):
     if (data.size == 0):
-        return np.zeros((8,8))
+        return np.zeros((8,8)),np.zeros((8,8)),np.zeros((8,8)),np.zeros((8,8))
     maxAddr = np.max(data["Addr"])
     arraySize = int(np.ceil(np.sqrt(maxAddr))**2)
     side = int(np.sqrt(arraySize))
     image = np.zeros((side,side))
+    bin1_image = np.zeros((side, side))
+    bin2_image = np.zeros((side, side))
+    bin3_image = np.zeros((side, side))
     counts = np.zeros((arraySize,))
+    bin1_counts = np.zeros((arraySize,))
+    bin2_counts = np.zeros((arraySize,))
+    bin3_counts = np.zeros((arraySize,))
 
     for i in range(arraySize):
         counts[i] = len(data[data["Addr"] == i])
+        if "Bin" in data.dtype.fields:
+            bin1_counts[i] = len(data[(data["Addr"] == i) & (data["Bin"] == 1)])
+            bin2_counts[i] = len(data[(data["Addr"] == i) & (data["Bin"] == 2)])
+            bin3_counts[i] = len(data[(data["Addr"] == i) & (data["Bin"] == 3)])
 
     for i in range(side * side):
         tdc = i // 4
@@ -344,13 +354,17 @@ def processSPADImage(data):
 
         x_pos = (2 * tdc) % side + (sub % 2)
         if (sub < 2):
-            y_pos = ((tdc) // (side//2)) * 2 + 1
-        else:
             y_pos = ((tdc) // (side//2)) * 2
+        else:
+            y_pos = ((tdc) // (side//2)) * 2 +1
 
         image[x_pos][y_pos] = counts[i]
+        bin1_image[x_pos][y_pos] = bin1_counts[i]
+        bin2_image[x_pos][y_pos] = bin2_counts[i]
+        bin3_image[x_pos][y_pos] = bin3_counts[i]
 
-    return image
+
+    return image, bin1_image, bin2_image, bin3_image
 
 
 
