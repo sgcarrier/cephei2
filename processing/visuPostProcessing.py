@@ -1,15 +1,16 @@
 import numpy as np
 import h5py
 import pandas as pd
+from scipy import stats
 from tqdm import tqdm
 
-def post_processing(h, fieldName, formatNum, tdcNum):
+def post_processing(h, fieldName, formatNum, tdcNum, mask):
     if (formatNum == 1):
         return post_processing_PLL_FORMAT(h, fieldName)
     else:
-        return post_processing_RAW_FORMAT(h, fieldName, tdcNum)
+        return post_processing_RAW_FORMAT(h, fieldName, tdcNum, mask)
 
-def post_processing_RAW_FORMAT(h, fieldName, tdcNum):
+def post_processing_RAW_FORMAT(h, fieldName, tdcNum, mask=None):
     """
     Post-Processing for the RAW frames. They are 64 bits long.
     We are only interested in the ones with the corresponding TDC number
@@ -17,10 +18,52 @@ def post_processing_RAW_FORMAT(h, fieldName, tdcNum):
     """
 
     if isinstance(h, h5py.Dataset):  # This is for cases we did all TDC at the same time
-        return np.array(h[fieldName])[h['Addr'] == (tdcNum * 4)]
+        ht = h[fieldName][mask]
+
+        # t = h["Global"]
+        # t_n = t[h['Addr'] == (tdcNum * 4)]
+        # print(str(t_n[0]) + ", " + str(t_n[1]) + ", " + str(t_n[10000]) + ", " + str(t_n[10001]))
+
+        return ht[h['Addr'][mask] == (tdcNum * 4)]
     else:  # This is for cases where we did one TDC at a time
         newBasePath = "ADDR_{}".format(tdcNum)
         return np.array(h[newBasePath][fieldName], dtype='int64')
+
+def post_processing_RAW_FORMAT_FINE_COARSE_NO_SKIP(h, tdcNum, maxTDC):
+
+    if isinstance(h, h5py.Dataset):  # This is for cases we did all TDC at the same time
+
+        fine = np.array(h['Fine'])[h['Addr'] == (tdcNum * 4)]
+        coarse = np.array(h['Coarse'])[h['Addr'] == (tdcNum * 4)]
+        glob = np.array(h['Global'])[h['Addr'] == (tdcNum * 4)]
+
+        mask = np.zeros((len(glob),))
+        td = 0
+        for i in range(5000):
+            if td == h['Addr'][i]:
+                mask[i] = 1
+                td += 4
+            else:
+                mask[i-td:i]= [0]*((td)//4)
+                td = 0
+
+            if td >= maxTDC*4:
+                td = 0
+
+        bmask = mask != 0
+        fine_ns = fine[bmask]
+        coarse_ns = coarse[bmask]
+
+        return fine_ns, coarse_ns
+
+
+
+
+
+
+    # else:  # This is for cases where we did one TDC at a time
+    #     newBasePath = "ADDR_{}".format(tdcNum)
+    #     return np.array(h[newBasePath][fieldName], dtype='int64')
 
 def post_processing_PLL_FORMAT(h, fieldName):
     """
@@ -324,7 +367,19 @@ def processCountRate(data, addr):
 
 
 
-
+def calcPeak(data, addr, peak_acceptance_factor):
+    reduced_data  = data[data['Addr'] == addr]
+    if "Timestamp" in reduced_data.dtype.fields:
+        mode = stats.mode(reduced_data['Timestamp'])
+        hist = np.bincount(reduced_data['Timestamp'])
+        hist = hist[hist != 0]
+        avg_count = np.mean(hist)
+        if mode[1] > (peak_acceptance_factor*avg_count):
+            return int(mode[0][0])
+        else:
+            return -1
+    else:
+        return -1
 
 def processSPADImage(data):
     if (data.size == 0):
@@ -394,4 +449,20 @@ def processTotalCountRate(data):
 
     else:
         return 0
+
+
+def calcMaxCoarse(filename, path):
+    with h5py.File(filename, 'r') as h:
+        data = h[path]
+        maxCoarse = findTrueMaxCoarseDecimal(data["Coarse"], threshold=0.1)
+
+    return maxCoarse
+
+
+def calcMaxFine(filename, path):
+    with h5py.File(filename, 'r') as h:
+        data = h[path]
+        maxFine = findTrueMaxFineWThreshold(data["Coarse"], data["Fine"], threshold=0.01)
+
+    return maxFine
 

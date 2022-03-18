@@ -402,7 +402,6 @@ class DelayLine:
 
 
 
-    @staticmethod
     def delay_to_bit_code_and_ftune(self, delay):
         # delays_by_bit = [4610, 2300, 1150, 575, 290, 145, 70, 35, 15, 10]
         delays_by_bit = [18.39, 22.09, 48.31, 87.83, 162.73, 308.62, 612.52, 1229.95, 2453.47, 4877.48]

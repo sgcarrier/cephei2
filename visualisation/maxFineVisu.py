@@ -80,8 +80,8 @@ if __name__ == '__main__':
     #             0 = Normal 64 bits no post-processing
     #             1 = PLL 20 bits
     # tdcNums = Array of tdcs addresses to display
-    BH.tdcHist(filename="/home2/cars2019/Documents/DATA/NON_CORR_TEST_ALL-20210407-194310.hdf5",
-               basePath="CHARTIER/ASIC0/TDC/M0/ALL_TDC_ACTIVE/PLL/FAST_255/SLOW_250/NON_CORR/EXT/PROCESSED",
+    BH.tdcHist(filename="/home/simonc/Documents/DATA/1_mars_2022/H5_M0_NON_CORR_DAC.hdf5",
+               basePath="/CHARTIER/ASIC5/TDC/M0/ALL_TDC_ACTIVE/DAC/FAST_1.28/SLOW_1.263/NON_CORR/EXT/ADDR_ALL/RAW",
                formatNum=0,
                tdcNums=list(range(49)))
 

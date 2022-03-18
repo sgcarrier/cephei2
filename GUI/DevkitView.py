@@ -6,12 +6,17 @@ from pyqtgraph import PlotWidget, ColorMap
 import pyqtgraph as pg
 import pickle
 from scipy import stats
+import os
+
+from processing.visuPostProcessing import calcMaxFine, calcMaxCoarse
+#from processing.get_TDC_skew import calcSkewCoef
+#from processing.ICYSHSR1_get_coef import calcCoef
 
 import h5py
 
 from functions.helper_functions import *
 from processing.dataFormats import getFrameDtype
-from processing.visuPostProcessing import processHistogram, processHistogramAll, processSPADImage, processCountRate, processTotalCountRate
+from processing.visuPostProcessing import processHistogram, processHistogramAll, processSPADImage, processCountRate, processTotalCountRate, calcPeak
 from data_grabber.multicastDataGrabber import MulticastDataGrabber
 import random
 from utility.QTextEditLogger import QTextEditLogger
@@ -54,6 +59,8 @@ class DevkitView(QtWidgets.QMainWindow):
 
         self.monitorList = ['Fine', 'Coarse']
         self.graphsReady = True
+
+        self.last_time = time.time()
 
         self.board = Board(remoteIP=self.ip)
 
@@ -164,6 +171,10 @@ class DevkitView(QtWidgets.QMainWindow):
 
         self.window_is_stop_h0_checkBox.stateChanged.connect(self.window_is_stop_h0_changed)
         self.window_is_stop_h0_checkBox.stateChanged.connect(self.window_is_stop_h1_changed)
+        
+
+
+        self.read_untriggered_checkBox.stateChanged.connect(self.read_untriggered_h0_changed)
 
 
         """ ASIC TAB"""
@@ -179,6 +190,8 @@ class DevkitView(QtWidgets.QMainWindow):
 
         self.laser_trigger_thresh_spinBox.setKeyboardTracking(False)
         self.laser_trigger_thresh_spinBox.valueChanged.connect(self.laser_trigger_thres_changed)
+
+        self.laser_trigger_h0_inverted_checkBox.stateChanged.connect(self.laser_trigger_thres_inverted_changed)
 
         self.disable_all_quench_h0_pushButton.clicked.connect(self.disable_all_quench_h0)
         self.disable_all_quench_h1_pushButton.clicked.connect(self.disable_all_quench_h1)
@@ -219,8 +232,8 @@ class DevkitView(QtWidgets.QMainWindow):
         self.holdoff_h0_spinBox.setKeyboardTracking(False)
         self.holdoff_h0_spinBox.valueChanged.connect(self.holdoff_current_h0)
 
-        self.v_comp_h0_spinBox.setKeyboardTracking(False)
-        self.v_comp_h0_spinBox.valueChanged.connect(self.comparator_voltage_h0)
+        self.v_comp_h0_doubleSpinBox.setKeyboardTracking(False)
+        self.v_comp_h0_doubleSpinBox.valueChanged.connect(self.comparator_voltage_h0)
 
         self.window_length_h0_SpinBox.setKeyboardTracking(False)
         self.window_length_h0_SpinBox.valueChanged.connect(self.window_length_h0_changed)
@@ -265,8 +278,16 @@ class DevkitView(QtWidgets.QMainWindow):
         array = self.array_select_h0_comboBox.currentIndex()
         self.board.asic_head_0.disable_all_quench_but(array, [quench])
 
+    def read_untriggered_h0_changed(self, state):
+        if state == 0:
+            self.board.b.ICYSHSR1.READ_UNTRIGGERED_TDCS(0, 0, 0)
+        else:
+            self.board.b.ICYSHSR1.READ_UNTRIGGERED_TDCS(0, 1, 0)
+
+
     def set_dac_fast_h0(self, val):
         self.board.v_fast_head_0.set_voltage(val)
+
 
     def set_dac_slow_h0(self, val):
         self.board.v_slow_head_0.set_voltage(val)
@@ -279,6 +300,12 @@ class DevkitView(QtWidgets.QMainWindow):
 
     def laser_trigger_thres_changed(self, value):
         self.board.laser_threshold.set_voltage(value)
+
+    def laser_trigger_thres_inverted_changed(self, state):
+        if state == 0:
+            self.board.mux_laser_polarity.select_input(MUX.NON_INVERTED)
+        else:
+            self.board.mux_laser_polarity.select_input(MUX.INVERTED)
 
     def recharge_current_h0(self, value):
         self.board.recharge_current.set_current(value)
@@ -344,6 +371,24 @@ class DevkitView(QtWidgets.QMainWindow):
 
                 self.updateLiveDataTab()
                 self.updateSPADTab()
+                self.autoChangeWindowWithSync()
+
+    def autoChangeWindowWithSync(self):
+        current_time = time.time()
+        if self.activate_sync_pixel_checkBox.isChecked() and ((current_time - self.last_time) > 10) :
+            pix_addr = self.sync_pixel_addr_h0_spinBox.value()
+            peak = calcPeak(self.currentLiveData_H0, pix_addr, 4)
+            self.last_time = current_time
+            if peak != -1:
+                objective = self.center_window_delay_spinBox.value()
+                shift = int(objective - peak)
+                current_delay = self.wind_trig_delay_h0_SpinBox.value()
+                new_delay = current_delay + shift
+                if new_delay < 0:
+                    new_delay = 0
+
+                self.wind_trig_delay_h0_SpinBox.setValue(new_delay)
+
 
 
     def saveDataToHDF(self, headNum, data):
@@ -876,15 +921,22 @@ class DevkitView(QtWidgets.QMainWindow):
         freq = 255
         type = self.correction_type_h0_comboBox.currentText()
 
-        with open('H7_M1_1v278_skew.pickle', 'rb') as f:
+        #skew_filename = 'H7_M1_1v278_skew.pickle'
+        skew_filename = "H{0}_M{1}_skew.pickle".format(int(head), int(array), int(freq), type)
+
+        #skew_filename = 'H8_M1_1v27_skew.pickle'
+
+        with open(skew_filename, 'rb') as f:
             skew_corr = pickle.load(f)
             for tdc in range(len(skew_corr)):
                 self.board.asic_head_0.set_skew_correction(array, tdc*4, int(skew_corr[tdc]))
 
 
-        #corr_filename = "H{0}_M{1}_F{2}_{3}.pickle".format(int(head), int(array), int(freq), type)
+        corr_filename = "H{0}_M{1}_{3}.pickle".format(int(head), int(array), int(freq), type)
 
-        corr_filename = "19oct_corr_coef_lin_bias_slope.pickle"
+        #corr_filename = "19oct_corr_coef_lin_bias_slope.pickle"
+        #corr_filename = "H8_M1_1v27_lin_bias_slope.pickle"
+
 
         with open(corr_filename, 'rb') as f:
             coefficients = pickle.load(f)
@@ -944,4 +996,87 @@ class ConnectDialogClass(QtWidgets.QDialog):
         self.ip = self.ip_setting.text()
         self.port = int(self.port_setting.text())
 
+
+    def runCalibSequence(self):
+
+        isAverageCoarse8 = False
+        while (isAverageCoarse8 != True):
+
+            cur_slow_freq  = self.dac_slow_h0_SpinBox.value()
+
+            filename = "CoarseAdj.hdf5"
+            path = "CoarseAdj"
+            groupName = path
+            datasetPath = path + "/RAW"
+
+            self.hdf_filename_lineEdit.setText(filename)
+            self.hdf_path_lineEdit.setText(datasetPath)
+            self.hdf_samples_spinBox.setValue(1000000)
+
+            time.sleep(2)
+            self.__recording = True
+            while (self.__recording):
+                time.sleep(1)
+
+
+            time.sleep(1)
+
+            avgCoarse = calcMaxCoarse(filename, path)
+            if (avgCoarse > 7.9) and (avgCoarse < 8.1):
+                isAverageCoarse8 = True
+            elif (avgCoarse <= 7.9):
+                cur_slow_freq += 0.001
+                #self.board.v_slow_head_0.set_voltage(cur_slow_freq)
+                self.dac_slow_h0_SpinBox.setValue(cur_slow_freq)
+                _logger.info("Average coarse was: " + str(avgCoarse) + ", setting slow to: " + str(cur_slow_freq))
+            elif (avgCoarse >= 8.1):
+                cur_slow_freq -= 0.001
+                #self.board.v_slow_head_0.set_voltage(cur_slow_freq)
+                self.dac_slow_h0_SpinBox.setValue(cur_slow_freq)
+                _logger.info("Average coarse was: " + str(avgCoarse) + ", setting slow to: " + str(cur_slow_freq))
+
+            os.remove(filename)
+
+        _logger.info(" === Done Coarse adjustment step ===")
+
+        # find fast that gives an average of 50 fine
+        _logger.info(" === Starting Fine adjustment step ===")
+        isAverageFine50 = False
+        while (isAverageFine50 == False):
+
+            cur_fast_freq  = self.dac_fast_h0_SpinBox.value()
+
+
+            filename = "FineAdj.hdf5"
+            path = "FineAdj"
+            groupName = path
+            datasetPath = path + "/RAW"
+
+            self.hdf_filename_lineEdit.setText(filename)
+            self.hdf_path_lineEdit.setText(datasetPath)
+            self.hdf_samples_spinBox.setValue(1000000)
+
+            time.sleep(2)
+            self.__recording = True
+            while (self.__recording):
+                time.sleep(1)
+
+            time.sleep(1)
+            avgFine = calcMaxFine(self.filename, path)
+            if (avgFine > 45) and (avgFine < 55):
+                isAverageCoarse8 = True
+            elif (avgFine <= 45):
+                cur_fast_freq -= 0.001
+                #self.board.v_fast_head_0.set_voltage(cur_fast_freq)
+                self.dac_fast_h0_SpinBox.setValue(cur_fast_freq)
+                _logger.info("Average fine was: " + str(avgFine) + ", setting fast to: " + str(cur_fast_freq))
+                os.remove(filename)
+            elif (avgFine >= 55):
+                cur_fast_freq += 0.001
+                #self.board.v_fast_head_0.set_voltage(cur_fast_freq)
+                self.dac_fast_h0_SpinBox.setValue(cur_fast_freq)
+                _logger.info("Average fine was: " + str(avgFine) + ", setting fast to: " + str(cur_fast_freq))
+                os.remove(filename)
+
+        _logger.info(" === Done Fine adjustment step ===")
 

@@ -37,9 +37,9 @@ class ASIC:
 
     # This function doesn't reset multiple chips at the same time.
     def reset(self):
-        self.b.ICYSHSR1.GPIO(self.head_id, "REINIT", False)
-        time.sleep(1)
         self.b.ICYSHSR1.GPIO(self.head_id, "REINIT", True)
+        time.sleep(1)
+        self.b.ICYSHSR1.GPIO(self.head_id, "REINIT", False)
         time.sleep(1)
 
     # This function doesn't sync multiple chips together.

@@ -8,18 +8,22 @@ def main():
     # ARR 0
     # Fichier Pascal
     #filename = "./data/ARR0/SkewCorr/TDC_M0_NON_CORR_TIME_All-20210616-132953.hdf5"
-    filename = "/CMC/partage/GRAMS/DATA/ICYSHSR1/ASIC_07/raw_data/NON_CORR_M1_H7.hdf5"
+    filename = "h5_skew_data.hdf5"
     #path = "CHARTIER/ASIC0/TDC/M0/ALL_TDC_ACTIVE/PLL/FAST_255/SLOW_250/NON_CORR/EXT/ADDR_ALL/RAW"
-    path = "CHARTIER/ASIC7/TDC/M1/ALL_TDC_ACTIVE/PLL/FAST_255/SLOW_250/NON_CORR/EXT/ADDR_ALL/RAW"
+    path = "CHARTIER/ASIC5/TDC/M1/ALL_TDC_ACTIVE/DAC/FAST_1.28/SLOW_1.263/NON_CORR/EXT/ADDR_ALL/RAW"
+
+    calcSkewCoef(filename, path, "H5_skew_data.pickle")
+
+def calcSkewCoef(filename, path, outputName):
 
     with h5py.File(filename, "r") as h:
         data = np.array(h[path])
-        timestamps = np.zeros(49)
+        timestamps = np.zeros(16)
         diffs = []
         count = 0
         for packet in data:
             if packet == 0xAAAAAAAAAAAAAAAA:
-                timestamps = np.zeros(49)
+                timestamps = np.zeros(16)
             elif packet == 0xAAAAAAABAAAAAAAB:
                 if timestamps.all():
                     diffs.append(timestamps[0]- timestamps)
@@ -39,8 +43,8 @@ def main():
         offset_delay = np.amax(skew)
         skew_correction = -(skew - offset_delay)
         print(skew_correction)
-        with open('H7_M1_255_skew.pickle', 'wb') as f:
+        with open(outputName, 'wb') as f:
             pickle.dump(skew_correction, f)
 
 
-main()
+#main()
