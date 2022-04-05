@@ -38,6 +38,19 @@ class TransferFunctions:
         self.bias_slope_reg = self.linear_regression_algorithm(True, True)
         #self.save_coefficients("all")
 
+    def get_DNL_INL_LSB(self):
+        avg_count = np.mean(self.density_code)
+        DNL = (self.density_code / avg_count) - 1
+
+        ps_per_count = PERIOD_IN_PS / np.sum(self.density_code)
+        LSB = np.mean(self.density_code * ps_per_count)
+
+        INL = np.cumsum(DNL)
+
+        numOfCodes = np.sum(self.fine_by_coarse)
+        return DNL, INL, LSB, numOfCodes
+
+
     def get_density_code(self, filename, basePath, pixel_id, filter_lower_than):
         with h5py.File(filename, "r") as h:
             ds = h[basePath]
@@ -76,9 +89,20 @@ class TransferFunctions:
     def get_slope_corr_biased_linear(self):
         return self.bias_slope_reg
 
+    def get_code(self, coarse, fine):
+        if coarse > 0:
+            coarse -= 1
+        return np.sum(self.fine_by_coarse[:coarse]) + fine
+
+
     def code_to_timestamp(self, coarse, fine):
+        if coarse > 0:
+            coarse -= 1
         index = np.sum(self.fine_by_coarse[:coarse]) + fine
-        return self.ideal_tf[index]
+        if index >= len(self.ideal_tf):
+            return np.NaN
+        else:
+            return self.ideal_tf[index]
 
     def get_coefficients(self):
         return self.coarse_period, self.fine_period, self.coarse_lookup_table, self.fine_slope_corr_lookup_table

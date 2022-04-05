@@ -29,6 +29,8 @@ class TimingTableVisualizer:
 
     def TDCodes(self, basePath, withFlush=True, maxFine=None, maxCoarse=None, TDCNum=0):
         lfh = self.fh[basePath]
+
+
         if maxFine:
             maxFine = np.int64(maxFine)
         else:
@@ -42,6 +44,12 @@ class TimingTableVisualizer:
 
 
         conditionIndex = (lfh['Coarse'] < maxCoarse) & (lfh['Fine'] < maxFine ) & (lfh['Addr'] == TDCNum)
+
+        data_len = len(lfh['Fine'])
+        valid_data_len = np.sum(conditionIndex)
+
+        print(str(valid_data_len) + " out of " + str(data_len) + " data valid")
+
 
         fine = ((lfh['Fine'][:])[conditionIndex]).astype('int64')
         # if fine.size != 0:
@@ -129,10 +137,10 @@ class TimingTableVisualizer:
 
 
     def showTimingTable(self, basePath, maxFine=None, maxCoarse=None, TDCNum=0, nonCorrPath=None):
-        # w = gl.GLViewWidget()
-        # w.opts['distance'] = 40
-        # w.show()
-        # w.setWindowTitle('pyqtgraph example: GLLinePlotItem')
+        w = gl.GLViewWidget()
+        w.opts['distance'] = 40
+        w.show()
+        w.setWindowTitle('pyqtgraph example: GLLinePlotItem')
 
         timingTable, maxFine, maxCoarse = self.genDistOfCodesFile(basePath=basePath,
                                                                   maxFine=maxFine,
@@ -140,31 +148,31 @@ class TimingTableVisualizer:
                                                                   TDCNum=TDCNum,
                                                                   nonCorrPath=nonCorrPath)
         self.total_timingTable = timingTable
-        # gx = gl.GLGridItem()
-        # gx.rotate(90, 0, 1, 0)
-        # gx.translate(0, 0, 0)
-        # w.addItem(gx)
-        # gy = gl.GLGridItem()
-        # gy.rotate(90, 1, 0, 0)
-        # gy.translate(0, 0, 0)
-        # w.addItem(gy)
-        # gz = gl.GLGridItem()
-        # gz.translate(0, 0, 0)
-        # w.addItem(gz)
-        #
-        # axis = gl.GLAxisItem()
-        # # xAxis.paint()
-        # # axis.setSize(self.valueNumber, self.valueNumber, self.valueNumber)
-        # w.addItem(axis)
+        gx = gl.GLGridItem()
+        gx.rotate(90, 0, 1, 0)
+        gx.translate(0, 0, 0)
+        w.addItem(gx)
+        gy = gl.GLGridItem()
+        gy.rotate(90, 1, 0, 0)
+        gy.translate(0, 0, 0)
+        w.addItem(gy)
+        gz = gl.GLGridItem()
+        gz.translate(0, 0, 0)
+        w.addItem(gz)
 
-        #
-        # x = np.arange(timingTable.shape[0])
-        # y = np.arange(timingTable.shape[1])
-        # z = timingTable / np.max(timingTable) * 10#* (10**2)
-        # plt = gl.GLSurfacePlotItem(z=z, shader='normalColor')
-        # w.addItem(plt)
+        axis = gl.GLAxisItem()
+        # xAxis.paint()
+        # axis.setSize(self.valueNumber, self.valueNumber, self.valueNumber)
+        w.addItem(axis)
 
-    #
+
+        x = np.arange(timingTable.shape[0])
+        y = np.arange(timingTable.shape[1])
+        z = timingTable / np.max(timingTable) * 10#* (10**2)
+        plt = gl.GLSurfacePlotItem(z=z, shader='normalColor')
+        w.addItem(plt)
+
+
     # def showTotalHist(self):
     #     total_hist_sum = np.sum(self.total_hist, axis=0)
     #
@@ -183,14 +191,16 @@ class TimingTableVisualizer:
     #
     #     ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14,
     #             verticalalignment='top')
-    #
-    #     plt.show()
+
+    #    plt.show()
 
     def showTotalHist(self):
         timetable_size = self.total_timingTable.shape[0]
         ttt = np.copy(self.total_timingTable[0:timetable_size, :])
 
         maxCode = len(ttt[0,:])
+
+        print(np.sum(ttt))
 
         for code in range(len(ttt[0,:])):
             if np.sum(ttt[:,code]) == 0:
@@ -205,6 +215,8 @@ class TimingTableVisualizer:
         plt.figure(2)
         ax = plt.subplot(1, 1, 1)
         ax.bar(np.arange(len(total_hist_sum)), total_hist_sum, align='center')
+        #ax.bar(np.arange(len(self.total_timingTable[:, 230])), self.total_timingTable[:, 230], align='center')
+
 
         ax.set_title(" Histogram TDC : 0, delay aligned, Correlated test total sum")
 
@@ -246,6 +258,7 @@ class TimingTableVisualizer:
 
         jitterRMS =  np.empty((len(ttt[0,:])))
         delayAVG =  np.empty((len(ttt[0,:])))
+        count = np.empty((len(ttt[0, :])))
 
         for code in tqdm(range(len(ttt[0, :]))):
             raw_data_recon = np.empty((0,))
@@ -261,23 +274,36 @@ class TimingTableVisualizer:
 
             jitterRMS[code] = np.std(raw_data_recon)
             delayAVG[code] = np.mean(raw_data_recon)
+            count[code] = len(raw_data_recon)
 
-        jitterRMS_noDelay = np.sqrt((jitterRMS**2) - (4.5**2))
+        #jitterRMS_noDelay = np.sqrt((jitterRMS**2) - (4.5**2))
+        jitterRMS_noDelay = jitterRMS
 
         plt.figure(3)
-        ax = plt.subplot(2, 1, 1)
+        ax = plt.subplot(3, 1, 1)
         ax.plot(np.arange(len(jitterRMS_noDelay)), jitterRMS_noDelay)
 
-        ax.set_title(" Code vs Jitter with delay line (4.5ps RMS jitter) removed")
+        ax.set_title(" Code vs Jitter with delay line (4.5ps RMS jitter) NOT removed")
 
         ax.set_xlabel('Code')
         ax.set_ylabel('Jitter RMS')
 
-        ax2 = plt.subplot(2, 1, 2, sharex=ax)
+        ax2 = plt.subplot(3, 1, 2, sharex=ax)
         ax2.plot(np.arange(len(delayAVG)), delayAVG)
 
         ax2.set_xlabel('Code')
         ax2.set_ylabel('AVG delay')
+
+        ax3 = plt.subplot(3, 1, 3, sharex=ax)
+        ax3.plot(np.arange(len(count)), count)
+
+        ax3.set_xlabel('Code')
+        ax3.set_ylabel('Count')
+
+        # textstr = '\n'.join((
+        #     r'Total Count=%.2f' % (sum(count),)))
+        #
+        # ax3.text(0.05, 0.15, textstr, transform=ax.transAxes, fontsize=14, verticalalignment='top')
 
         plt.show()
 
@@ -290,8 +316,11 @@ if __name__ == '__main__':
 
     app = QtGui.QApplication([])
 
-    filename = "/CMC/partage/GRAMS/DATA/ICYSHSR1/ASIC_07/raw_data/18oct2021/CORR_ALL_DAC_M1_D500.hdf5"
-    baseDatesetPath = "CHARTIER/ASIC7/TDC/M1/ALL_TDC_ACTIVE/DAC/FAST_1.268/SLOW_1.248/CORR/EXT/ADDR_ALL/"
+    filename = "/CMC/partage/GRAMS/DATA/ICYSHSR1/ASIC_07/raw_data/18_mars_2022/H7_M0_DAC_CORR.hdf5"
+    baseDatesetPath = "CHARTIER/ASIC7/TDC/M0/ALL_TDC_ACTIVE/DAC/FAST_1.278/SLOW_1.263/CORR/EXT/ADDR_ALL/"
+
+    #filename = "/CMC/partage/GRAMS/DATA/ICYSHSR1/ASIC_07/raw_data/20oct2021/CORR_DAC1v278_75MHz_H7_2.hdf5"
+    #baseDatesetPath = "CHARTIER/ASIC7/TDC/M1/ALL_TDC_ACTIVE/DAC/FAST_1.278/SLOW_1.263/CORR/EXT/ADDR_ALL/"
 
 
 
@@ -301,11 +330,12 @@ if __name__ == '__main__':
 
     #TT.coarseZeroHist(baseDatesetPath, TDCNum=0)
 
-    TT.showTimingTable(baseDatesetPath, 30, 9, TDCNum=0, nonCorrPath=None)
+    TT.showTimingTable(baseDatesetPath, 45, 8, TDCNum=0, nonCorrPath=None)
 
-    #TT.showTotalHist()
 
-    TT.jitterVsCode()
+    TT.showTotalHist()
+
+    #TT.jitterVsCode()
 
     TT.close()
 

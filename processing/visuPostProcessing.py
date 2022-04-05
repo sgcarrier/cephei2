@@ -4,7 +4,7 @@ import pandas as pd
 from scipy import stats
 from tqdm import tqdm
 
-def post_processing(h, fieldName, formatNum, tdcNum, mask):
+def post_processing(h, fieldName, formatNum, tdcNum, mask=None):
     if (formatNum == 1):
         return post_processing_PLL_FORMAT(h, fieldName)
     else:
@@ -18,13 +18,12 @@ def post_processing_RAW_FORMAT(h, fieldName, tdcNum, mask=None):
     """
 
     if isinstance(h, h5py.Dataset):  # This is for cases we did all TDC at the same time
-        ht = h[fieldName][mask]
-
-        # t = h["Global"]
-        # t_n = t[h['Addr'] == (tdcNum * 4)]
-        # print(str(t_n[0]) + ", " + str(t_n[1]) + ", " + str(t_n[10000]) + ", " + str(t_n[10001]))
-
-        return ht[h['Addr'][mask] == (tdcNum * 4)]
+        if mask is not None:
+            ht = h[fieldName][mask]
+            return ht[h['Addr'][mask] == (tdcNum * 4)]
+        else:
+            ht = h[fieldName]
+            return ht[h['Addr'] == (tdcNum * 4)]
     else:  # This is for cases where we did one TDC at a time
         newBasePath = "ADDR_{}".format(tdcNum)
         return np.array(h[newBasePath][fieldName], dtype='int64')
