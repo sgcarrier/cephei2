@@ -31,7 +31,9 @@ class JitterCorr():
                                               basePath=basePath,
                                               pixel_id=tdcNum * 4))
 
-
+    """
+    The timing table is used for pretty much all steps of the correlated tests
+    """
     def genTimingTable(self, filename, basePath, tdcNum):
 
         with h5py.File(filename, "r") as h:
@@ -47,6 +49,7 @@ class JitterCorr():
                     # Apply post processing on Fine
                     corrected_fine = post_processing(h[currPath], "Fine", 0, tdcNum=tdcNum, mask=None)
 
+                    #Conver to code value
                     codes = [self.TFS[tdcNum].get_code(c, f) for c, f in zip(corrected_coarse, corrected_fine)]
 
                     maxCode = (np.sum(self.TFS[tdcNum].fine_by_coarse) + 10)
@@ -93,6 +96,7 @@ class JitterCorr():
 
         print(np.sum(ttt))
 
+        # For every code, find the average delay, and shift so that the events are centered on the middle delay (2000ps)
         for code in range(len(ttt[0, :])):
             if np.sum(ttt[:, code]) == 0:
                 continue
